@@ -9,10 +9,10 @@
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.hanfeng21050.easyenv.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
+        <applicationService serviceImplementation="com.github.hanfeng21050.config.EasyEnvConfigComponent" order="first"/>
+        <applicationConfigurable id="com.github.hanfeng21050.view.settings" displayName="EasyEnv" instance="com.github.hanfeng21050.view.settings.CommonSettingsConfigurable"/>
     </extensions>
 
     <applicationListeners>
-        <listener class="com.github.hanfeng21050.easyenv.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     </applicationListeners>
 </idea-plugin>
