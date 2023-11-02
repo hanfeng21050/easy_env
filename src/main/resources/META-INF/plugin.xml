@@ -13,6 +13,12 @@
         <applicationConfigurable id="com.github.hanfeng21050.view.settings" displayName="EasyEnv" instance="com.github.hanfeng21050.view.settings.CommonSettingsConfigurable"/>
     </extensions>
 
+
     <applicationListeners>
     </applicationListeners>
+    <actions>
+        <group id="ConfigCreateGroup" text="Halo Tool" popup="true" class="com.github.hanfeng21050.actions.ConfigCreateGroup">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
+        </group>
+    </actions>
 </idea-plugin>

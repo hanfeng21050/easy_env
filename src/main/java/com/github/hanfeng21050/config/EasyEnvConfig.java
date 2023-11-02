@@ -15,7 +15,7 @@ public class EasyEnvConfig {
     private Map<String, CustomValue> customMap;
 
     public Map<String, CustomValue> getCustomMap() {
-        if(customMap == null) {
+        if (customMap == null) {
             customMap = new TreeMap<>();
         }
         return customMap;
@@ -26,6 +26,10 @@ public class EasyEnvConfig {
     }
 
     public static class CustomValue {
+
+        private String label;
+
+        private String address;
         /**
          * ¿‡–Õ
          */
@@ -38,9 +42,11 @@ public class EasyEnvConfig {
         public CustomValue() {
         }
 
-        public CustomValue(String username, String password) {
+        public CustomValue(String label, String address, String username, String password) {
             this.username = username;
             this.password = password;
+            this.label = label;
+            this.address = address;
         }
 
         public String getUsername() {
@@ -57,6 +63,22 @@ public class EasyEnvConfig {
 
         public void setPassword(String password) {
             this.password = password;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public void setLabel(String label) {
+            this.label = label;
+        }
+
+        public String getAddress() {
+            return address;
+        }
+
+        public void setAddress(String address) {
+            this.address = address;
         }
     }
 }

@@ -35,10 +35,8 @@ public class CommonSettingsView extends AbstractTemplateSettingsView {
         };
         refreshCustomTable();
 
-
         panel = ToolbarDecorator.createDecorator(customTable)
                 .setAddAction(anActionButton -> {
-                    System.out.println(123);
                     if (config != null) {
                         SettingAddView settingAddView = new SettingAddView();
                         if(settingAddView.showAndGet()) {
@@ -87,6 +85,9 @@ public class CommonSettingsView extends AbstractTemplateSettingsView {
         customTable.setModel(customModel);
         customTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         customTable.getColumnModel().getColumn(0).setPreferredWidth((int)(customTable.getWidth() * 0.3));
+        customTable.getColumnModel().getColumn(0).setWidth(0);
+        customTable.getColumnModel().getColumn(0).setMinWidth(0);
+        customTable.getColumnModel().getColumn(0).setMaxWidth(0);
     }
 
     /**
@@ -100,8 +101,10 @@ public class CommonSettingsView extends AbstractTemplateSettingsView {
         for (Map.Entry<String, EasyEnvConfig.CustomValue> entry : customMap.entrySet()) {
             String key = entry.getKey();
             EasyEnvConfig.CustomValue value = entry.getValue();
-            Vector<String> row = new Vector<>(3);
+            Vector<String> row = new Vector<>(5);
             row.add(key);
+            row.add(value.getLabel());
+            row.add(value.getAddress());
             row.add(value.getUsername());
             row.add(value.getPassword());
             customData.add(row);

@@ -13,7 +13,9 @@ public abstract class AbstractTemplateSettingsView {
     protected static Vector<String> customNames;
 
     static {
-        customNames = new Vector<>(3);
+        customNames = new Vector<>(5);
+        customNames.add("uuid");
+        customNames.add("名称");
         customNames.add("地址");
         customNames.add("用户名");
         customNames.add("密码");
