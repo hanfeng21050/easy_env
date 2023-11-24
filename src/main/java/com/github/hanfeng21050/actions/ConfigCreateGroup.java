@@ -9,10 +9,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,9 +36,9 @@ public class ConfigCreateGroup extends ActionGroup {
      */
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-        Map<String, EasyEnvConfig.CustomValue> customMap = null;
+        Map<String, EasyEnvConfig.SeeConnectInfo> customMap = null;
         if (config != null) {
-            customMap = config.getCustomMap();
+            customMap = config.getSeeConnectInfoMap();
         }
         AnAction[] actions = new AnAction[0];
         if (customMap != null) {
@@ -52,8 +48,8 @@ public class ConfigCreateGroup extends ActionGroup {
         int i = 0;
         if (customMap != null) {
             for (String s : customMap.keySet()) {
-                EasyEnvConfig.CustomValue customValue = customMap.get(s);
-                actions[i] = new SubAction(customValue.getLabel(), customValue.getAddress(), customValue.getUsername(), customValue.getPassword());
+                EasyEnvConfig.SeeConnectInfo seeConnectInfo = customMap.get(s);
+                actions[i] = new SubAction(seeConnectInfo.getLabel(), seeConnectInfo.getAddress(), seeConnectInfo.getUsername(), seeConnectInfo.getPassword());
                 i++;
             }
         }

@@ -10,15 +10,23 @@ import java.util.Vector;
  * @Date 2023/10/31 9:49
  */
 public abstract class AbstractTemplateSettingsView {
-    protected static Vector<String> customNames;
+    protected static Vector<String> headers1;
+    protected static Vector<String> headers2;
 
     static {
-        customNames = new Vector<>(5);
-        customNames.add("uuid");
-        customNames.add("名称");
-        customNames.add("地址");
-        customNames.add("用户名");
-        customNames.add("密码");
+        headers1 = new Vector<>(5);
+        headers1.add("uuid");
+        headers1.add("名称");
+        headers1.add("地址");
+        headers1.add("用户名");
+        headers1.add("密码");
+
+        headers2 = new Vector<>(4);
+        headers2.add("uuid");
+        headers2.add("文件名");
+        headers2.add("正则表达式");
+        headers2.add("替换文本 ");
+
     }
 
     protected EasyEnvConfig config;

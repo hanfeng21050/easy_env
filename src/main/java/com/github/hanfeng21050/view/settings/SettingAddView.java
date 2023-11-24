@@ -1,6 +1,7 @@
 package com.github.hanfeng21050.view.settings;
 
 import com.github.hanfeng21050.config.EasyEnvConfig.*;
+import com.github.hanfeng21050.utils.CryptUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,7 @@ public class SettingAddView extends DialogWrapper {
     private JTextField labelTextField;
     private JTextField addressTextField;
     private JTextField usernameTextField;
-    private JTextField passwordTextField;
+    private JPasswordField passwordTextField;
 
     public SettingAddView() {
         super(false);
@@ -39,18 +40,22 @@ public class SettingAddView extends DialogWrapper {
     @Nullable
     @Override
     protected ValidationInfo doValidate() {
-       // todo
+        // todo
         return super.doValidate();
     }
 
-    public Map.Entry<String, CustomValue> getEntry() {
-        String uuid = UUID.randomUUID().toString();
-        CustomValue customValue = new CustomValue();
-        customValue.setLabel(labelTextField.getText());
-        customValue.setAddress(addressTextField.getText());
-        customValue.setUsername(usernameTextField.getText());
-        customValue.setPassword(passwordTextField.getText());
+    public Map.Entry<String, SeeConnectInfo> getEntry() {
+        try {
+            String uuid = UUID.randomUUID().toString();
+            SeeConnectInfo seeConnectInfo = new SeeConnectInfo();
+            seeConnectInfo.setLabel(labelTextField.getText());
+            seeConnectInfo.setAddress(addressTextField.getText());
+            seeConnectInfo.setUsername(usernameTextField.getText());
+            seeConnectInfo.setPassword(CryptUtil.encryptPassword(passwordTextField.getText()));
+            return new SimpleEntry<>(uuid, seeConnectInfo);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
-        return new SimpleEntry<>(uuid, customValue);
     }
 }

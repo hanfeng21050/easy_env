@@ -1,7 +1,7 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.hanfeng21050.easyenv</id>
-    <name>easy_env Template</name>
+    <name>Easy Env</name>
     <vendor>hanfeng21050</vendor>
 
     <depends>com.intellij.modules.platform</depends>
@@ -10,7 +10,9 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="com.github.hanfeng21050.config.EasyEnvConfigComponent" order="first"/>
-        <applicationConfigurable id="com.github.hanfeng21050.view.settings" displayName="EasyEnv" instance="com.github.hanfeng21050.view.settings.CommonSettingsConfigurable"/>
+        <applicationConfigurable id="com.github.hanfeng21050.view.settings" displayName="EasyEnv" instance="com.github.hanfeng21050.view.settings.EasyEnvSettingsConfigurable">
+            <configurable parentId="com.github.hanfeng21050.view.settings" displayName="EasyEnvConfig" instance="com.github.hanfeng21050.view.settings.EasyEnvRuleSettingsConfigurable" />
+        </applicationConfigurable>
     </extensions>
 
 

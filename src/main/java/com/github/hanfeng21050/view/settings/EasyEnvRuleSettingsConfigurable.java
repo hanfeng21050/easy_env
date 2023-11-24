@@ -10,22 +10,17 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @Author hanfeng32305
- * @Date 2023/10/30 17:14
- */
-public class CommonSettingsConfigurable implements Configurable {
+public class EasyEnvRuleSettingsConfigurable implements Configurable {
     private final EasyEnvConfig config = ServiceManager.getService(EasyEnvConfigComponent.class).getState();
-    private final CommonSettingsView view = new CommonSettingsView();
-
+    final EasyEnvRuleSettingsView easyEnvRuleSettingsView = new EasyEnvRuleSettingsView(config);
     @Override
     public @NlsContexts.ConfigurableName String getDisplayName() {
-        return "EasyEnv";
+        return "EasyEnvRule";
     }
 
     @Override
     public @Nullable JComponent createComponent() {
-        return view.getComponent();
+        return easyEnvRuleSettingsView.getComponent();
     }
 
     @Override
@@ -36,10 +31,5 @@ public class CommonSettingsConfigurable implements Configurable {
     @Override
     public void apply() throws ConfigurationException {
 
-    }
-
-    @Override
-    public void reset() {
-        view.refresh();
     }
 }

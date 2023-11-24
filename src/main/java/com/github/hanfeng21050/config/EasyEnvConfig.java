@@ -1,10 +1,7 @@
 package com.github.hanfeng21050.config;
 
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
@@ -12,20 +9,47 @@ import java.util.TreeMap;
  * @Date 2023/10/30 17:12
  */
 public class EasyEnvConfig {
-    private Map<String, CustomValue> customMap;
+    private Map<String, SeeConnectInfo> seeConnectInfoMap;
+    private Map<String, ConfigReplaceRule> configReplaceRuleMap;
+    private SortedMap<String, String> excludedFileMap;
 
-    public Map<String, CustomValue> getCustomMap() {
-        if (customMap == null) {
-            customMap = new TreeMap<>();
+    public Map<String, SeeConnectInfo> getSeeConnectInfoMap() {
+        if (seeConnectInfoMap == null) {
+            seeConnectInfoMap = new TreeMap<>();
         }
-        return customMap;
+        return seeConnectInfoMap;
     }
 
-    public void setCustomMap(Map<String, CustomValue> customMap) {
-        this.customMap = customMap;
+    public Map<String, ConfigReplaceRule> getConfigReplaceRuleMap() {
+        if (configReplaceRuleMap == null) {
+            configReplaceRuleMap = new TreeMap<>();
+        }
+        return configReplaceRuleMap;
     }
 
-    public static class CustomValue {
+    public SortedMap<String, String> getExcludedFileMap() {
+        if (excludedFileMap == null) {
+            excludedFileMap = new TreeMap<>();
+        }
+        return excludedFileMap;
+    }
+
+    public void setSeeConnectInfoMap(Map<String, SeeConnectInfo> seeConnectInfoMap) {
+        this.seeConnectInfoMap = seeConnectInfoMap;
+    }
+
+    public void setConfigReplaceRuleMap(Map<String, ConfigReplaceRule> configReplaceRuleMap) {
+        this.configReplaceRuleMap = configReplaceRuleMap;
+    }
+
+    public void setExcludedFileMap(SortedMap<String, String> excludedFileMap) {
+        this.excludedFileMap = excludedFileMap;
+    }
+
+    /**
+     * see连接信息
+     */
+    public static class SeeConnectInfo {
 
         private String label;
 
@@ -39,10 +63,10 @@ public class EasyEnvConfig {
          */
         private String password;
 
-        public CustomValue() {
+        public SeeConnectInfo() {
         }
 
-        public CustomValue(String label, String address, String username, String password) {
+        public SeeConnectInfo(String label, String address, String username, String password) {
             this.username = username;
             this.password = password;
             this.label = label;
@@ -79,6 +103,39 @@ public class EasyEnvConfig {
 
         public void setAddress(String address) {
             this.address = address;
+        }
+    }
+
+    /**
+     * 正则替换规则
+     */
+    public static class ConfigReplaceRule {
+        private String fileName;
+        private String regExpression;
+        private String replaceStr;
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public void setFileName(String fileName) {
+            this.fileName = fileName;
+        }
+
+        public String getRegExpression() {
+            return regExpression;
+        }
+
+        public void setRegExpression(String regExpression) {
+            this.regExpression = regExpression;
+        }
+
+        public String getReplaceStr() {
+            return replaceStr;
+        }
+
+        public void setReplaceStr(String replaceStr) {
+            this.replaceStr = replaceStr;
         }
     }
 }

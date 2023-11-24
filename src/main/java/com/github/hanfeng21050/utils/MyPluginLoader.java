@@ -3,6 +3,7 @@ package com.github.hanfeng21050.utils;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.github.hanfeng21050.config.SeeConfig;
+import com.github.hanfeng21050.request.SeeRequest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -16,8 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.client.CookieStore;
-import org.apache.http.impl.client.BasicCookieStore;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -42,6 +41,9 @@ public class MyPluginLoader {
         this.project = project;
     }
 
+    /**
+     * 启动阻塞加载进程
+     */
     public void startBlockingLoadingProcess() {
         // 禁用UI，使用户不能进行其他操作
         ApplicationManager.getApplication().invokeLater(() -> DumbService.getInstance(project).setAlternativeResolveEnabled(true));
@@ -55,27 +57,39 @@ public class MyPluginLoader {
                 String name = project.getName();
                 String applicationName = name + "-svr";
                 try {
-                    login(progressIndicator);
-                    String auth = getAuth(progressIndicator);
-                    String applicationId = getApplication(progressIndicator, applicationName, auth);
+                    // 登录并获取 auth 信息
+                    SeeRequest.login(seeConfig);
+
+                    String auth = SeeRequest.getAuth(seeConfig);
+                    progressIndicator.setText("auth获取成功, auth：" + auth);
+
+                    // 获取应用id
+                    String applicationId = SeeRequest.getApplication(seeConfig, applicationName, auth);
+                    progressIndicator.setText(applicationName + "获取获取应用id成功，applicationId:" + applicationId);
+
                     if (StringUtils.isNotBlank(applicationId)) {
-                        JSONObject config = getConfig(progressIndicator, applicationId, auth);
-                        saveConfig(progressIndicator, config);
+                        // 获取配置信息
+                        JSONObject config = SeeRequest.getConfigInfo(seeConfig, applicationId, auth);
+                        progressIndicator.setText(applicationName + "获取项目配置信息成功");
+
+                        // 保存配置
+                        saveConfigToFile(progressIndicator, config);
 
                         ApplicationManager.getApplication().invokeLater(() -> {
-                            Messages.showInfoMessage("配置获取成功", "信息");
+                            Messages.showInfoMessage("项目" + applicationName + "配置获取成功", "信息");
                         });
                     } else {
                         ApplicationManager.getApplication().invokeLater(() -> {
-                            Messages.showInfoMessage("未获取到当前项目的配置文件，请检查", "提示");
+                            Messages.showInfoMessage("未获取到当前项目" + applicationName + "的配置文件，请检查", "提示");
                         });
                     }
+                } catch (Exception ex) {
+                    String errMsg = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
 
-                } catch (URISyntaxException | IOException e) {
                     ApplicationManager.getApplication().invokeLater(() -> {
-                        Messages.showErrorDialog("连接失败，请检查", "错误");
+                        Messages.showErrorDialog("连接失败，请检查。" + errMsg, "错误");
                     });
-                    throw new RuntimeException(e);
+                    throw new RuntimeException(ex);
                 }
 
             }
@@ -108,6 +122,7 @@ public class MyPluginLoader {
 
             Map<String, String> map = new HashMap<>();
             map.put("username", seeConfig.getUsername());
+            // 加密
             map.put("password", seeConfig.getPassword());
             map.put("execution", executionValue);
             map.put("lt", ltValue);
@@ -153,7 +168,7 @@ public class MyPluginLoader {
         String str = HttpClientUtil.httpPost(seeConfig.getAddress() + "/acm/dssp/application/authority/query.json", body, header);
         JSONObject parse = JSONObject.parse(str);
         String errorInfo = (String) parse.get("error_info");
-        if(StringUtils.isBlank(errorInfo)) {
+        if (StringUtils.isBlank(errorInfo)) {
             JSONArray jsonArray = parse.getJSONObject("data").getJSONArray("items");
             if (!jsonArray.isEmpty()) {
                 JSONObject jsonObject = jsonArray.getJSONObject(0);
@@ -183,11 +198,10 @@ public class MyPluginLoader {
     }
 
     /**
-     *
      * @param indicator
      * @param jsonObject
      */
-    private void saveConfig(@NotNull ProgressIndicator indicator, JSONObject jsonObject) {
+    private void saveConfigToFile(@NotNull ProgressIndicator indicator, JSONObject jsonObject) {
         JSONArray array = mergeNonEmptyConfig(jsonObject);
         for (int i = 0; i < array.size(); i++) {
             JSONObject config = array.getJSONObject(i);
@@ -211,6 +225,7 @@ public class MyPluginLoader {
 
     /**
      * 获取所有的config配置文件
+     *
      * @param jsonObject
      * @return
      */
@@ -249,6 +264,7 @@ public class MyPluginLoader {
 
     /**
      * 保存文件
+     *
      * @param fileName
      * @param content
      */
@@ -287,6 +303,7 @@ public class MyPluginLoader {
 
     /**
      * 配置文件特殊处理
+     *
      * @param fileName
      * @param content
      * @return
