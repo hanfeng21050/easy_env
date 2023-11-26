@@ -2,21 +2,20 @@ package com.github.hanfeng21050.view.settings;
 
 import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.github.hanfeng21050.config.EasyEnvConfig.ConfigReplaceRule;
-import com.github.hanfeng21050.config.EasyEnvConfigComponent;
 import com.google.common.collect.Maps;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.UUID;
 import java.util.Vector;
 
 public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
@@ -34,15 +33,9 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
     }
 
     private void createUIComponents() {
-        replaceRuleTable = new JBTable() {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
+        replaceRuleTable = new JBTable();
         refreshReplaceRuleTable();
-        ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(replaceRuleTable);
-        toolbarDecorator.setAddAction(button -> {
+        filterRulePanel = ToolbarDecorator.createDecorator(replaceRuleTable).setAddAction(button -> {
             if (config != null) {
                 ReplaceRuleAddView replaceRuleAddView = new ReplaceRuleAddView();
                 if (replaceRuleAddView.showAndGet()) {
@@ -51,8 +44,7 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
                     refreshReplaceRuleTable();
                 }
             }
-        });
-        toolbarDecorator.setRemoveAction(anActionButton -> {
+        }).setRemoveAction(anActionButton -> {
             if (config != null) {
                 int selectedRow = replaceRuleTable.getSelectedRow();
                 if (selectedRow != -1) {
@@ -63,9 +55,30 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
                     showInfoMessage("请选择一行");
                 }
             }
-        });
-        filterRulePanel = toolbarDecorator.createPanel();
+        }).createPanel();
+
+
+        excludedFileTable = new JBTable();
+        refreshExcludedFileTable();
+        excludedFilePanel = ToolbarDecorator.createDecorator(excludedFileTable).setAddAction(button -> {
+            if (config != null) {
+                config.getExcludedFileMap().put(UUID.randomUUID().toString(), "");
+                refreshExcludedFileTable();
+            }
+        }).setRemoveAction(anActionButton -> {
+            if (config != null) {
+                int selectedRow = excludedFileTable.getSelectedRow();
+                if (selectedRow != -1) {
+                    SortedMap<String, String> customMap = config.getExcludedFileMap();
+                    customMap.remove(excludedFileTable.getValueAt(selectedRow, 0).toString());
+                    refreshExcludedFileTable();
+                } else {
+                    showInfoMessage("请选择一行");
+                }
+            }
+        }).createPanel();
     }
+
 
     @Override
     public JComponent getComponent() {
@@ -85,6 +98,61 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
         replaceRuleTable.getColumnModel().getColumn(0).setWidth(0);
         replaceRuleTable.getColumnModel().getColumn(0).setMinWidth(0);
         replaceRuleTable.getColumnModel().getColumn(0).setMaxWidth(0);
+
+        customModel.addTableModelListener(new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                int row = e.getFirstRow();
+                if (e.getType() == TableModelEvent.UPDATE) {
+                    String key = (String) customModel.getValueAt(row, 0);
+                    String fileName = (String) customModel.getValueAt(row, 1);
+                    String regExpression = (String) customModel.getValueAt(row, 2);
+                    String replaceStr = (String) customModel.getValueAt(row, 3);
+
+                    ConfigReplaceRule configReplaceRule = new ConfigReplaceRule(fileName, regExpression, replaceStr);
+                    config.getConfigReplaceRuleMap().put(key, configReplaceRule);
+                }
+            }
+        });
+    }
+
+    private void refreshExcludedFileTable() {
+        if (config != null && config.getExcludedFileMap() != null) {
+            SortedMap<String, String> excludedFileMap = config.getExcludedFileMap();
+            DefaultTableModel customModel = getExcludedFileTableModel(excludedFileMap);
+            excludedFileTable.setModel(customModel);
+            excludedFileTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            excludedFileTable.getColumnModel().getColumn(0).setPreferredWidth((int) (replaceRuleTable.getWidth() * 0.3));
+            excludedFileTable.getColumnModel().getColumn(0).setWidth(0);
+            excludedFileTable.getColumnModel().getColumn(0).setMinWidth(0);
+            excludedFileTable.getColumnModel().getColumn(0).setMaxWidth(0);
+
+            customModel.addTableModelListener(new TableModelListener() {
+                @Override
+                public void tableChanged(TableModelEvent e) {
+                    int row = e.getFirstRow();
+                    if (e.getType() == TableModelEvent.UPDATE) {
+                        String key = (String) customModel.getValueAt(row, 0);
+                        String newValue = (String) customModel.getValueAt(row, 1);
+                        config.getExcludedFileMap().put(key, newValue);
+                    }
+                }
+            });
+        }
+    }
+
+    @NotNull
+    private DefaultTableModel getExcludedFileTableModel(SortedMap<String, String> excludedFileMap) {
+        Vector<Vector<String>> customData = new Vector<>(excludedFileMap.size());
+        for (Map.Entry<String, String> entry : excludedFileMap.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            Vector<String> row = new Vector<>(2);
+            row.add(key);
+            row.add(value);
+            customData.add(row);
+        }
+        return new DefaultTableModel(customData, headers3);
     }
 
     @NotNull

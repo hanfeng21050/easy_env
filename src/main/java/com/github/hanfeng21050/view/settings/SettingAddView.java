@@ -1,9 +1,11 @@
 package com.github.hanfeng21050.view.settings;
 
-import com.github.hanfeng21050.config.EasyEnvConfig.*;
+import com.github.hanfeng21050.config.EasyEnvConfig.SeeConnectInfo;
+import com.github.hanfeng21050.utils.CommonValidateUtil;
 import com.github.hanfeng21050.utils.CryptUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,7 +42,21 @@ public class SettingAddView extends DialogWrapper {
     @Nullable
     @Override
     protected ValidationInfo doValidate() {
-        // todo
+        if (StringUtils.isBlank(labelTextField.getText())) {
+            return new ValidationInfo("请输入备注", labelTextField);
+        }
+        if (StringUtils.isBlank(addressTextField.getText())) {
+            return new ValidationInfo("请输入地址", addressTextField);
+        }
+        if (StringUtils.isNotBlank(addressTextField.getText()) && !CommonValidateUtil.isValidURL(addressTextField.getText())) {
+            return new ValidationInfo("地址输入不正确，请检查", addressTextField);
+        }
+        if (StringUtils.isBlank(usernameTextField.getText())) {
+            return new ValidationInfo("请输入用户名", usernameTextField);
+        }
+        if (StringUtils.isBlank(passwordTextField.getText())) {
+            return new ValidationInfo("请输入密码", passwordTextField);
+        }
         return super.doValidate();
     }
 

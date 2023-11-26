@@ -51,17 +51,17 @@ public class EasyEnvConfig {
      */
     public static class SeeConnectInfo {
 
-        private String label;
+        private String label = "";
 
-        private String address;
+        private String address = "";
         /**
          * 类型
          */
-        private String username;
+        private String username = "";
         /**
          * 值
          */
-        private String password;
+        private String password = "";
 
         public SeeConnectInfo() {
         }
@@ -110,9 +110,18 @@ public class EasyEnvConfig {
      * 正则替换规则
      */
     public static class ConfigReplaceRule {
-        private String fileName;
-        private String regExpression;
-        private String replaceStr;
+        private String fileName = "";
+        private String regExpression = "";
+        private String replaceStr = "";
+
+        public ConfigReplaceRule() {
+        }
+
+        public ConfigReplaceRule(String fileName, String regExpression, String replaceStr) {
+            this.fileName = fileName;
+            this.regExpression = regExpression;
+            this.replaceStr = replaceStr;
+        }
 
         public String getFileName() {
             return fileName;

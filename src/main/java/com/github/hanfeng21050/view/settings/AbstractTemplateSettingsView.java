@@ -12,6 +12,7 @@ import java.util.Vector;
 public abstract class AbstractTemplateSettingsView {
     protected static Vector<String> headers1;
     protected static Vector<String> headers2;
+    protected static Vector<String> headers3;
 
     static {
         headers1 = new Vector<>(5);
@@ -26,6 +27,10 @@ public abstract class AbstractTemplateSettingsView {
         headers2.add("文件名");
         headers2.add("正则表达式");
         headers2.add("替换文本 ");
+
+        headers3 = new Vector<>(2);
+        headers3.add("uuid");
+        headers3.add("文件名");
 
     }
 

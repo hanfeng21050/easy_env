@@ -1,8 +1,9 @@
 package com.github.hanfeng21050.view.settings;
 
 import com.github.hanfeng21050.config.EasyEnvConfig;
-import com.github.hanfeng21050.utils.CryptUtil;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ValidationInfo;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,5 +43,21 @@ public class ReplaceRuleAddView extends DialogWrapper {
             throw new RuntimeException(e);
         }
 
+    }
+
+    @Override
+    protected ValidationInfo doValidate() {
+        if (StringUtils.isBlank(fileNameTextField.getText())) {
+            return new ValidationInfo("请输入文件名", fileNameTextField);
+        }
+        if (StringUtils.isBlank(regExpressionTextField.getText())) {
+            return new ValidationInfo("请输入正则表达式", regExpressionTextField);
+        }
+        if (StringUtils.isBlank(replaceStrTextField.getText())) {
+            return new ValidationInfo("请输入替换文本", replaceStrTextField);
+        }
+
+
+        return super.doValidate();
     }
 }

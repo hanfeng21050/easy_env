@@ -368,6 +368,7 @@ public class HttpClientUtil {
             }
         }
         HttpGet httpGet = new HttpGet(uriBuilder.build());
+        httpGet.getParams().setParameter("http.protocol.allow-circular-redirects", true);
         // …Ë÷√«Î«ÛÕ∑
         setRequestHeader(httpGet, header);
 

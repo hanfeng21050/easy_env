@@ -38,10 +38,4 @@ public class EasyEnvSettingsConfigurable implements Configurable {
 
     }
 
-    @Override
-    public void reset() {
-        view.refresh();
-    }
-
-
 }

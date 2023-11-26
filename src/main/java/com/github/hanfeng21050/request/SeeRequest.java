@@ -3,9 +3,9 @@ package com.github.hanfeng21050.request;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.github.hanfeng21050.config.SeeConfig;
-import com.github.hanfeng21050.utils.CryptUtil;
 import com.github.hanfeng21050.utils.HttpClientUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import org.apache.commons.lang.StringUtils;
 
@@ -17,10 +17,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SeeRequest {
-
+    private static final Logger LOGGER = Logger.getInstance(SeeRequest.class);
     // 常量定义
     private static final String SUCCESS = "success";
     private static final String CAS_LOGIN_URL = "/cas/login";
+    private static final String ACM_URL = "/acm";
     private static final String ACM_SYSTEM_AUTH_JSON_URL = "/acm/system/auth.json";
     private static final String ACM_DSSP_APPLICATION_QUERY_JSON_URL = "/acm/dssp/application/authority/query.json";
     private static final String ACM_DSSP_CONFIG_GET_COMPARE_CONFIG_JSON_URL = "/acm/dssp/config/getCompareConfig.json";
@@ -51,7 +52,7 @@ public class SeeRequest {
 
         if(SUCCESS.equals(res)) {
             // 页面跳转，获取cookie
-            HttpClientUtil.httpGet(seeConfig.getAddress() + CAS_LOGIN_URL + "?service=http%3A%2F%2F10.20.36.109%3A8081%2Facm%2Fcloud.htm");
+            String s = HttpClientUtil.httpGet(seeConfig.getAddress() + ACM_URL);
         } else {
             throw new Exception("用户验证失败");
         }

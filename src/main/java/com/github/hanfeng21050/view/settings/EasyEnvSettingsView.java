@@ -19,6 +19,8 @@ import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import java.util.Map;
 import java.util.Objects;
@@ -44,12 +46,7 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
      */
     public EasyEnvSettingsView() {
         super();
-        customTable = new JBTable() {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
+        customTable = new JBTable();
         refreshCustomTable();
 
         panel = ToolbarDecorator.createDecorator(customTable)
@@ -194,6 +191,25 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
         customTable.getColumnModel().getColumn(0).setWidth(0);
         customTable.getColumnModel().getColumn(0).setMinWidth(0);
         customTable.getColumnModel().getColumn(0).setMaxWidth(0);
+
+        customModel.addTableModelListener(new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                int row = e.getFirstRow();
+                if (e.getType() == TableModelEvent.UPDATE) {
+                    String key = (String) customModel.getValueAt(row, 0);
+                    String label = (String) customModel.getValueAt(row, 1);
+                    String address = (String) customModel.getValueAt(row, 2);
+                    String username = (String) customModel.getValueAt(row, 3);
+                    String password = (String) customModel.getValueAt(row, 4);
+
+                    EasyEnvConfig.SeeConnectInfo seeConnectInfo = new EasyEnvConfig.SeeConnectInfo(label, address, username, password);
+                    if (config != null) {
+                        config.getSeeConnectInfoMap().put(key, seeConnectInfo);
+                    }
+                }
+            }
+        });
     }
 
     /**

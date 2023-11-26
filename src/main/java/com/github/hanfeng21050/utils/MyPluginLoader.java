@@ -2,9 +2,12 @@ package com.github.hanfeng21050.utils;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.github.hanfeng21050.config.EasyEnvConfig;
+import com.github.hanfeng21050.config.EasyEnvConfigComponent;
 import com.github.hanfeng21050.config.SeeConfig;
 import com.github.hanfeng21050.request.SeeRequest;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -21,10 +24,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,6 +35,8 @@ import java.util.regex.Pattern;
  * Date  2023/11/1 0:26
  */
 public class MyPluginLoader {
+
+    private final EasyEnvConfig config = ServiceManager.getService(EasyEnvConfigComponent.class).getState();
     private final SeeConfig seeConfig;
     private final Project project;
 
@@ -102,101 +106,6 @@ public class MyPluginLoader {
         });
     }
 
-    // login
-    private void login(@NotNull ProgressIndicator indicator) throws URISyntaxException, IOException {
-        HttpClientUtil.clearCookie();
-
-        indicator.setText("开始登录：" + seeConfig.getAddress());
-        String str = HttpClientUtil.httpGet(seeConfig.getAddress() + "/cas/login?get-lt=true");
-        String ltPattern = "\"lt\":\"(.*?)\"";
-        String executionPattern = "\"execution\":\"(.*?)\"";
-
-        Pattern ltRegex = Pattern.compile(ltPattern);
-        Pattern executionRegex = Pattern.compile(executionPattern);
-
-        Matcher ltMatcher = ltRegex.matcher(str);
-        Matcher executionMatcher = executionRegex.matcher(str);
-        if (ltMatcher.find() && executionMatcher.find()) {
-            String ltValue = ltMatcher.group(1);
-            String executionValue = executionMatcher.group(1);
-
-            Map<String, String> map = new HashMap<>();
-            map.put("username", seeConfig.getUsername());
-            // 加密
-            map.put("password", seeConfig.getPassword());
-            map.put("execution", executionValue);
-            map.put("lt", ltValue);
-            map.put("submit", "LOGIN");
-            map.put("_eventId", "submit");
-            // 登录
-            HttpClientUtil.httpPost(seeConfig.getAddress() + "/cas/login", map);
-
-            // 页面跳转，获取cookie
-            HttpClientUtil.httpGet(seeConfig.getAddress() + "/cas/login?service=http%3A%2F%2F10.20.36.109%3A8081%2Facm%2Fcloud.htm");
-            indicator.setFraction(0.2);
-            indicator.checkCanceled();
-        }
-    }
-
-    private String getAuth(@NotNull ProgressIndicator indicator) throws URISyntaxException, IOException {
-        indicator.setText("正在获取auth信息");
-        // /acm/system/auth.json
-        String str = HttpClientUtil.httpPost(seeConfig.getAddress() + "/acm/system/auth.json", new HashMap<>());
-        String tokenPattern = "\"token\":\"(.*?)\"";
-        Pattern tokenRegex = Pattern.compile(tokenPattern);
-        Matcher matcher = tokenRegex.matcher(str);
-        if (matcher.find()) {
-            String token = matcher.group(1);
-            indicator.setFraction(0.3);
-            indicator.checkCanceled();
-            return token;
-        }
-        return "";
-    }
-
-    private String getApplication(@NotNull ProgressIndicator indicator, String applicationName, String auth) throws IOException {
-        // /acm/dssp/application/authority/query.json
-        indicator.setText("获取应用id：" + applicationName);
-        Map<String, String> body = new HashMap<>();
-        Map<String, String> header = new HashMap<>();
-        body.put("pageNo", "1");
-        body.put("pageSize", "1");
-        body.put("name", applicationName);
-        body.put("allowedUpgradeMark", "true");
-        header.put("Authorization", "Bearer " + auth);
-
-        String str = HttpClientUtil.httpPost(seeConfig.getAddress() + "/acm/dssp/application/authority/query.json", body, header);
-        JSONObject parse = JSONObject.parse(str);
-        String errorInfo = (String) parse.get("error_info");
-        if (StringUtils.isBlank(errorInfo)) {
-            JSONArray jsonArray = parse.getJSONObject("data").getJSONArray("items");
-            if (!jsonArray.isEmpty()) {
-                JSONObject jsonObject = jsonArray.getJSONObject(0);
-                return (String) jsonObject.get("id");
-            }
-        } else {
-            ApplicationManager.getApplication().invokeLater(() -> {
-                Messages.showErrorDialog("error: " + errorInfo, "错误");
-            });
-            throw new RuntimeException(errorInfo);
-        }
-        return "";
-    }
-
-    private JSONObject getConfig(@NotNull ProgressIndicator indicator, String applicationId, String auth) throws IOException {
-        indicator.setText("读取配置信息：" + applicationId);
-        // /acm/dssp/config/getCompareConfig.json
-        Map<String, String> body = new HashMap<>();
-        Map<String, String> header = new HashMap<>();
-        header.put("Authorization", "Bearer " + auth);
-        body.put("applicationId", applicationId);
-        String str = HttpClientUtil.httpPost(seeConfig.getAddress() + "/acm/dssp/config/getCompareConfig.json", body, header);
-        indicator.setFraction(0.5);
-        indicator.checkCanceled();
-        indicator.setText("读取配置成功：" + applicationId);
-        return JSONObject.parse(str);
-    }
-
     /**
      * @param indicator
      * @param jsonObject
@@ -214,8 +123,6 @@ public class MyPluginLoader {
                     String fileName = matcher.group(1);
                     indicator.setText("正在保存配置：" + fileName);
                     String content = (String) config.get("content");
-                    // 处理配置内容
-                    content = removeOrReplace(fileName, content);
                     saveFile(fileName, content);
                 }
             }
@@ -269,6 +176,29 @@ public class MyPluginLoader {
      * @param content
      */
     public void saveFile(String fileName, String content) {
+        // 判断是否在过滤列表内，如果在则跳过
+        SortedMap<String, String> excludedFileMap = config.getExcludedFileMap();
+        for (Map.Entry<String, String> stringStringEntry : excludedFileMap.entrySet()) {
+            String excludeFileName = stringStringEntry.getValue();
+            if (CommonValidateUtil.isFileNameMatch(fileName, excludeFileName)) {
+                return;
+            }
+        }
+
+        // 根据配置规则替换文本内容
+        Map<String, EasyEnvConfig.ConfigReplaceRule> configReplaceRuleMap = config.getConfigReplaceRuleMap();
+        for (Map.Entry<String, EasyEnvConfig.ConfigReplaceRule> stringConfigReplaceRuleEntry : configReplaceRuleMap.entrySet()) {
+            EasyEnvConfig.ConfigReplaceRule rule = stringConfigReplaceRuleEntry.getValue();
+            if (CommonValidateUtil.isFileNameMatch(fileName, rule.getFileName())) {
+                String regExpression = rule.getRegExpression();
+                String replaceStr = rule.getReplaceStr();
+
+                Pattern pattern = Pattern.compile(regExpression);
+                Matcher matcher = pattern.matcher(content);
+                content = matcher.replaceAll(replaceStr);
+            }
+        }
+
         VirtualFile[] modules = project.getBaseDir().getChildren();
         for (VirtualFile module : modules) {
             if (module.getPath().contains("deploy")) {
@@ -299,41 +229,5 @@ public class MyPluginLoader {
         }
 
 
-    }
-
-    /**
-     * 配置文件特殊处理
-     *
-     * @param fileName
-     * @param content
-     * @return
-     */
-    public String removeOrReplace(String fileName, String content) {
-        // log4j2.xml 移除掉kafka相关节点
-//        if (fileName.equals("log4j2.xml")) {
-//            Pattern pattern = Pattern.compile("<Kafka.*?</Kafka>", Pattern.DOTALL);
-//            Matcher matcher = pattern.matcher(content);
-//            content = matcher.replaceAll("");
-//        }
-
-        // application.properties
-        if (fileName.equals("application.properties")) {
-            // 不需要这个配置文件
-            content = content.replaceAll("\\./cust-config/emergency\\.properties,", "");
-
-            // 替换配置文件路径
-            content = content.replaceAll("\\./config/", "classpath:");
-
-            // 注释app.host
-            content = content.replaceAll("(app\\.host=)", "# $1");
-        }
-
-        if (fileName.equals("middleware.properties")) {
-            // 替换配置文件路径
-            content = content.replaceAll("files://\\./config/", "classpath:");
-            content = content.replaceAll("\\./config/", "classpath:");
-        }
-
-        return content;
     }
 }
