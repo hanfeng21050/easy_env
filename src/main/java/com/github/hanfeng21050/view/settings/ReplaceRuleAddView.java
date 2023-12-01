@@ -53,11 +53,6 @@ public class ReplaceRuleAddView extends DialogWrapper {
         if (StringUtils.isBlank(regExpressionTextField.getText())) {
             return new ValidationInfo("请输入正则表达式", regExpressionTextField);
         }
-        if (StringUtils.isBlank(replaceStrTextField.getText())) {
-            return new ValidationInfo("请输入替换文本", replaceStrTextField);
-        }
-
-
         return super.doValidate();
     }
 }
