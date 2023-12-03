@@ -116,15 +116,13 @@ public class MyPluginLoader {
             JSONObject config = array.getJSONObject(i);
             // 获取文件名称
             String path = (String) config.get("path");
-            if (path.contains(".properties") || path.contains(".dat") || path.contains(".pfx")) {
-                Pattern pattern = Pattern.compile("([^/]+)$");
-                Matcher matcher = pattern.matcher(path);
-                if (matcher.find()) {
-                    String fileName = matcher.group(1);
-                    indicator.setText("正在保存配置：" + fileName);
-                    String content = (String) config.get("content");
-                    saveFile(fileName, content);
-                }
+            Pattern pattern = Pattern.compile("([^/]+)$");
+            Matcher matcher = pattern.matcher(path);
+            if (matcher.find()) {
+                String fileName = matcher.group(1);
+                indicator.setText("正在保存配置：" + fileName);
+                String content = (String) config.get("content");
+                saveFile(fileName, content);
             }
         }
     }
