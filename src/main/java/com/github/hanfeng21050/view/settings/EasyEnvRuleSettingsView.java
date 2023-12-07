@@ -19,6 +19,10 @@ import java.util.UUID;
 import java.util.Vector;
 
 public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
+    // 私有静态变量，用于保存唯一实例
+    private static EasyEnvRuleSettingsView instance;
+
+
     private JPanel panel;
     private JPanel filterRulePanel;
     private JPanel excludedFilePanel;
@@ -28,9 +32,19 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
     private JBList<Map.Entry<String, ConfigReplaceRule>> configReplaceRuleMapList;
     private EasyEnvConfig config;
 
-    public EasyEnvRuleSettingsView(EasyEnvConfig easyEnvConfig) {
+    private EasyEnvRuleSettingsView(EasyEnvConfig easyEnvConfig) {
         this.config = easyEnvConfig;
     }
+
+    // 公共方法，用于获取唯一实例
+    public static EasyEnvRuleSettingsView getInstance(EasyEnvConfig easyEnvConfig) {
+        if (instance == null) {
+            // 如果实例为空，创建一个新实例
+            instance = new EasyEnvRuleSettingsView(easyEnvConfig);
+        }
+        return instance;
+    }
+
 
     private void createUIComponents() {
         replaceRuleTable = new JBTable();
@@ -86,7 +100,7 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
     }
 
 
-    private void refreshReplaceRuleTable() {
+    public void refreshReplaceRuleTable() {
         Map<String, EasyEnvConfig.ConfigReplaceRule> customMap = Maps.newHashMap();
         if (config != null && config.getConfigReplaceRuleMap() != null) {
             customMap = config.getConfigReplaceRuleMap();
@@ -116,7 +130,7 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
         });
     }
 
-    private void refreshExcludedFileTable() {
+    public void refreshExcludedFileTable() {
         if (config != null && config.getExcludedFileMap() != null) {
             SortedMap<String, String> excludedFileMap = config.getExcludedFileMap();
             DefaultTableModel customModel = getExcludedFileTableModel(excludedFileMap);

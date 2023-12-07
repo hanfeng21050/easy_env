@@ -12,7 +12,7 @@ import javax.swing.*;
 
 public class EasyEnvRuleSettingsConfigurable implements Configurable {
     private final EasyEnvConfig config = ServiceManager.getService(EasyEnvConfigComponent.class).getState();
-    final EasyEnvRuleSettingsView easyEnvRuleSettingsView = new EasyEnvRuleSettingsView(config);
+    final EasyEnvRuleSettingsView easyEnvRuleSettingsView = EasyEnvRuleSettingsView.getInstance(config);
     @Override
     public @NlsContexts.ConfigurableName String getDisplayName() {
         return "EasyEnvRule";

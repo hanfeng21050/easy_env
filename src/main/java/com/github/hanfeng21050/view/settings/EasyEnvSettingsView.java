@@ -1,60 +1,214 @@
 package com.github.hanfeng21050.view.settings;
 
 import com.github.hanfeng21050.config.EasyEnvConfig;
-import com.github.hanfeng21050.config.EasyEnvConfigComponent;
 import com.github.hanfeng21050.config.SeeConfig;
 import com.github.hanfeng21050.request.SeeRequest;
 import com.github.hanfeng21050.utils.MyPluginLoader;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Vector;
 import java.util.function.Consumer;
 
 /**
- * CommonSettingsView 提供了一个通用设置视图，包括添加、删除、生成配置和测试连接等操作。
- *
- * @Author hanfeng32305
- * @Date 2023/10/30 17:24
+ * 显示和配置EasyEnv插件设置的视图。
  */
 public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
-    private final JPanel panel;
-    private final EasyEnvConfig config = ServiceManager.getService(EasyEnvConfigComponent.class).getState();
-
-    private final JTable customTable;
+    private final EasyEnvConfig config;
+    private JButton importButton;
+    private JButton exportButton;
+    private JPanel envPanel;
+    private JPanel panel;
+    private JTable envTable;
+    private JBList<Map.Entry<String, EasyEnvConfig.SeeConnectInfo>> seeConnectInfoMapList;
 
     private boolean isModify = false;
 
     /**
-     * CommonSettingsView 构造函数，初始化视图和相关操作。
+     * 构造函数，接收EasyEnv配置并初始化视图。
+     *
+     * @param easyEnvConfig EasyEnv配置
      */
-    public EasyEnvSettingsView() {
-        super();
-        customTable = new JBTable();
-        refreshCustomTable();
+    public EasyEnvSettingsView(EasyEnvConfig easyEnvConfig) {
+        this.config = easyEnvConfig;
+    }
 
-        panel = ToolbarDecorator.createDecorator(customTable)
+    @Override
+    public JComponent getComponent() {
+        return panel;
+    }
+
+    /**
+     * 创建自定义组件的方法。
+     */
+    private void createUIComponents() {
+        // 初始化 importButton
+        importButton = new JButton("导入配置");
+        importButton.addActionListener(e -> importConfiguration());
+
+        // 初始化 exportButton
+        exportButton = new JButton("导出配置");
+        exportButton.addActionListener(e -> exportConfiguration());
+
+        // 初始化表格
+        envTable = new JBTable();
+        refreshEnvTable();
+
+        envPanel = ToolbarDecorator.createDecorator(envTable)
                 .setAddAction(anActionButton -> addSetting())
                 .setRemoveAction(anActionButton -> removeSetting())
                 .addExtraAction(createActionButton("生成配置", "/META-INF/icon-gen.png", this::generateConfiguration))
                 .addExtraAction(createActionButton("测试连接", "/META-INF/icon-test.png", this::testConnection))
                 .createPanel();
+    }
+
+    /**
+     * 导入配置的方法，执行与“导入配置”按钮相关的逻辑。
+     */
+    private void importConfiguration() {
+        JFileChooser fileChooser = new JFileChooser();
+        FileNameExtensionFilter xmlFilter = new FileNameExtensionFilter("XML files (*.xml)", "xml");
+        fileChooser.setFileFilter(xmlFilter);
+        fileChooser.setDialogTitle("选择配置文件");
+        int result = fileChooser.showOpenDialog(panel);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            // 用户选择了文件
+            java.io.File selectedFile = fileChooser.getSelectedFile();
+            // 在这里执行将 XML 文件导入到 config 的逻辑
+            importConfigFromXml(selectedFile);
+        }
+    }
+
+    /**
+     * 从 XML 文件导入配置的方法。
+     *
+     * @param file 要导入的 XML 文件
+     */
+    private void importConfigFromXml(java.io.File file) {
+        if (file.exists() && file.isFile()) {
+            try {
+                JAXBContext context = JAXBContext.newInstance(EasyEnvConfig.class);
+                Unmarshaller unmarshaller = context.createUnmarshaller();
+                EasyEnvConfig importedConfig = (EasyEnvConfig) unmarshaller.unmarshal(file);
+                // 在这里处理导入的配置对象
+                handleImportedConfig(importedConfig);
+                this.isModify = true;
+                // 导入成功，显示提示信息
+                Messages.showInfoMessage("导入成功", "成功");
+            } catch (JAXBException e) {
+                // 导入失败，显示错误信息
+                Messages.showErrorDialog(e.getMessage(), "失败");
+                throw new RuntimeException(e);
+            }
+        } else {
+            // 文件不存在或不是文件
+            String errorMessage = "选择的文件无效，请选择一个有效的 XML 文件。";
+            Messages.showErrorDialog(errorMessage, "导入失败");
+        }
+    }
+
+    /**
+     * 处理导入的配置对象的方法。
+     *
+     * @param importedConfig 导入的配置对象
+     */
+    private void handleImportedConfig(EasyEnvConfig importedConfig) {
+        config.setSeeConnectInfoMap(importedConfig.getSeeConnectInfoMap());
+        config.setConfigReplaceRuleMap(importedConfig.getConfigReplaceRuleMap());
+        config.setExcludedFileMap(importedConfig.getExcludedFileMap());
+        refreshEnvTable();
+
+        EasyEnvRuleSettingsView instance = EasyEnvRuleSettingsView.getInstance(config);
+        instance.refreshReplaceRuleTable();
+        instance.refreshExcludedFileTable();
+    }
+
+    /**
+     * 导出配置的方法，执行与“导出配置”按钮相关的逻辑。
+     */
+    private void exportConfiguration() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("选择导出目录");
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int result = fileChooser.showSaveDialog(panel);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            // 用户选择了目录
+            java.io.File selectedDirectory = fileChooser.getSelectedFile();
+
+            // 提示用户输入文件名，可以使用默认文件名
+            String defaultFileName = "easyEnv";
+            String fileName = Messages.showInputDialog(
+                    "请输入文件名（包括扩展名），或按确定使用默认文件名:",
+                    "输入文件名",
+                    Messages.getQuestionIcon(),
+                    defaultFileName,
+                    null);
+
+            if (fileName != null && !fileName.trim().isEmpty()) {
+                // 用户提供了文件名，添加 .xml 扩展名
+                fileName += ".xml";
+                // 用户提供了文件名
+                java.io.File outputFile = new java.io.File(selectedDirectory, fileName);
+                exportConfigToDirectory(outputFile);
+            }
+        }
+    }
+
+    /**
+     * 将配置导出到目录的方法。
+     *
+     * @param outputFile 要导出到的目录
+     */
+    private void exportConfigToDirectory(java.io.File outputFile) {
+        if (outputFile.exists()) {
+            // 文件已存在，询问用户是否覆盖
+            int result = Messages.showOkCancelDialog(
+                    "文件已存在，是否覆盖？",
+                    "文件已存在",
+                    Messages.getQuestionIcon());
+
+            if (result != Messages.OK) {
+                // 用户取消了覆盖操作
+                return;
+            }
+        }
+
+        JAXBContext context = null;
+        try {
+            context = JAXBContext.newInstance(EasyEnvConfig.class);
+            Marshaller marshaller = context.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            marshaller.marshal(config, outputFile);
+
+            // 导出成功，显示提示信息
+            String successMessage = "配置成功导出到: " + outputFile.getAbsolutePath();
+            Messages.showInfoMessage(successMessage, "导出成功");
+        } catch (JAXBException e) {
+            // 导出失败，显示错误信息
+            String errorMessage = "导出配置时发生错误: " + e.getMessage();
+            Messages.showErrorDialog(errorMessage, "导出失败");
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -66,7 +220,7 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
             if (settingAddView.showAndGet()) {
                 Map.Entry<String, EasyEnvConfig.SeeConnectInfo> entry = settingAddView.getEntry();
                 config.getSeeConnectInfoMap().put(entry.getKey(), entry.getValue());
-                refreshCustomTable();
+                refreshEnvTable();
                 this.isModify = true;
             }
         }
@@ -77,11 +231,11 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
      */
     private void removeSetting() {
         if (config != null) {
-            int selectedRow = customTable.getSelectedRow();
+            int selectedRow = envTable.getSelectedRow();
             if (selectedRow != -1) {
                 Map<String, EasyEnvConfig.SeeConnectInfo> customMap = config.getSeeConnectInfoMap();
-                customMap.remove(customTable.getValueAt(selectedRow, 0).toString());
-                refreshCustomTable();
+                customMap.remove(envTable.getValueAt(selectedRow, 0).toString());
+                refreshEnvTable();
                 this.isModify = true;
             } else {
                 showInfoMessage("请选择一行");
@@ -90,15 +244,28 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     }
 
     /**
+     * 创建带有图标的 AnActionButton 的方法。
+     */
+    private AnActionButton createActionButton(String text, String iconPath, Consumer<AnActionEvent> action) {
+        return new AnActionButton(text, IconLoader.getIcon(iconPath, Objects.requireNonNull(ReflectionUtil.getGrandCallerClass()))) {
+
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+                action.accept(e);
+            }
+        };
+    }
+
+    /**
      * 生成配置的方法，执行与“生成配置”按钮相关的逻辑。
      */
     private void generateConfiguration(AnActionEvent e) {
-        int selectedRow = customTable.getSelectedRow();
+        int selectedRow = envTable.getSelectedRow();
         if (selectedRow != -1) {
             // 在这里执行“测试连接”按钮的逻辑
-            String address = (String) customTable.getValueAt(selectedRow, 2);
-            String username = (String) customTable.getValueAt(selectedRow, 3);
-            String password = (String) customTable.getValueAt(selectedRow, 4);
+            String address = (String) envTable.getValueAt(selectedRow, 2);
+            String username = (String) envTable.getValueAt(selectedRow, 3);
+            String password = (String) envTable.getValueAt(selectedRow, 4);
 
             SeeConfig seeConfig = new SeeConfig(address, username, password);
             Project project = e.getProject();
@@ -114,12 +281,12 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
      */
     private void testConnection(AnActionEvent e) {
         try {
-            int selectedRow = customTable.getSelectedRow();
+            int selectedRow = envTable.getSelectedRow();
             if (selectedRow != -1) {
                 // 在这里执行“测试连接”按钮的逻辑
-                String address = (String) customTable.getValueAt(selectedRow, 2);
-                String username = (String) customTable.getValueAt(selectedRow, 3);
-                String password = (String) customTable.getValueAt(selectedRow, 4);
+                String address = (String) envTable.getValueAt(selectedRow, 2);
+                String username = (String) envTable.getValueAt(selectedRow, 3);
+                String password = (String) envTable.getValueAt(selectedRow, 4);
 
                 SeeConfig seeConfig = new SeeConfig(address, username, password);
                 SeeRequest.login(seeConfig);
@@ -137,89 +304,30 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
             });
             throw new RuntimeException(ex);
         }
-
     }
 
     /**
-     * 显示信息提示框的方法。
+     * 刷新环境表格的方法。
      */
-    private void showInfoMessage(String message) {
-        Messages.showInfoMessage(message, "提示");
-    }
-
-    /**
-     * 创建带有图标的 AnActionButton 的方法。
-     */
-    private AnActionButton createActionButton(String text, String iconPath, Consumer<AnActionEvent> action) {
-        return new AnActionButton(text, IconLoader.getIcon(iconPath, Objects.requireNonNull(ReflectionUtil.getGrandCallerClass()))) {
-
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-                action.accept(e);
-            }
-        };
-    }
-
-    /**
-     * 获取视图组件的方法。
-     *
-     * @return 视图组件
-     */
-    public JComponent getComponent() {
-        return panel;
-    }
-
-    /**
-     * 刷新视图的方法。
-     */
-    public void refresh() {
-        // 可以在这里添加刷新逻辑
-    }
-
-    /**
-     * 刷新表格数据的方法，从配置中读取自定义变量并更新表格。
-     */
-    private void refreshCustomTable() {
+    private void refreshEnvTable() {
         Map<String, EasyEnvConfig.SeeConnectInfo> customMap = Maps.newHashMap();
         if (config != null && config.getSeeConnectInfoMap() != null) {
             customMap = config.getSeeConnectInfoMap();
         }
-        DefaultTableModel customModel = getDefaultTableModel(customMap);
-        customTable.setModel(customModel);
-        customTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        customTable.getColumnModel().getColumn(0).setPreferredWidth((int) (customTable.getWidth() * 0.3));
-        customTable.getColumnModel().getColumn(0).setWidth(0);
-        customTable.getColumnModel().getColumn(0).setMinWidth(0);
-        customTable.getColumnModel().getColumn(0).setMaxWidth(0);
 
-        customModel.addTableModelListener(new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                int row = e.getFirstRow();
-                if (e.getType() == TableModelEvent.UPDATE) {
-                    String key = (String) customModel.getValueAt(row, 0);
-                    String label = (String) customModel.getValueAt(row, 1);
-                    String address = (String) customModel.getValueAt(row, 2);
-                    String username = (String) customModel.getValueAt(row, 3);
-                    String password = (String) customModel.getValueAt(row, 4);
-
-                    EasyEnvConfig.SeeConnectInfo seeConnectInfo = new EasyEnvConfig.SeeConnectInfo(label, address, username, password);
-                    if (config != null) {
-                        config.getSeeConnectInfoMap().put(key, seeConnectInfo);
-                    }
-                }
-            }
-        });
+        DefaultTableModel customModel = getEnvTableModel(customMap);
+        envTable.setModel(customModel);
+        envTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        envTable.getColumnModel().getColumn(0).setPreferredWidth((int) (envTable.getWidth() * 0.3));
+        envTable.getColumnModel().getColumn(0).setWidth(0);
+        envTable.getColumnModel().getColumn(0).setMinWidth(0);
+        envTable.getColumnModel().getColumn(0).setMaxWidth(0);
     }
 
     /**
-     * 从配置中读取数据的方法，生成默认表格模型。
-     *
-     * @param customMap 自定义变量映射
-     * @return 表格模型
+     * 获取环境表格模型的方法。
      */
-    @NotNull
-    private DefaultTableModel getDefaultTableModel(Map<String, EasyEnvConfig.SeeConnectInfo> customMap) {
+    private DefaultTableModel getEnvTableModel(Map<String, EasyEnvConfig.SeeConnectInfo> customMap) {
         Vector<Vector<String>> customData = new Vector<>(customMap.size());
         for (Map.Entry<String, EasyEnvConfig.SeeConnectInfo> entry : customMap.entrySet()) {
             String key = entry.getKey();
@@ -236,10 +344,20 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     }
 
     /**
-     * 判断修改状态
-     * @return
+     * 判断是否有修改。
+     *
+     * @return 如果有修改，返回true；否则，返回false。
      */
     public boolean isModified() {
         return isModify;
+    }
+
+    /**
+     * 显示信息提示框的方法。
+     *
+     * @param message 要显示的消息。
+     */
+    private void showInfoMessage(String message) {
+        Messages.showInfoMessage(message, "提示");
     }
 }

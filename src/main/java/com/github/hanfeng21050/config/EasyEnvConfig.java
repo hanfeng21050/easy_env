@@ -1,5 +1,6 @@
 package com.github.hanfeng21050.config;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -8,6 +9,7 @@ import java.util.TreeMap;
  * @Author hanfeng32305
  * @Date 2023/10/30 17:12
  */
+@XmlRootElement
 public class EasyEnvConfig {
     private Map<String, SeeConnectInfo> seeConnectInfoMap;
     private Map<String, ConfigReplaceRule> configReplaceRuleMap;

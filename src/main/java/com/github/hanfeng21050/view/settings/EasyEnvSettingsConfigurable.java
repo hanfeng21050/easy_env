@@ -16,7 +16,7 @@ import javax.swing.*;
  */
 public class EasyEnvSettingsConfigurable implements Configurable {
     private final EasyEnvConfig config = ServiceManager.getService(EasyEnvConfigComponent.class).getState();
-    private final EasyEnvSettingsView view = new EasyEnvSettingsView();
+    private final EasyEnvSettingsView view = new EasyEnvSettingsView(config);
 
     @Override
     public @NlsContexts.ConfigurableName String getDisplayName() {
