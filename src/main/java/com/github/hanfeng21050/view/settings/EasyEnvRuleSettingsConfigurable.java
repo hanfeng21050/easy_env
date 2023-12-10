@@ -25,11 +25,16 @@ public class EasyEnvRuleSettingsConfigurable implements Configurable {
 
     @Override
     public boolean isModified() {
-        return false;
+        return easyEnvRuleSettingsView.isModified();
     }
 
     @Override
     public void apply() throws ConfigurationException {
+        easyEnvRuleSettingsView.apply();
+    }
 
+    @Override
+    public void reset() {
+        easyEnvRuleSettingsView.reset();
     }
 }

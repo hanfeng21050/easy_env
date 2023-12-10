@@ -25,8 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.SortedMap;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -175,21 +174,20 @@ public class MyPluginLoader {
      */
     public void saveFile(String fileName, String content) {
         // 判断是否在过滤列表内，如果在则跳过
-        SortedMap<String, String> excludedFileMap = config.getExcludedFileMap();
-        for (Map.Entry<String, String> stringStringEntry : excludedFileMap.entrySet()) {
-            String excludeFileName = stringStringEntry.getValue();
+        List<EasyEnvConfig.ExcludedFile> excludedFiles = config.getExcludedFiles();
+        for (EasyEnvConfig.ExcludedFile excludedFile : excludedFiles) {
+            String excludeFileName = excludedFile.getFileName();
             if (CommonValidateUtil.isFileNameMatch(fileName, excludeFileName)) {
                 return;
             }
         }
 
         // 根据配置规则替换文本内容
-        Map<String, EasyEnvConfig.ConfigReplaceRule> configReplaceRuleMap = config.getConfigReplaceRuleMap();
-        for (Map.Entry<String, EasyEnvConfig.ConfigReplaceRule> stringConfigReplaceRuleEntry : configReplaceRuleMap.entrySet()) {
-            EasyEnvConfig.ConfigReplaceRule rule = stringConfigReplaceRuleEntry.getValue();
-            if (CommonValidateUtil.isFileNameMatch(fileName, rule.getFileName())) {
-                String regExpression = rule.getRegExpression();
-                String replaceStr = rule.getReplaceStr();
+        List<EasyEnvConfig.ConfigReplaceRule> configReplaceRules = config.getConfigReplaceRules();
+        for (EasyEnvConfig.ConfigReplaceRule configReplaceRule : configReplaceRules) {
+            if (CommonValidateUtil.isFileNameMatch(fileName, configReplaceRule.getFileName())) {
+                String regExpression = configReplaceRule.getRegExpression();
+                String replaceStr = configReplaceRule.getReplaceStr();
 
                 Pattern pattern = Pattern.compile(regExpression);
                 Matcher matcher = pattern.matcher(content);

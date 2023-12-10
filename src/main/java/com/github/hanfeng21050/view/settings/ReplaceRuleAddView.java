@@ -7,8 +7,6 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.AbstractMap;
-import java.util.Map;
 import java.util.UUID;
 
 public class ReplaceRuleAddView extends DialogWrapper {
@@ -31,14 +29,15 @@ public class ReplaceRuleAddView extends DialogWrapper {
         return panel;
     }
 
-    public Map.Entry<String, EasyEnvConfig.ConfigReplaceRule> getEntry() {
+    public EasyEnvConfig.ConfigReplaceRule getEntry() {
         try {
             String uuid = UUID.randomUUID().toString();
             EasyEnvConfig.ConfigReplaceRule configReplaceRule = new EasyEnvConfig.ConfigReplaceRule();
+            configReplaceRule.setUuid(uuid);
             configReplaceRule.setFileName(fileNameTextField.getText());
             configReplaceRule.setRegExpression(regExpressionTextField.getText());
             configReplaceRule.setReplaceStr(replaceStrTextField.getText());
-            return new AbstractMap.SimpleEntry<>(uuid, configReplaceRule);
+            return configReplaceRule;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

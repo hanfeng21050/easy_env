@@ -9,8 +9,6 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -60,15 +58,16 @@ public class SettingAddView extends DialogWrapper {
         return super.doValidate();
     }
 
-    public Map.Entry<String, SeeConnectInfo> getEntry() {
+    public SeeConnectInfo getEntry() {
         try {
             String uuid = UUID.randomUUID().toString();
             SeeConnectInfo seeConnectInfo = new SeeConnectInfo();
+            seeConnectInfo.setUuid(uuid);
             seeConnectInfo.setLabel(labelTextField.getText());
             seeConnectInfo.setAddress(addressTextField.getText());
             seeConnectInfo.setUsername(usernameTextField.getText());
             seeConnectInfo.setPassword(CryptUtil.encryptPassword(passwordTextField.getText()));
-            return new SimpleEntry<>(uuid, seeConnectInfo);
+            return seeConnectInfo;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

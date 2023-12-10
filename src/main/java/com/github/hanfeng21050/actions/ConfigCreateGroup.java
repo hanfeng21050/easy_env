@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * @Author hanfeng32305
@@ -36,21 +36,19 @@ public class ConfigCreateGroup extends ActionGroup {
      */
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-        Map<String, EasyEnvConfig.SeeConnectInfo> customMap = null;
+        List<EasyEnvConfig.SeeConnectInfo> seeConnectInfos = null;
         if (config != null) {
-            customMap = config.getSeeConnectInfoMap();
+            seeConnectInfos = config.getSeeConnectInfos();
         }
         AnAction[] actions = new AnAction[0];
-        if (customMap != null) {
-            actions = new AnAction[customMap.size()];
+        if (seeConnectInfos != null) {
+            actions = new AnAction[seeConnectInfos.size()];
         }
 
-        int i = 0;
-        if (customMap != null) {
-            for (String s : customMap.keySet()) {
-                EasyEnvConfig.SeeConnectInfo seeConnectInfo = customMap.get(s);
+        if (seeConnectInfos != null) {
+            for (int i = 0; i < seeConnectInfos.size(); i++) {
+                EasyEnvConfig.SeeConnectInfo seeConnectInfo = seeConnectInfos.get(i);
                 actions[i] = new SubAction(seeConnectInfo.getLabel(), seeConnectInfo.getAddress(), seeConnectInfo.getUsername(), seeConnectInfo.getPassword());
-                i++;
             }
         }
         return actions;

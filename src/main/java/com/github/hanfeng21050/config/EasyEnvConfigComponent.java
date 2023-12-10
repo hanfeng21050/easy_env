@@ -7,8 +7,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Objects;
-import java.util.TreeMap;
 
 /**
  * @Author hanfeng32305
@@ -22,9 +22,9 @@ public class EasyEnvConfigComponent implements PersistentStateComponent<EasyEnvC
     public @Nullable EasyEnvConfig getState() {
         if (config == null) {
             config = new EasyEnvConfig();
-            config.setSeeConnectInfoMap(new TreeMap<>());
-            config.setConfigReplaceRuleMap(new TreeMap<>());
-            config.setExcludedFileMap(new TreeMap<>());
+            config.setSeeConnectInfos(new ArrayList<>());
+            config.setConfigReplaceRules(new ArrayList<>());
+            config.setExcludedFiles(new ArrayList<>());
         }
         return config;
     }

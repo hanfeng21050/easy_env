@@ -35,7 +35,11 @@ public class EasyEnvSettingsConfigurable implements Configurable {
 
     @Override
     public void apply() throws ConfigurationException {
-
+        view.apply();
     }
 
+    @Override
+    public void reset() {
+        view.reset();
+    }
 }

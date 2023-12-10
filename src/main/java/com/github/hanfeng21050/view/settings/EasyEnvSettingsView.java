@@ -4,7 +4,7 @@ import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.github.hanfeng21050.config.SeeConfig;
 import com.github.hanfeng21050.request.SeeRequest;
 import com.github.hanfeng21050.utils.MyPluginLoader;
-import com.google.common.collect.Maps;
+import com.github.hanfeng21050.utils.ObjectUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -17,12 +17,16 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ReflectionUtil;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Vector;
@@ -33,6 +37,7 @@ import java.util.function.Consumer;
  */
 public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     private final EasyEnvConfig config;
+    private List<EasyEnvConfig.SeeConnectInfo> oldSeeConnectInfos;
     private JButton importButton;
     private JButton exportButton;
     private JPanel envPanel;
@@ -49,6 +54,13 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
      */
     public EasyEnvSettingsView(EasyEnvConfig easyEnvConfig) {
         this.config = easyEnvConfig;
+
+        try {
+            // 拷贝副本
+            this.oldSeeConnectInfos = ObjectUtil.deepCopyList(config.getSeeConnectInfos());
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -132,14 +144,16 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
      * @param importedConfig 导入的配置对象
      */
     private void handleImportedConfig(EasyEnvConfig importedConfig) {
-        config.setSeeConnectInfoMap(importedConfig.getSeeConnectInfoMap());
-        config.setConfigReplaceRuleMap(importedConfig.getConfigReplaceRuleMap());
-        config.setExcludedFileMap(importedConfig.getExcludedFileMap());
+        config.setSeeConnectInfos(importedConfig.getSeeConnectInfos());
+        config.setConfigReplaceRules(importedConfig.getConfigReplaceRules());
+        config.setExcludedFiles(importedConfig.getExcludedFiles());
         refreshEnvTable();
 
         EasyEnvRuleSettingsView instance = EasyEnvRuleSettingsView.getInstance(config);
         instance.refreshReplaceRuleTable();
         instance.refreshExcludedFileTable();
+
+        this.isModify = true;
     }
 
     /**
@@ -218,8 +232,8 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
         if (config != null) {
             SettingAddView settingAddView = new SettingAddView();
             if (settingAddView.showAndGet()) {
-                Map.Entry<String, EasyEnvConfig.SeeConnectInfo> entry = settingAddView.getEntry();
-                config.getSeeConnectInfoMap().put(entry.getKey(), entry.getValue());
+                EasyEnvConfig.SeeConnectInfo entry = settingAddView.getEntry();
+                config.getSeeConnectInfos().add(entry);
                 refreshEnvTable();
                 this.isModify = true;
             }
@@ -233,8 +247,8 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
         if (config != null) {
             int selectedRow = envTable.getSelectedRow();
             if (selectedRow != -1) {
-                Map<String, EasyEnvConfig.SeeConnectInfo> customMap = config.getSeeConnectInfoMap();
-                customMap.remove(envTable.getValueAt(selectedRow, 0).toString());
+                List<EasyEnvConfig.SeeConnectInfo> seeConnectInfos = config.getSeeConnectInfos();
+                seeConnectInfos.remove(selectedRow);
                 refreshEnvTable();
                 this.isModify = true;
             } else {
@@ -310,34 +324,55 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
      * 刷新环境表格的方法。
      */
     private void refreshEnvTable() {
-        Map<String, EasyEnvConfig.SeeConnectInfo> customMap = Maps.newHashMap();
-        if (config != null && config.getSeeConnectInfoMap() != null) {
-            customMap = config.getSeeConnectInfoMap();
-        }
+        List<EasyEnvConfig.SeeConnectInfo> seeConnectInfos = config.getSeeConnectInfos();
 
-        DefaultTableModel customModel = getEnvTableModel(customMap);
+        DefaultTableModel customModel = getEnvTableModel(seeConnectInfos);
         envTable.setModel(customModel);
         envTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         envTable.getColumnModel().getColumn(0).setPreferredWidth((int) (envTable.getWidth() * 0.3));
         envTable.getColumnModel().getColumn(0).setWidth(0);
         envTable.getColumnModel().getColumn(0).setMinWidth(0);
         envTable.getColumnModel().getColumn(0).setMaxWidth(0);
+
+        customModel.addTableModelListener(new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                int row = e.getFirstRow();
+                if (e.getType() == TableModelEvent.UPDATE) {
+                    String key = (String) customModel.getValueAt(row, 0);
+                    String label = (String) customModel.getValueAt(row, 1);
+                    String address = (String) customModel.getValueAt(row, 2);
+                    String username = (String) customModel.getValueAt(row, 3);
+                    String password = (String) customModel.getValueAt(row, 4);
+
+                    for (int i = 0; i < seeConnectInfos.size(); i++) {
+                        EasyEnvConfig.SeeConnectInfo seeConnectInfo = seeConnectInfos.get(i);
+                        if (seeConnectInfo.getUuid().equals(key)) {
+                            seeConnectInfo.setLabel(label);
+                            seeConnectInfo.setAddress(address);
+                            seeConnectInfo.setUsername(username);
+                            seeConnectInfo.setPassword(password);
+                            isModify = true;
+                        }
+                    }
+                }
+            }
+        });
     }
 
     /**
      * 获取环境表格模型的方法。
      */
-    private DefaultTableModel getEnvTableModel(Map<String, EasyEnvConfig.SeeConnectInfo> customMap) {
-        Vector<Vector<String>> customData = new Vector<>(customMap.size());
-        for (Map.Entry<String, EasyEnvConfig.SeeConnectInfo> entry : customMap.entrySet()) {
-            String key = entry.getKey();
-            EasyEnvConfig.SeeConnectInfo value = entry.getValue();
+    private DefaultTableModel getEnvTableModel(List<EasyEnvConfig.SeeConnectInfo> seeConnectInfos) {
+        Vector<Vector<String>> customData = new Vector<>(seeConnectInfos.size());
+
+        for (EasyEnvConfig.SeeConnectInfo seeConnectInfo : seeConnectInfos) {
             Vector<String> row = new Vector<>(5);
-            row.add(key);
-            row.add(value.getLabel());
-            row.add(value.getAddress());
-            row.add(value.getUsername());
-            row.add(value.getPassword());
+            row.add(seeConnectInfo.getUuid());
+            row.add(seeConnectInfo.getLabel());
+            row.add(seeConnectInfo.getAddress());
+            row.add(seeConnectInfo.getUsername());
+            row.add(seeConnectInfo.getPassword());
             customData.add(row);
         }
         return new DefaultTableModel(customData, headers1);
@@ -350,6 +385,32 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
      */
     public boolean isModified() {
         return isModify;
+    }
+
+    /**
+     * 重置
+     */
+    public void reset() {
+        try {
+            List<EasyEnvConfig.SeeConnectInfo> seeConnectInfos = ObjectUtil.deepCopyList(oldSeeConnectInfos);
+            this.config.setSeeConnectInfos(seeConnectInfos);
+            refreshEnvTable();
+            this.isModify = false;
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 保存
+     */
+    public void apply() {
+        try {
+            this.oldSeeConnectInfos = ObjectUtil.deepCopyList(config.getSeeConnectInfos());
+            this.isModify = false;
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

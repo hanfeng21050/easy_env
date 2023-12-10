@@ -1,57 +1,58 @@
 package com.github.hanfeng21050.config;
 
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Author hanfeng32305
  * @Date 2023/10/30 17:12
  */
 @XmlRootElement
-public class EasyEnvConfig {
-    private Map<String, SeeConnectInfo> seeConnectInfoMap;
-    private Map<String, ConfigReplaceRule> configReplaceRuleMap;
-    private SortedMap<String, String> excludedFileMap;
+public class EasyEnvConfig implements Serializable {
+    private List<SeeConnectInfo> seeConnectInfos;
+    private List<ConfigReplaceRule> configReplaceRules;
+    private List<ExcludedFile> excludedFiles;
 
-    public Map<String, SeeConnectInfo> getSeeConnectInfoMap() {
-        if (seeConnectInfoMap == null) {
-            seeConnectInfoMap = new TreeMap<>();
+    public List<SeeConnectInfo> getSeeConnectInfos() {
+        if (seeConnectInfos == null) {
+            seeConnectInfos = new ArrayList<>();
         }
-        return seeConnectInfoMap;
+        return seeConnectInfos;
     }
 
-    public Map<String, ConfigReplaceRule> getConfigReplaceRuleMap() {
-        if (configReplaceRuleMap == null) {
-            configReplaceRuleMap = new TreeMap<>();
+    public void setSeeConnectInfos(List<SeeConnectInfo> seeConnectInfos) {
+        this.seeConnectInfos = seeConnectInfos;
+    }
+
+    public List<ConfigReplaceRule> getConfigReplaceRules() {
+        if (configReplaceRules == null) {
+            configReplaceRules = new ArrayList<>();
         }
-        return configReplaceRuleMap;
+        return configReplaceRules;
     }
 
-    public SortedMap<String, String> getExcludedFileMap() {
-        if (excludedFileMap == null) {
-            excludedFileMap = new TreeMap<>();
+    public void setConfigReplaceRules(List<ConfigReplaceRule> configReplaceRules) {
+        this.configReplaceRules = configReplaceRules;
+    }
+
+    public List<ExcludedFile> getExcludedFiles() {
+        if (excludedFiles == null) {
+            excludedFiles = new ArrayList<>();
         }
-        return excludedFileMap;
+        return excludedFiles;
     }
 
-    public void setSeeConnectInfoMap(Map<String, SeeConnectInfo> seeConnectInfoMap) {
-        this.seeConnectInfoMap = seeConnectInfoMap;
-    }
-
-    public void setConfigReplaceRuleMap(Map<String, ConfigReplaceRule> configReplaceRuleMap) {
-        this.configReplaceRuleMap = configReplaceRuleMap;
-    }
-
-    public void setExcludedFileMap(SortedMap<String, String> excludedFileMap) {
-        this.excludedFileMap = excludedFileMap;
+    public void setExcludedFiles(List<ExcludedFile> excludedFiles) {
+        this.excludedFiles = excludedFiles;
     }
 
     /**
      * see连接信息
      */
-    public static class SeeConnectInfo {
+    public static class SeeConnectInfo implements Serializable {
+        private String uuid;
 
         private String label = "";
 
@@ -68,7 +69,8 @@ public class EasyEnvConfig {
         public SeeConnectInfo() {
         }
 
-        public SeeConnectInfo(String label, String address, String username, String password) {
+        public SeeConnectInfo(String uuid, String label, String address, String username, String password) {
+            this.uuid = uuid;
             this.username = username;
             this.password = password;
             this.label = label;
@@ -106,12 +108,21 @@ public class EasyEnvConfig {
         public void setAddress(String address) {
             this.address = address;
         }
+
+        public String getUuid() {
+            return uuid;
+        }
+
+        public void setUuid(String uuid) {
+            this.uuid = uuid;
+        }
     }
 
     /**
      * 正则替换规则
      */
-    public static class ConfigReplaceRule {
+    public static class ConfigReplaceRule implements Serializable {
+        private String uuid;
         private String fileName = "";
         private String regExpression = "";
         private String replaceStr = "";
@@ -119,7 +130,8 @@ public class EasyEnvConfig {
         public ConfigReplaceRule() {
         }
 
-        public ConfigReplaceRule(String fileName, String regExpression, String replaceStr) {
+        public ConfigReplaceRule(String uuid, String fileName, String regExpression, String replaceStr) {
+            this.uuid = uuid;
             this.fileName = fileName;
             this.regExpression = regExpression;
             this.replaceStr = replaceStr;
@@ -147,6 +159,46 @@ public class EasyEnvConfig {
 
         public void setReplaceStr(String replaceStr) {
             this.replaceStr = replaceStr;
+        }
+
+        public String getUuid() {
+            return uuid;
+        }
+
+        public void setUuid(String uuid) {
+            this.uuid = uuid;
+        }
+    }
+
+    /**
+     * 文件过滤
+     */
+    public static class ExcludedFile implements Serializable {
+        private String uuid;
+        private String fileName;
+
+        public ExcludedFile() {
+        }
+
+        public ExcludedFile(String uuid, String fileName) {
+            this.uuid = uuid;
+            this.fileName = fileName;
+        }
+
+        public String getUuid() {
+            return uuid;
+        }
+
+        public void setUuid(String uuid) {
+            this.uuid = uuid;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public void setFileName(String fileName) {
+            this.fileName = fileName;
         }
     }
 }

@@ -2,7 +2,7 @@ package com.github.hanfeng21050.view.settings;
 
 import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.github.hanfeng21050.config.EasyEnvConfig.ConfigReplaceRule;
-import com.google.common.collect.Maps;
+import com.github.hanfeng21050.utils.ObjectUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
@@ -13,8 +13,9 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.UUID;
 import java.util.Vector;
 
@@ -23,6 +24,8 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
     private static EasyEnvRuleSettingsView instance;
 
 
+    private List<ConfigReplaceRule> oldConfigReplaceRules;
+    private List<EasyEnvConfig.ExcludedFile> oldExcludeFiles;
     private JPanel panel;
     private JPanel filterRulePanel;
     private JPanel excludedFilePanel;
@@ -32,8 +35,16 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
     private JBList<Map.Entry<String, ConfigReplaceRule>> configReplaceRuleMapList;
     private EasyEnvConfig config;
 
+    private boolean isModify = false;
+
     private EasyEnvRuleSettingsView(EasyEnvConfig easyEnvConfig) {
         this.config = easyEnvConfig;
+        try {
+            this.oldConfigReplaceRules = ObjectUtil.deepCopyList(config.getConfigReplaceRules());
+            this.oldExcludeFiles = ObjectUtil.deepCopyList(config.getExcludedFiles());
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // 公共方法，用于获取唯一实例
@@ -53,8 +64,9 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
             if (config != null) {
                 ReplaceRuleAddView replaceRuleAddView = new ReplaceRuleAddView();
                 if (replaceRuleAddView.showAndGet()) {
-                    Map.Entry<String, EasyEnvConfig.ConfigReplaceRule> entry = replaceRuleAddView.getEntry();
-                    config.getConfigReplaceRuleMap().put(entry.getKey(), entry.getValue());
+                    ConfigReplaceRule configReplaceRule = replaceRuleAddView.getEntry();
+                    config.getConfigReplaceRules().add(configReplaceRule);
+                    isModify = true;
                     refreshReplaceRuleTable();
                 }
             }
@@ -62,8 +74,9 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
             if (config != null) {
                 int selectedRow = replaceRuleTable.getSelectedRow();
                 if (selectedRow != -1) {
-                    Map<String, EasyEnvConfig.ConfigReplaceRule> customMap = config.getConfigReplaceRuleMap();
-                    customMap.remove(replaceRuleTable.getValueAt(selectedRow, 0).toString());
+                    List<ConfigReplaceRule> configReplaceRules = config.getConfigReplaceRules();
+                    configReplaceRules.remove(selectedRow);
+                    isModify = true;
                     refreshReplaceRuleTable();
                 } else {
                     showInfoMessage("请选择一行");
@@ -76,15 +89,18 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
         refreshExcludedFileTable();
         excludedFilePanel = ToolbarDecorator.createDecorator(excludedFileTable).setAddAction(button -> {
             if (config != null) {
-                config.getExcludedFileMap().put(UUID.randomUUID().toString(), "");
+                EasyEnvConfig.ExcludedFile excludedFile = new EasyEnvConfig.ExcludedFile(UUID.randomUUID().toString(), "");
+                config.getExcludedFiles().add(excludedFile);
+                isModify = true;
                 refreshExcludedFileTable();
             }
         }).setRemoveAction(anActionButton -> {
             if (config != null) {
                 int selectedRow = excludedFileTable.getSelectedRow();
                 if (selectedRow != -1) {
-                    SortedMap<String, String> customMap = config.getExcludedFileMap();
-                    customMap.remove(excludedFileTable.getValueAt(selectedRow, 0).toString());
+                    List<EasyEnvConfig.ExcludedFile> excludedFiles = config.getExcludedFiles();
+                    excludedFiles.remove(selectedRow);
+                    isModify = true;
                     refreshExcludedFileTable();
                 } else {
                     showInfoMessage("请选择一行");
@@ -101,11 +117,8 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
 
 
     public void refreshReplaceRuleTable() {
-        Map<String, EasyEnvConfig.ConfigReplaceRule> customMap = Maps.newHashMap();
-        if (config != null && config.getConfigReplaceRuleMap() != null) {
-            customMap = config.getConfigReplaceRuleMap();
-        }
-        DefaultTableModel customModel = getReplaceRuleTableModel(customMap);
+        List<ConfigReplaceRule> configReplaceRules = config.getConfigReplaceRules();
+        DefaultTableModel customModel = getReplaceRuleTableModel(configReplaceRules);
         replaceRuleTable.setModel(customModel);
         replaceRuleTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         replaceRuleTable.getColumnModel().getColumn(0).setPreferredWidth((int) (replaceRuleTable.getWidth() * 0.3));
@@ -123,17 +136,24 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
                     String regExpression = (String) customModel.getValueAt(row, 2);
                     String replaceStr = (String) customModel.getValueAt(row, 3);
 
-                    ConfigReplaceRule configReplaceRule = new ConfigReplaceRule(fileName, regExpression, replaceStr);
-                    config.getConfigReplaceRuleMap().put(key, configReplaceRule);
+                    for (int i = 0; i < configReplaceRules.size(); i++) {
+                        ConfigReplaceRule configReplaceRule = configReplaceRules.get(i);
+                        if (configReplaceRule.getUuid().equals(key)) {
+                            configReplaceRule.setFileName(fileName);
+                            configReplaceRule.setReplaceStr(regExpression);
+                            configReplaceRule.setReplaceStr(replaceStr);
+                            isModify = true;
+                        }
+                    }
                 }
             }
         });
     }
 
     public void refreshExcludedFileTable() {
-        if (config != null && config.getExcludedFileMap() != null) {
-            SortedMap<String, String> excludedFileMap = config.getExcludedFileMap();
-            DefaultTableModel customModel = getExcludedFileTableModel(excludedFileMap);
+        if (config != null && config.getExcludedFiles() != null) {
+            List<EasyEnvConfig.ExcludedFile> excludedFiles = config.getExcludedFiles();
+            DefaultTableModel customModel = getExcludedFileTableModel(excludedFiles);
             excludedFileTable.setModel(customModel);
             excludedFileTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             excludedFileTable.getColumnModel().getColumn(0).setPreferredWidth((int) (replaceRuleTable.getWidth() * 0.3));
@@ -148,7 +168,15 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
                     if (e.getType() == TableModelEvent.UPDATE) {
                         String key = (String) customModel.getValueAt(row, 0);
                         String newValue = (String) customModel.getValueAt(row, 1);
-                        config.getExcludedFileMap().put(key, newValue);
+
+                        // 更新数据
+                        for (int i = 0; i < excludedFiles.size(); i++) {
+                            EasyEnvConfig.ExcludedFile excludedFile = excludedFiles.get(i);
+                            if (excludedFile.getUuid().equals(key)) {
+                                excludedFile.setFileName(newValue);
+                            }
+                            isModify = true;
+                        }
                     }
                 }
             });
@@ -156,30 +184,27 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
     }
 
     @NotNull
-    private DefaultTableModel getExcludedFileTableModel(SortedMap<String, String> excludedFileMap) {
-        Vector<Vector<String>> customData = new Vector<>(excludedFileMap.size());
-        for (Map.Entry<String, String> entry : excludedFileMap.entrySet()) {
-            String key = entry.getKey();
-            String value = entry.getValue();
+    private DefaultTableModel getExcludedFileTableModel(List<EasyEnvConfig.ExcludedFile> excludedFiles) {
+        Vector<Vector<String>> customData = new Vector<>(excludedFiles.size());
+        for (EasyEnvConfig.ExcludedFile excludedFile : excludedFiles) {
             Vector<String> row = new Vector<>(2);
-            row.add(key);
-            row.add(value);
+            row.add(excludedFile.getUuid());
+            row.add(excludedFile.getFileName());
             customData.add(row);
         }
         return new DefaultTableModel(customData, headers3);
     }
 
     @NotNull
-    private DefaultTableModel getReplaceRuleTableModel(Map<String, EasyEnvConfig.ConfigReplaceRule> customMap) {
-        Vector<Vector<String>> customData = new Vector<>(customMap.size());
-        for (Map.Entry<String, EasyEnvConfig.ConfigReplaceRule> entry : customMap.entrySet()) {
-            String key = entry.getKey();
-            EasyEnvConfig.ConfigReplaceRule value = entry.getValue();
+    private DefaultTableModel getReplaceRuleTableModel(List<ConfigReplaceRule> configReplaceRules) {
+        Vector<Vector<String>> customData = new Vector<>(configReplaceRules.size());
+
+        for (ConfigReplaceRule configReplaceRule : configReplaceRules) {
             Vector<String> row = new Vector<>(4);
-            row.add(key);
-            row.add(value.getFileName());
-            row.add(value.getRegExpression());
-            row.add(value.getReplaceStr());
+            row.add(configReplaceRule.getUuid());
+            row.add(configReplaceRule.getFileName());
+            row.add(configReplaceRule.getRegExpression());
+            row.add(configReplaceRule.getReplaceStr());
             customData.add(row);
         }
         return new DefaultTableModel(customData, headers2);
@@ -190,5 +215,43 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
      */
     private void showInfoMessage(String message) {
         Messages.showInfoMessage(message, "提示");
+    }
+
+    /**
+     * 判断是否有修改。
+     *
+     * @return 如果有修改，返回true；否则，返回false。
+     */
+    public boolean isModified() {
+        return isModify;
+    }
+
+    /**
+     * 】
+     * 应用配置
+     */
+    public void apply() {
+        try {
+            this.oldConfigReplaceRules = ObjectUtil.deepCopyList(config.getConfigReplaceRules());
+            this.oldExcludeFiles = ObjectUtil.deepCopyList(config.getExcludedFiles());
+            this.isModify = false;
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 重置配置
+     */
+    public void reset() {
+        try {
+            this.config.setConfigReplaceRules(ObjectUtil.deepCopyList(this.oldConfigReplaceRules));
+            this.config.setExcludedFiles(ObjectUtil.deepCopyList(this.oldExcludeFiles));
+            refreshReplaceRuleTable();
+            refreshExcludedFileTable();
+            this.isModify = false;
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
