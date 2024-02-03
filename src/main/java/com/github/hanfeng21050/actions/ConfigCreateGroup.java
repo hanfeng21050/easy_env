@@ -24,8 +24,8 @@ public class ConfigCreateGroup extends ActionGroup {
     private final EasyEnvConfig config = ServiceManager.getService(EasyEnvConfigComponent.class).getState();
 
     public ConfigCreateGroup() {
-        // 设置 Action 组的显示文本
-        getTemplatePresentation().setText("启动配置生成");
+        // 璁剧疆 Action 缁勭殑鏄剧ず鏂囨湰
+        getTemplatePresentation().setText("鍚姩閰嶇疆鐢熸垚");
     }
 
     /**

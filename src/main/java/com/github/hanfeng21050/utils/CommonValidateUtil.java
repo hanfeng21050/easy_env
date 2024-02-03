@@ -11,34 +11,34 @@ public class CommonValidateUtil {
 
 
     /**
-     * Ğ£ÑéÍøÖ·ÊÇ·ñºÏ·¨
+     * æ ¡éªŒç½‘å€æ˜¯å¦åˆæ³•
      *
      * @param url
      * @return
      */
     public static boolean isValidURL(String url) {
-        // ¶¨ÒåURLµÄÕıÔò±í´ïÊ½Ä£Ê½
+        // å®šä¹‰URLçš„æ­£åˆ™è¡¨è¾¾å¼æ¨¡å¼
         String urlRegex = "^(https?://[^/]+)$";
 
-        // ´´½¨Pattern¶ÔÏó
+        // åˆ›å»ºPatternå¯¹è±¡
         Pattern pattern = Pattern.compile(urlRegex);
 
-        // ´´½¨Matcher¶ÔÏó
+        // åˆ›å»ºMatcherå¯¹è±¡
         Matcher matcher = pattern.matcher(url);
 
-        // ¼ì²éÆ¥Åä½á¹û
+        // æ£€æŸ¥åŒ¹é…ç»“æœ
         return matcher.matches();
     }
 
 
     public static boolean isFileNameMatch(String fileName, String pattern) {
-        // ´´½¨ PathMatcher
+        // åˆ›å»º PathMatcher
         PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
 
-        // ½«ÎÄ¼şÃû×ª»»Îª Path ¶ÔÏó
+        // å°†æ–‡ä»¶åè½¬æ¢ä¸º Path å¯¹è±¡
         Path path = Paths.get(fileName);
 
-        // Ö´ĞĞÆ¥Åä
+        // æ‰§è¡ŒåŒ¹é…
         return matcher.matches(path);
     }
 }

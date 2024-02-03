@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 
 public class SeeRequest {
     private static final Logger LOGGER = Logger.getInstance(SeeRequest.class);
-    // ³£Á¿¶¨Òå
+    // å¸¸é‡å®šä¹‰
     private static final String SUCCESS = "success";
     private static final String CAS_LOGIN_URL = "/cas/login";
     private static final String ACM_URL = "/acm";
@@ -26,19 +26,19 @@ public class SeeRequest {
     private static final String ACM_DSSP_APPLICATION_QUERY_JSON_URL = "/acm/dssp/application/authority/query.json";
     private static final String ACM_DSSP_CONFIG_GET_COMPARE_CONFIG_JSON_URL = "/acm/dssp/config/getCompareConfig.json";
 
-    // µÇÂ¼·½·¨
+    // ç™»å½•æ–¹æ³•
     public static void login(SeeConfig seeConfig) throws Exception {
         HttpClientUtil.clearCookie();
 
-        // »ñÈ¡µÇÂ¼Ò³Ãæ
+        // è·å–ç™»å½•é¡µé¢
         String loginUrl = seeConfig.getAddress() + CAS_LOGIN_URL + "?get-lt=true";
         String response = HttpClientUtil.httpGet(loginUrl);
 
-        // ´ÓÏìÓ¦ÖĞÌáÈ¡ lt ºÍ execution µÄÖµ
+        // ä»å“åº”ä¸­æå– lt å’Œ execution çš„å€¼
         String ltValue = extractValueFromResponse(response, "\"lt\":\"(.*?)\"");
         String executionValue = extractValueFromResponse(response, "\"execution\":\"(.*?)\"");
 
-        // ¹¹½¨µÇÂ¼²ÎÊı
+        // æ„å»ºç™»å½•å‚æ•°
         Map<String, String> loginParams = new HashMap<>();
         loginParams.put("username", seeConfig.getUsername());
         loginParams.put("password", seeConfig.getPassword());
@@ -47,31 +47,31 @@ public class SeeRequest {
         loginParams.put("submit", "LOGIN");
         loginParams.put("_eventId", "submit");
 
-        // ·¢ÆğµÇÂ¼ÇëÇó
+        // å‘èµ·ç™»å½•è¯·æ±‚
         String res = HttpClientUtil.httpPost(seeConfig.getAddress() + CAS_LOGIN_URL, loginParams);
 
         if(SUCCESS.equals(res)) {
-            // Ò³ÃæÌø×ª£¬»ñÈ¡cookie
+            // é¡µé¢è·³è½¬ï¼Œè·å–cookie
             String s = HttpClientUtil.httpGet(seeConfig.getAddress() + ACM_URL);
         } else {
-            throw new Exception("ÓÃ»§ÑéÖ¤Ê§°Ü");
+            throw new Exception("ç”¨æˆ·éªŒè¯å¤±è´¥");
         }
     }
 
-    // »ñÈ¡ÈÏÖ¤ĞÅÏ¢·½·¨
+    // è·å–è®¤è¯ä¿¡æ¯æ–¹æ³•
     public static String getAuth(SeeConfig seeConfig) throws URISyntaxException, IOException {
         String authJsonUrl = seeConfig.getAddress() + ACM_SYSTEM_AUTH_JSON_URL;
         return extractValueFromResponse(HttpClientUtil.httpPost(authJsonUrl, new HashMap<>()), "\"token\":\"(.*?)\"");
     }
 
-    // ´ÓÏìÓ¦ÖĞÌáÈ¡Ö¸¶¨Ä£Ê½µÄÖµ
+    // ä»å“åº”ä¸­æå–æŒ‡å®šæ¨¡å¼çš„å€¼
     public static String extractValueFromResponse(String response, String pattern) {
         Pattern regex = Pattern.compile(pattern);
         Matcher matcher = regex.matcher(response);
         return matcher.find() ? matcher.group(1) : "";
     }
 
-    // »ñÈ¡Ó¦ÓÃĞÅÏ¢·½·¨
+    // è·å–åº”ç”¨ä¿¡æ¯æ–¹æ³•
     public static String getApplication(SeeConfig seeConfig, String applicationName, String auth) throws IOException {
         Map<String, String> body = new HashMap<>();
         Map<String, String> header = new HashMap<>();
@@ -81,11 +81,11 @@ public class SeeRequest {
         body.put("allowedUpgradeMark", "true");
         header.put("Authorization", "Bearer " + auth);
 
-        // ·¢Æğ»ñÈ¡Ó¦ÓÃĞÅÏ¢µÄÇëÇó
+        // å‘èµ·è·å–åº”ç”¨ä¿¡æ¯çš„è¯·æ±‚
         String response = HttpClientUtil.httpPost(seeConfig.getAddress() + ACM_DSSP_APPLICATION_QUERY_JSON_URL, body, header);
         JSONObject parse = JSONObject.parse(response);
 
-        // ´¦ÀíÏìÓ¦
+        // å¤„ç†å“åº”
         String errorInfo = parse.getString("error_info");
         if (StringUtils.isBlank(errorInfo)) {
             JSONArray jsonArray = parse.getJSONObject("data").getJSONArray("items");
@@ -94,28 +94,28 @@ public class SeeRequest {
                 return jsonObject.getString("id");
             }
         } else {
-            // ´¦Àí´íÎóĞÅÏ¢
+            // å¤„ç†é”™è¯¯ä¿¡æ¯
             handleError(errorInfo);
         }
         return "";
     }
 
-    // »ñÈ¡ÅäÖÃÎÄ¼şĞÅÏ¢
+    // è·å–é…ç½®æ–‡ä»¶ä¿¡æ¯
     public static JSONObject getConfigInfo(SeeConfig seeConfig, String applicationId, String auth) throws IOException {
         Map<String, String> body = new HashMap<>();
         Map<String, String> header = new HashMap<>();
         header.put("Authorization", "Bearer " + auth);
         body.put("applicationId", applicationId);
 
-        // ·¢Æğ»ñÈ¡ÅäÖÃĞÅÏ¢µÄÇëÇó
+        // å‘èµ·è·å–é…ç½®ä¿¡æ¯çš„è¯·æ±‚
         String response = HttpClientUtil.httpPost(seeConfig.getAddress() + ACM_DSSP_CONFIG_GET_COMPARE_CONFIG_JSON_URL, body, header);
         return JSONObject.parse(response);
     }
 
-    // ´¦Àí´íÎóĞÅÏ¢·½·¨
+    // å¤„ç†é”™è¯¯ä¿¡æ¯æ–¹æ³•
     private static   void handleError(String errorInfo) {
         ApplicationManager.getApplication().invokeLater(() -> {
-            Messages.showErrorDialog("error: " + errorInfo, "´íÎó");
+            Messages.showErrorDialog("error: " + errorInfo, "é”™è¯¯");
         });
         throw new RuntimeException(errorInfo);
     }

@@ -49,7 +49,7 @@ public class EasyEnvConfig implements Serializable {
     }
 
     /**
-     * seeÁ¬½ÓĞÅÏ¢
+     * seeè¿æ¥ä¿¡æ¯
      */
     public static class SeeConnectInfo implements Serializable {
         private String uuid;
@@ -58,11 +58,11 @@ public class EasyEnvConfig implements Serializable {
 
         private String address = "";
         /**
-         * ÀàĞÍ
+         * ç±»å‹
          */
         private String username = "";
         /**
-         * Öµ
+         * å€¼
          */
         private String password = "";
 
@@ -119,7 +119,7 @@ public class EasyEnvConfig implements Serializable {
     }
 
     /**
-     * ÕıÔòÌæ»»¹æÔò
+     * æ­£åˆ™æ›¿æ¢è§„åˆ™
      */
     public static class ConfigReplaceRule implements Serializable {
         private String uuid;
@@ -171,7 +171,7 @@ public class EasyEnvConfig implements Serializable {
     }
 
     /**
-     * ÎÄ¼ş¹ıÂË
+     * æ–‡ä»¶è¿‡æ»¤
      */
     public static class ExcludedFile implements Serializable {
         private String uuid;

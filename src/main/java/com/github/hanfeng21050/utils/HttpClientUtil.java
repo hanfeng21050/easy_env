@@ -1,19 +1,3 @@
-/*
- * ÏµÍ³Ãû³Æ: ÒµÎñ¼¯ÖĞÔËÓªÆ½Ì¨
- * Ä£¿éÃû³Æ:
- * Àà Ãû ³Æ: HttpClientUtil.java
- * Èí¼ş°æÈ¨: º¼ÖİºãÉúµç×Ó¹É·İÓĞÏŞ¹«Ë¾
- * Ïà¹ØÎÄµµ:
- * ĞŞ¸Ä¼ÇÂ¼:
- * ĞŞ¸ÄÈÕÆÚ ĞŞ¸ÄÈËÔ± ĞŞ¸ÄËµÃ÷<BR>
- * ======== ====== ============================================
- * ======== ====== ============================================
- * ÆÀÉó¼ÇÂ¼£º
- * ÆÀÉóÈËÔ±£º
- * ÆÀÉóÈÕÆÚ£º
- * ·¢ÏÖÎÊÌâ£º
- */
-
 package com.github.hanfeng21050.utils;
 
 import org.apache.http.Consts;
@@ -64,7 +48,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * http¿Í»§¶Ë¹¤¾ßÀà
+ * httpå®¢æˆ·ç«¯å·¥å…·ç±»
  * httpclient
  *
  * @author niusw40398
@@ -75,63 +59,63 @@ public class HttpClientUtil {
     private final static Logger log = LoggerFactory.getLogger(HttpClientUtil.class);
 
     /**
-     * httpclientÁ¬½Ó³Ø
+     * httpclientè¿æ¥æ± 
      */
     private static PoolingHttpClientConnectionManager manager = null;
 
     /**
-     * http¿Í»§¶Ë
+     * httpå®¢æˆ·ç«¯
      */
     private static volatile CloseableHttpClient httpClient = null;
 
     /**
-     * Ä¬ÈÏÇëÇóÅäÖÃ
+     * é»˜è®¤è¯·æ±‚é…ç½®
      */
     private static RequestConfig defaultRequestConfig = null;
 
     private static CookieStore cookieStore = new BasicCookieStore();
 
     /**
-     * ³õÊ¼»¯
+     * åˆå§‹åŒ–
      */
     private static void init() {
-        // Ä¬ÈÏÇëÇóÅäÖÃ
+        // é»˜è®¤è¯·æ±‚é…ç½®
         defaultRequestConfig = RequestConfig.custom()
-                // HttpClientÖĞµÄÒªÓÃÁ¬½ÓÊ±³¢ÊÔ´ÓÁ¬½Ó³ØÖĞ»ñÈ¡£¬ÈôÊÇÔÚµÈ´ıÁËÒ»¶¨µÄÊ±¼äºó»¹Ã»ÓĞ»ñÈ¡µ½¿ÉÓÃÁ¬½Ó£¨±ÈÈçÁ¬½Ó³ØÖĞÃ»ÓĞ¿ÕÏĞÁ¬½ÓÁË£©Ôò»áÅ×³ö»ñÈ¡Á¬½Ó³¬Ê±Òì³£¡£
+                // HttpClientä¸­çš„è¦ç”¨è¿æ¥æ—¶å°è¯•ä»è¿æ¥æ± ä¸­è·å–ï¼Œè‹¥æ˜¯åœ¨ç­‰å¾…äº†ä¸€å®šçš„æ—¶é—´åè¿˜æ²¡æœ‰è·å–åˆ°å¯ç”¨è¿æ¥ï¼ˆæ¯”å¦‚è¿æ¥æ± ä¸­æ²¡æœ‰ç©ºé—²è¿æ¥äº†ï¼‰åˆ™ä¼šæŠ›å‡ºè·å–è¿æ¥è¶…æ—¶å¼‚å¸¸ã€‚
                 .setConnectTimeout(2000)
-                // Ö¸µÄÊÇÁ¬½ÓÄ¿±êurlµÄÁ¬½Ó³¬Ê±Ê±¼ä£¬¼´¿Í·ş¶Ë·¢ËÍÇëÇóµ½ÓëÄ¿±êurl½¨Á¢ÆğÁ¬½ÓµÄ×î´óÊ±¼ä¡£Èç¹ûÔÚ¸ÃÊ±¼ä·¶Î§ÄÚ»¹Ã»ÓĞ½¨Á¢ÆğÁ¬½Ó£¬Ôò¾ÍÅ×³öconnectionTimeOutÒì³£¡£
+                // æŒ‡çš„æ˜¯è¿æ¥ç›®æ ‡urlçš„è¿æ¥è¶…æ—¶æ—¶é—´ï¼Œå³å®¢æœç«¯å‘é€è¯·æ±‚åˆ°ä¸ç›®æ ‡urlå»ºç«‹èµ·è¿æ¥çš„æœ€å¤§æ—¶é—´ã€‚å¦‚æœåœ¨è¯¥æ—¶é—´èŒƒå›´å†…è¿˜æ²¡æœ‰å»ºç«‹èµ·è¿æ¥ï¼Œåˆ™å°±æŠ›å‡ºconnectionTimeOutå¼‚å¸¸ã€‚
                 .setSocketTimeout(3 * 60 * 1000)
-                // Á¬½ÓÉÏÒ»¸öurlºó£¬»ñÈ¡responseµÄ·µ»ØµÈ´ıÊ±¼ä £¬¼´ÔÚÓëÄ¿±êurl½¨Á¢Á¬½Óºó£¬µÈ´ı·Å»ØresponseµÄ×î´óÊ±¼ä£¬ÔÚ¹æ¶¨Ê±¼äÄÚÃ»ÓĞ·µ»ØÏìÓ¦µÄ»°¾ÍÅ×³öSocketTimeout¡£
+                // è¿æ¥ä¸Šä¸€ä¸ªurlåï¼Œè·å–responseçš„è¿”å›ç­‰å¾…æ—¶é—´ ï¼Œå³åœ¨ä¸ç›®æ ‡urlå»ºç«‹è¿æ¥åï¼Œç­‰å¾…æ”¾å›responseçš„æœ€å¤§æ—¶é—´ï¼Œåœ¨è§„å®šæ—¶é—´å†…æ²¡æœ‰è¿”å›å“åº”çš„è¯å°±æŠ›å‡ºSocketTimeoutã€‚
                 .setConnectionRequestTimeout(60 * 1000)
                 .build();
 
-        // httpclietn ³Ø¹ÜÀíÆ÷
+        // httpclietn æ± ç®¡ç†å™¨
         SSLConnectionSocketFactory scsf = null;
         try {
-            /// ½â¾öhttpClient·¢ËÍhttps´íÎóµÄÎÊÌâ
+            /// è§£å†³httpClientå‘é€httpsé”™è¯¯çš„é—®é¢˜
             scsf = new SSLConnectionSocketFactory(
                     SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build(),
                     NoopHostnameVerifier.INSTANCE);
 
-            // ×¢²á·ÃÎÊĞ­ÒéÏà¹ØµÄ socket ¹¤³§
+            // æ³¨å†Œè®¿é—®åè®®ç›¸å…³çš„ socket å·¥å‚
             Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
                     .register("http", PlainConnectionSocketFactory.INSTANCE)
                     .register("https", scsf).build();
-            // HttpConnection¹¤²ú£ºÅäÖÃĞ´ÇëÇó/½âÎöÏàÓ¦´¦ÀíÆ÷
+            // HttpConnectionå·¥äº§ï¼šé…ç½®å†™è¯·æ±‚/è§£æç›¸åº”å¤„ç†å™¨
             HttpConnectionFactory<HttpRoute, ManagedHttpClientConnection> connFactory = new ManagedHttpClientConnectionFactory(DefaultHttpRequestWriterFactory.INSTANCE,
                     DefaultHttpResponseParserFactory.INSTANCE);
-            // DNS ½âÎöÆ÷
+            // DNS è§£æå™¨
             DnsResolver dnsResolver = SystemDefaultDnsResolver.INSTANCE;
-            // ´´½¨³Ø»¯Á¬½Ó¹ÜÀíÆ÷
+            // åˆ›å»ºæ± åŒ–è¿æ¥ç®¡ç†å™¨
             manager = new PoolingHttpClientConnectionManager(socketFactoryRegistry, connFactory, dnsResolver);
-            // Ä¬ÈÏÎªSocket ÅäÖÃ
+            // é»˜è®¤ä¸ºSocket é…ç½®
             SocketConfig defaultSocketConfig = SocketConfig.custom().setTcpNoDelay(true).build();
             manager.setDefaultSocketConfig(defaultSocketConfig);
-            // ÉèÖÃÕû¸öÁ¬½Ó³ØµÄ×î´óÁ¬½ÓÊı Ä¬ÈÏ20
+            // è®¾ç½®æ•´ä¸ªè¿æ¥æ± çš„æœ€å¤§è¿æ¥æ•° é»˜è®¤20
             manager.setMaxTotal(200);
-            // Ã¿¸öÂ·ÓÉ×î´óÁ¬½ÓÊı Ä¬ÈÏ2
+            // æ¯ä¸ªè·¯ç”±æœ€å¤§è¿æ¥æ•° é»˜è®¤2
             manager.setDefaultMaxPerRoute(20);
-            // ÔÚ´ÓÁ¬½Ó³Ø»ñÈ¡Á¬½ÓÊ±£¬Á¬½Ó²»»îÔ¾¶à³¤Ê±¼äºóĞèÒª½øĞĞÒ»´ÎÑéÖ¤£¬Ä¬ÈÏÎª 2s
+            // åœ¨ä»è¿æ¥æ± è·å–è¿æ¥æ—¶ï¼Œè¿æ¥ä¸æ´»è·ƒå¤šé•¿æ—¶é—´åéœ€è¦è¿›è¡Œä¸€æ¬¡éªŒè¯ï¼Œé»˜è®¤ä¸º 2s
             manager.setValidateAfterInactivity(5 * 1000);
         } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
             log.error(e.getMessage(), e);
@@ -152,7 +136,7 @@ public class HttpClientUtil {
     }
 
     /**
-     * µÃµ½http¿Í»§¶Ë
+     * å¾—åˆ°httpå®¢æˆ·ç«¯
      *
      * @return {@link CloseableHttpClient}
      */
@@ -160,22 +144,22 @@ public class HttpClientUtil {
         if (manager == null) {
             init();
         }
-        // Ë«¼ìËø, ±£Ö¤Ö»ÓĞÒ»¸öÊµÀı
+        // åŒæ£€é”, ä¿è¯åªæœ‰ä¸€ä¸ªå®ä¾‹
         if (httpClient == null) {
             synchronized (HttpClientUtil.class) {
                 if (httpClient == null) {
                     httpClient = HttpClients.custom().setConnectionManager(manager)
-                            // Á¬½Ó³Ø²»ÊÇ¹²ÏíÄ£Ê½
+                            // è¿æ¥æ± ä¸æ˜¯å…±äº«æ¨¡å¼
                             .setConnectionManagerShared(false)
-                            // ¶¨ÆÚ»ØÊÕ¹ıÆÚÁ¬½Ó
+                            // å®šæœŸå›æ”¶è¿‡æœŸè¿æ¥
                             .evictExpiredConnections()
-                            // Á¬½Ó´æ»îÊ±¼ä£¬Èç¹û²»ÉèÖÃ£¬Ôò¸ù¾İ³¤Á¬½ÓĞÅÏ¢¾ö¶¨
+                            // è¿æ¥å­˜æ´»æ—¶é—´ï¼Œå¦‚æœä¸è®¾ç½®ï¼Œåˆ™æ ¹æ®é•¿è¿æ¥ä¿¡æ¯å†³å®š
                             .setConnectionTimeToLive(60, TimeUnit.SECONDS)
-                            // ÉèÖÃÄ¬ÈÏÇëÇóÅäÖÃ
+                            // è®¾ç½®é»˜è®¤è¯·æ±‚é…ç½®
                             .setDefaultRequestConfig(defaultRequestConfig)
-                            // Á¬½ÓÖØÓÃ²ßÂÔ
+                            // è¿æ¥é‡ç”¨ç­–ç•¥
                             .setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE)
-                            // ³¤Á¬½ÓÅäÖÃ£¬¼´»ñµÃ³¤Á¬½ÓÉú²ú¶à³¤Ê±¼ä
+                            // é•¿è¿æ¥é…ç½®ï¼Œå³è·å¾—é•¿è¿æ¥ç”Ÿäº§å¤šé•¿æ—¶é—´
                             .setKeepAliveStrategy(DefaultConnectionKeepAliveStrategy.INSTANCE)
                             .setRetryHandler(DefaultHttpRequestRetryHandler.INSTANCE)
                             .setDefaultCookieStore(cookieStore)
@@ -185,7 +169,7 @@ public class HttpClientUtil {
 
         }
 
-        // JVMÍ£Ö¹»òÖØÆôÊ± ¹Ø±ÕÁ¬½Ó³ØÊÍ·ÅµôÁ¬½Ó
+        // JVMåœæ­¢æˆ–é‡å¯æ—¶ å…³é—­è¿æ¥æ± é‡Šæ”¾æ‰è¿æ¥
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -202,10 +186,10 @@ public class HttpClientUtil {
     }
 
     /**
-     * ÉèÖÃÇëÇóÍ·
+     * è®¾ç½®è¯·æ±‚å¤´
      *
-     * @param httpRequestBase ÇëÇó
-     * @param header          ÇëÇóÍ·
+     * @param httpRequestBase è¯·æ±‚
+     * @param header          è¯·æ±‚å¤´
      */
     private static void setRequestHeader(HttpRequestBase httpRequestBase, Map<String, String> header) {
         if (header != null && header.size() > 0) {
@@ -218,11 +202,11 @@ public class HttpClientUtil {
     }
 
     /**
-     * postÇëÇó
+     * postè¯·æ±‚
      *
-     * @param url    ÇëÇóµØÖ·
-     * @param body   ÇëÇóÌå
-     * @param header ÇëÇóÍ·
+     * @param url    è¯·æ±‚åœ°å€
+     * @param body   è¯·æ±‚ä½“
+     * @param header è¯·æ±‚å¤´
      * @return {@link String}
      */
     public static String httpPost(String url, Map<String, String> body, Map<String, String> header) throws IOException {
@@ -247,11 +231,11 @@ public class HttpClientUtil {
     }
 
     /**
-     * postÇëÇó
+     * postè¯·æ±‚
      *
-     * @param url    ÇëÇóµØÖ·
-     * @param body   ÇëÇóÌå
-     * @param header ÇëÇóÍ·
+     * @param url    è¯·æ±‚åœ°å€
+     * @param body   è¯·æ±‚ä½“
+     * @param header è¯·æ±‚å¤´
      * @return {@link String}
      */
     public static String httpPost(String url, String body, Map<String, String> header) throws IOException {
@@ -271,11 +255,11 @@ public class HttpClientUtil {
 
 
     /**
-     * postÇëÇó
+     * postè¯·æ±‚
      *
-     * @param url        ÇëÇóµØÖ·
-     * @param httpEntity ÇëÇóÌå
-     * @param header     ÇëÇóÍ·
+     * @param url        è¯·æ±‚åœ°å€
+     * @param httpEntity è¯·æ±‚ä½“
+     * @param header     è¯·æ±‚å¤´
      * @return {@link String}
      * @throws IOException ioexception
      */
@@ -298,8 +282,8 @@ public class HttpClientUtil {
     /**
      * http post
      *
-     * @param url  ÇëÇóµØÖ·
-     * @param body ÇëÇóÌå
+     * @param url  è¯·æ±‚åœ°å€
+     * @param body è¯·æ±‚ä½“
      * @return {@link String}
      */
     public static String httpPost(String url, String body) throws IOException {
@@ -307,10 +291,10 @@ public class HttpClientUtil {
     }
 
     /**
-     * postÇëÇó
+     * postè¯·æ±‚
      *
-     * @param url  ÇëÇóµØÖ·
-     * @param body ÇëÇóÌå
+     * @param url  è¯·æ±‚åœ°å€
+     * @param body è¯·æ±‚ä½“
      * @return {@link String}
      */
     public static String httpPost(String url, Map<String, String> body) throws IOException {
@@ -318,10 +302,10 @@ public class HttpClientUtil {
     }
 
     /**
-     * postÇëÇó
+     * postè¯·æ±‚
      *
-     * @param url        ÇëÇóµØÖ·
-     * @param httpEntity ÇëÇóÌå
+     * @param url        è¯·æ±‚åœ°å€
+     * @param httpEntity è¯·æ±‚ä½“
      * @return {@link String}
      * @throws IOException ioexception
      */
@@ -331,9 +315,9 @@ public class HttpClientUtil {
 
 
     /**
-     * http getÇëÇó
+     * http getè¯·æ±‚
      *
-     * @param url ÇëÇóµØÖ·
+     * @param url è¯·æ±‚åœ°å€
      * @return {@link String}
      */
     public static String httpGet(String url) throws URISyntaxException, IOException {
@@ -341,10 +325,10 @@ public class HttpClientUtil {
     }
 
     /**
-     * http getÇëÇó
+     * http getè¯·æ±‚
      *
-     * @param url    ÇëÇóµØÖ·
-     * @param params ÇëÇó²ÎÊı
+     * @param url    è¯·æ±‚åœ°å€
+     * @param params è¯·æ±‚å‚æ•°
      * @return {@link String}
      */
     public static String httpGet(String url, Map<String, String> params) throws URISyntaxException, IOException {
@@ -352,16 +336,16 @@ public class HttpClientUtil {
     }
 
     /**
-     * http getÇëÇó
+     * http getè¯·æ±‚
      *
-     * @param url    ÇëÇóµØÖ·
-     * @param params ÇëÇó²ÎÊı
-     * @param header ÇëÇóÍ·
+     * @param url    è¯·æ±‚åœ°å€
+     * @param params è¯·æ±‚å‚æ•°
+     * @param header è¯·æ±‚å¤´
      * @return {@link String}
      */
     public static String httpGet(String url, Map<String, String> params, Map<String, String> header) throws URISyntaxException, IOException {
         URIBuilder uriBuilder = new URIBuilder(url);
-        // ÉèÖÃÇëÇó²ÎÊı
+        // è®¾ç½®è¯·æ±‚å‚æ•°
         if (params != null && params.size() > 0) {
             for (Map.Entry<String, String> entry : params.entrySet()) {
                 uriBuilder.setParameter(entry.getKey(), entry.getValue());
@@ -369,7 +353,7 @@ public class HttpClientUtil {
         }
         HttpGet httpGet = new HttpGet(uriBuilder.build());
         httpGet.getParams().setParameter("http.protocol.allow-circular-redirects", true);
-        // ÉèÖÃÇëÇóÍ·
+        // è®¾ç½®è¯·æ±‚å¤´
         setRequestHeader(httpGet, header);
 
         CloseableHttpResponse response = null;
@@ -387,7 +371,7 @@ public class HttpClientUtil {
     /**
      * post
      *
-     * @param httpRequest http postÇëÇó
+     * @param httpRequest http postè¯·æ±‚
      * @return {@link String}
      */
     public static CloseableHttpResponse request(HttpRequestBase httpRequest) throws IOException {
@@ -396,7 +380,7 @@ public class HttpClientUtil {
     }
 
     /**
-     * Çå³ıcookie
+     * æ¸…é™¤cookie
      */
     public static void clearCookie() {
         cookieStore.clear();

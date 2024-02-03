@@ -29,7 +29,7 @@ public class SettingAddView extends DialogWrapper {
     public SettingAddView() {
         super(false);
         init();
-        setTitle("Ìí¼ÓµØÖ·");
+        setTitle("æ·»åŠ åœ°å€");
     }
 
     @Override
@@ -41,19 +41,19 @@ public class SettingAddView extends DialogWrapper {
     @Override
     protected ValidationInfo doValidate() {
         if (StringUtils.isBlank(labelTextField.getText())) {
-            return new ValidationInfo("ÇëÊäÈë±¸×¢", labelTextField);
+            return new ValidationInfo("è¯·è¾“å…¥å¤‡æ³¨", labelTextField);
         }
         if (StringUtils.isBlank(addressTextField.getText())) {
-            return new ValidationInfo("ÇëÊäÈëµØÖ·", addressTextField);
+            return new ValidationInfo("è¯·è¾“å…¥åœ°å€", addressTextField);
         }
         if (StringUtils.isNotBlank(addressTextField.getText()) && !CommonValidateUtil.isValidURL(addressTextField.getText())) {
-            return new ValidationInfo("µØÖ·ÊäÈë²»ÕıÈ·£¬Çë¼ì²é", addressTextField);
+            return new ValidationInfo("åœ°å€è¾“å…¥ä¸æ­£ç¡®ï¼Œè¯·æ£€æŸ¥", addressTextField);
         }
         if (StringUtils.isBlank(usernameTextField.getText())) {
-            return new ValidationInfo("ÇëÊäÈëÓÃ»§Ãû", usernameTextField);
+            return new ValidationInfo("è¯·è¾“å…¥ç”¨æˆ·å", usernameTextField);
         }
         if (StringUtils.isBlank(passwordTextField.getText())) {
-            return new ValidationInfo("ÇëÊäÈëÃÜÂë", passwordTextField);
+            return new ValidationInfo("è¯·è¾“å…¥å¯†ç ", passwordTextField);
         }
         return super.doValidate();
     }

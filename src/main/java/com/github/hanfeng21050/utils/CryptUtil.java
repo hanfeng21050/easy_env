@@ -6,13 +6,13 @@ import java.security.MessageDigest;
 public class CryptUtil {
 
     public static String encryptPassword(String password) throws Exception {
-        // Ê¹ÓÃ sha512 ¼ÓÃÜ
+        // ä½¿ç”¨ sha512 åŠ å¯†
         String sha512Result = sha512(password);
 
-        // Ê¹ÓÃ md5 ¼ÓÃÜ
+        // ä½¿ç”¨ md5 åŠ å¯†
         String md5Result = md5(password);
 
-        // Æ´½Ó sha512 ºÍ md5 µÄ½á¹û
+        // æ‹¼æ¥ sha512 å’Œ md5 çš„ç»“æœ
         return sha512Result + "," + md5Result;
     }
 
@@ -28,13 +28,13 @@ public class CryptUtil {
 
     private static String hash(String input, String algorithm) {
         try {
-            // »ñÈ¡ÕªÒªËã·¨ÊµÀı
+            // è·å–æ‘˜è¦ç®—æ³•å®ä¾‹
             MessageDigest digest = MessageDigest.getInstance(algorithm);
 
-            // ¼ÆËã¹şÏ£Öµ
+            // è®¡ç®—å“ˆå¸Œå€¼
             byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
 
-            // ½«×Ö½ÚÊı×é×ª»»ÎªÊ®Áù½øÖÆ×Ö·û´®
+            // å°†å­—èŠ‚æ•°ç»„è½¬æ¢ä¸ºåå…­è¿›åˆ¶å­—ç¬¦ä¸²
             StringBuilder hexStringBuilder = new StringBuilder();
             for (byte hashByte : hashBytes) {
                 String hex = Integer.toHexString(0xff & hashByte);

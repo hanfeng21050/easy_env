@@ -33,7 +33,7 @@ import java.util.Vector;
 import java.util.function.Consumer;
 
 /**
- * ÏÔÊ¾ºÍÅäÖÃEasyEnv²å¼şÉèÖÃµÄÊÓÍ¼¡£
+ * æ˜¾ç¤ºå’Œé…ç½®EasyEnvæ’ä»¶è®¾ç½®çš„è§†å›¾ã€‚
  */
 public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     private final EasyEnvConfig config;
@@ -48,15 +48,15 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     private boolean isModify = false;
 
     /**
-     * ¹¹Ôìº¯Êı£¬½ÓÊÕEasyEnvÅäÖÃ²¢³õÊ¼»¯ÊÓÍ¼¡£
+     * æ„é€ å‡½æ•°ï¼Œæ¥æ”¶EasyEnvé…ç½®å¹¶åˆå§‹åŒ–è§†å›¾ã€‚
      *
-     * @param easyEnvConfig EasyEnvÅäÖÃ
+     * @param easyEnvConfig EasyEnvé…ç½®
      */
     public EasyEnvSettingsView(EasyEnvConfig easyEnvConfig) {
         this.config = easyEnvConfig;
 
         try {
-            // ¿½±´¸±±¾
+            // æ‹·è´å‰¯æœ¬
             this.oldSeeConnectInfos = ObjectUtil.deepCopyList(config.getSeeConnectInfos());
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
@@ -69,51 +69,51 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     }
 
     /**
-     * ´´½¨×Ô¶¨Òå×é¼şµÄ·½·¨¡£
+     * åˆ›å»ºè‡ªå®šä¹‰ç»„ä»¶çš„æ–¹æ³•ã€‚
      */
     private void createUIComponents() {
-        // ³õÊ¼»¯ importButton
-        importButton = new JButton("µ¼ÈëÅäÖÃ");
+        // åˆå§‹åŒ– importButton
+        importButton = new JButton("å¯¼å…¥é…ç½®");
         importButton.addActionListener(e -> importConfiguration());
 
-        // ³õÊ¼»¯ exportButton
-        exportButton = new JButton("µ¼³öÅäÖÃ");
+        // åˆå§‹åŒ– exportButton
+        exportButton = new JButton("å¯¼å‡ºé…ç½®");
         exportButton.addActionListener(e -> exportConfiguration());
 
-        // ³õÊ¼»¯±í¸ñ
+        // åˆå§‹åŒ–è¡¨æ ¼
         envTable = new JBTable();
         refreshEnvTable();
 
         envPanel = ToolbarDecorator.createDecorator(envTable)
                 .setAddAction(anActionButton -> addSetting())
                 .setRemoveAction(anActionButton -> removeSetting())
-                .addExtraAction(createActionButton("Éú³ÉÅäÖÃ", "/META-INF/icon-gen.png", this::generateConfiguration))
-                .addExtraAction(createActionButton("²âÊÔÁ¬½Ó", "/META-INF/icon-test.png", this::testConnection))
+                .addExtraAction(createActionButton("ç”Ÿæˆé…ç½®", "/META-INF/icon-gen.png", this::generateConfiguration))
+                .addExtraAction(createActionButton("æµ‹è¯•è¿æ¥", "/META-INF/icon-test.png", this::testConnection))
                 .createPanel();
     }
 
     /**
-     * µ¼ÈëÅäÖÃµÄ·½·¨£¬Ö´ĞĞÓë¡°µ¼ÈëÅäÖÃ¡±°´Å¥Ïà¹ØµÄÂß¼­¡£
+     * å¯¼å…¥é…ç½®çš„æ–¹æ³•ï¼Œæ‰§è¡Œä¸â€œå¯¼å…¥é…ç½®â€æŒ‰é’®ç›¸å…³çš„é€»è¾‘ã€‚
      */
     private void importConfiguration() {
         JFileChooser fileChooser = new JFileChooser();
         FileNameExtensionFilter xmlFilter = new FileNameExtensionFilter("XML files (*.xml)", "xml");
         fileChooser.setFileFilter(xmlFilter);
-        fileChooser.setDialogTitle("Ñ¡ÔñÅäÖÃÎÄ¼ş");
+        fileChooser.setDialogTitle("é€‰æ‹©é…ç½®æ–‡ä»¶");
         int result = fileChooser.showOpenDialog(panel);
 
         if (result == JFileChooser.APPROVE_OPTION) {
-            // ÓÃ»§Ñ¡ÔñÁËÎÄ¼ş
+            // ç”¨æˆ·é€‰æ‹©äº†æ–‡ä»¶
             java.io.File selectedFile = fileChooser.getSelectedFile();
-            // ÔÚÕâÀïÖ´ĞĞ½« XML ÎÄ¼şµ¼Èëµ½ config µÄÂß¼­
+            // åœ¨è¿™é‡Œæ‰§è¡Œå°† XML æ–‡ä»¶å¯¼å…¥åˆ° config çš„é€»è¾‘
             importConfigFromXml(selectedFile);
         }
     }
 
     /**
-     * ´Ó XML ÎÄ¼şµ¼ÈëÅäÖÃµÄ·½·¨¡£
+     * ä» XML æ–‡ä»¶å¯¼å…¥é…ç½®çš„æ–¹æ³•ã€‚
      *
-     * @param file Òªµ¼ÈëµÄ XML ÎÄ¼ş
+     * @param file è¦å¯¼å…¥çš„ XML æ–‡ä»¶
      */
     private void importConfigFromXml(java.io.File file) {
         if (file.exists() && file.isFile()) {
@@ -121,27 +121,27 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
                 JAXBContext context = JAXBContext.newInstance(EasyEnvConfig.class);
                 Unmarshaller unmarshaller = context.createUnmarshaller();
                 EasyEnvConfig importedConfig = (EasyEnvConfig) unmarshaller.unmarshal(file);
-                // ÔÚÕâÀï´¦Àíµ¼ÈëµÄÅäÖÃ¶ÔÏó
+                // åœ¨è¿™é‡Œå¤„ç†å¯¼å…¥çš„é…ç½®å¯¹è±¡
                 handleImportedConfig(importedConfig);
                 this.isModify = true;
-                // µ¼Èë³É¹¦£¬ÏÔÊ¾ÌáÊ¾ĞÅÏ¢
-                Messages.showInfoMessage("µ¼Èë³É¹¦", "³É¹¦");
+                // å¯¼å…¥æˆåŠŸï¼Œæ˜¾ç¤ºæç¤ºä¿¡æ¯
+                Messages.showInfoMessage("å¯¼å…¥æˆåŠŸ", "æˆåŠŸ");
             } catch (JAXBException e) {
-                // µ¼ÈëÊ§°Ü£¬ÏÔÊ¾´íÎóĞÅÏ¢
-                Messages.showErrorDialog(e.getMessage(), "Ê§°Ü");
+                // å¯¼å…¥å¤±è´¥ï¼Œæ˜¾ç¤ºé”™è¯¯ä¿¡æ¯
+                Messages.showErrorDialog(e.getMessage(), "å¤±è´¥");
                 throw new RuntimeException(e);
             }
         } else {
-            // ÎÄ¼ş²»´æÔÚ»ò²»ÊÇÎÄ¼ş
-            String errorMessage = "Ñ¡ÔñµÄÎÄ¼şÎŞĞ§£¬ÇëÑ¡ÔñÒ»¸öÓĞĞ§µÄ XML ÎÄ¼ş¡£";
-            Messages.showErrorDialog(errorMessage, "µ¼ÈëÊ§°Ü");
+            // æ–‡ä»¶ä¸å­˜åœ¨æˆ–ä¸æ˜¯æ–‡ä»¶
+            String errorMessage = "é€‰æ‹©çš„æ–‡ä»¶æ— æ•ˆï¼Œè¯·é€‰æ‹©ä¸€ä¸ªæœ‰æ•ˆçš„ XML æ–‡ä»¶ã€‚";
+            Messages.showErrorDialog(errorMessage, "å¯¼å…¥å¤±è´¥");
         }
     }
 
     /**
-     * ´¦Àíµ¼ÈëµÄÅäÖÃ¶ÔÏóµÄ·½·¨¡£
+     * å¤„ç†å¯¼å…¥çš„é…ç½®å¯¹è±¡çš„æ–¹æ³•ã€‚
      *
-     * @param importedConfig µ¼ÈëµÄÅäÖÃ¶ÔÏó
+     * @param importedConfig å¯¼å…¥çš„é…ç½®å¯¹è±¡
      */
     private void handleImportedConfig(EasyEnvConfig importedConfig) {
         config.setSeeConnectInfos(importedConfig.getSeeConnectInfos());
@@ -157,31 +157,31 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     }
 
     /**
-     * µ¼³öÅäÖÃµÄ·½·¨£¬Ö´ĞĞÓë¡°µ¼³öÅäÖÃ¡±°´Å¥Ïà¹ØµÄÂß¼­¡£
+     * å¯¼å‡ºé…ç½®çš„æ–¹æ³•ï¼Œæ‰§è¡Œä¸â€œå¯¼å‡ºé…ç½®â€æŒ‰é’®ç›¸å…³çš„é€»è¾‘ã€‚
      */
     private void exportConfiguration() {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Ñ¡Ôñµ¼³öÄ¿Â¼");
+        fileChooser.setDialogTitle("é€‰æ‹©å¯¼å‡ºç›®å½•");
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         int result = fileChooser.showSaveDialog(panel);
 
         if (result == JFileChooser.APPROVE_OPTION) {
-            // ÓÃ»§Ñ¡ÔñÁËÄ¿Â¼
+            // ç”¨æˆ·é€‰æ‹©äº†ç›®å½•
             java.io.File selectedDirectory = fileChooser.getSelectedFile();
 
-            // ÌáÊ¾ÓÃ»§ÊäÈëÎÄ¼şÃû£¬¿ÉÒÔÊ¹ÓÃÄ¬ÈÏÎÄ¼şÃû
+            // æç¤ºç”¨æˆ·è¾“å…¥æ–‡ä»¶åï¼Œå¯ä»¥ä½¿ç”¨é»˜è®¤æ–‡ä»¶å
             String defaultFileName = "easyEnv";
             String fileName = Messages.showInputDialog(
-                    "ÇëÊäÈëÎÄ¼şÃû£¨°üÀ¨À©Õ¹Ãû£©£¬»ò°´È·¶¨Ê¹ÓÃÄ¬ÈÏÎÄ¼şÃû:",
-                    "ÊäÈëÎÄ¼şÃû",
+                    "è¯·è¾“å…¥æ–‡ä»¶åï¼ˆåŒ…æ‹¬æ‰©å±•åï¼‰ï¼Œæˆ–æŒ‰ç¡®å®šä½¿ç”¨é»˜è®¤æ–‡ä»¶å:",
+                    "è¾“å…¥æ–‡ä»¶å",
                     Messages.getQuestionIcon(),
                     defaultFileName,
                     null);
 
             if (fileName != null && !fileName.trim().isEmpty()) {
-                // ÓÃ»§Ìá¹©ÁËÎÄ¼şÃû£¬Ìí¼Ó .xml À©Õ¹Ãû
+                // ç”¨æˆ·æä¾›äº†æ–‡ä»¶åï¼Œæ·»åŠ  .xml æ‰©å±•å
                 fileName += ".xml";
-                // ÓÃ»§Ìá¹©ÁËÎÄ¼şÃû
+                // ç”¨æˆ·æä¾›äº†æ–‡ä»¶å
                 java.io.File outputFile = new java.io.File(selectedDirectory, fileName);
                 exportConfigToDirectory(outputFile);
             }
@@ -189,20 +189,20 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     }
 
     /**
-     * ½«ÅäÖÃµ¼³öµ½Ä¿Â¼µÄ·½·¨¡£
+     * å°†é…ç½®å¯¼å‡ºåˆ°ç›®å½•çš„æ–¹æ³•ã€‚
      *
-     * @param outputFile Òªµ¼³öµ½µÄÄ¿Â¼
+     * @param outputFile è¦å¯¼å‡ºåˆ°çš„ç›®å½•
      */
     private void exportConfigToDirectory(java.io.File outputFile) {
         if (outputFile.exists()) {
-            // ÎÄ¼şÒÑ´æÔÚ£¬Ñ¯ÎÊÓÃ»§ÊÇ·ñ¸²¸Ç
+            // æ–‡ä»¶å·²å­˜åœ¨ï¼Œè¯¢é—®ç”¨æˆ·æ˜¯å¦è¦†ç›–
             int result = Messages.showOkCancelDialog(
-                    "ÎÄ¼şÒÑ´æÔÚ£¬ÊÇ·ñ¸²¸Ç£¿",
-                    "ÎÄ¼şÒÑ´æÔÚ",
+                    "æ–‡ä»¶å·²å­˜åœ¨ï¼Œæ˜¯å¦è¦†ç›–ï¼Ÿ",
+                    "æ–‡ä»¶å·²å­˜åœ¨",
                     Messages.getQuestionIcon());
 
             if (result != Messages.OK) {
-                // ÓÃ»§È¡ÏûÁË¸²¸Ç²Ù×÷
+                // ç”¨æˆ·å–æ¶ˆäº†è¦†ç›–æ“ä½œ
                 return;
             }
         }
@@ -214,19 +214,19 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
             marshaller.marshal(config, outputFile);
 
-            // µ¼³ö³É¹¦£¬ÏÔÊ¾ÌáÊ¾ĞÅÏ¢
-            String successMessage = "ÅäÖÃ³É¹¦µ¼³öµ½: " + outputFile.getAbsolutePath();
-            Messages.showInfoMessage(successMessage, "µ¼³ö³É¹¦");
+            // å¯¼å‡ºæˆåŠŸï¼Œæ˜¾ç¤ºæç¤ºä¿¡æ¯
+            String successMessage = "é…ç½®æˆåŠŸå¯¼å‡ºåˆ°: " + outputFile.getAbsolutePath();
+            Messages.showInfoMessage(successMessage, "å¯¼å‡ºæˆåŠŸ");
         } catch (JAXBException e) {
-            // µ¼³öÊ§°Ü£¬ÏÔÊ¾´íÎóĞÅÏ¢
-            String errorMessage = "µ¼³öÅäÖÃÊ±·¢Éú´íÎó: " + e.getMessage();
-            Messages.showErrorDialog(errorMessage, "µ¼³öÊ§°Ü");
+            // å¯¼å‡ºå¤±è´¥ï¼Œæ˜¾ç¤ºé”™è¯¯ä¿¡æ¯
+            String errorMessage = "å¯¼å‡ºé…ç½®æ—¶å‘ç”Ÿé”™è¯¯: " + e.getMessage();
+            Messages.showErrorDialog(errorMessage, "å¯¼å‡ºå¤±è´¥");
             throw new RuntimeException(e);
         }
     }
 
     /**
-     * Ìí¼ÓÉèÖÃµÄ·½·¨£¬ÏÔÊ¾ÉèÖÃ¶Ô»°¿ò²¢½«ĞÂÉèÖÃÌí¼Óµ½ÅäÖÃÖĞ¡£
+     * æ·»åŠ è®¾ç½®çš„æ–¹æ³•ï¼Œæ˜¾ç¤ºè®¾ç½®å¯¹è¯æ¡†å¹¶å°†æ–°è®¾ç½®æ·»åŠ åˆ°é…ç½®ä¸­ã€‚
      */
     private void addSetting() {
         if (config != null) {
@@ -241,7 +241,7 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     }
 
     /**
-     * É¾³ıÉèÖÃµÄ·½·¨£¬´ÓÅäÖÃÖĞÉ¾³ıÑ¡¶¨µÄÉèÖÃ¡£
+     * åˆ é™¤è®¾ç½®çš„æ–¹æ³•ï¼Œä»é…ç½®ä¸­åˆ é™¤é€‰å®šçš„è®¾ç½®ã€‚
      */
     private void removeSetting() {
         if (config != null) {
@@ -252,13 +252,13 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
                 refreshEnvTable();
                 this.isModify = true;
             } else {
-                showInfoMessage("ÇëÑ¡ÔñÒ»ĞĞ");
+                showInfoMessage("è¯·é€‰æ‹©ä¸€è¡Œ");
             }
         }
     }
 
     /**
-     * ´´½¨´øÓĞÍ¼±êµÄ AnActionButton µÄ·½·¨¡£
+     * åˆ›å»ºå¸¦æœ‰å›¾æ ‡çš„ AnActionButton çš„æ–¹æ³•ã€‚
      */
     private AnActionButton createActionButton(String text, String iconPath, Consumer<AnActionEvent> action) {
         return new AnActionButton(text, IconLoader.getIcon(iconPath, Objects.requireNonNull(ReflectionUtil.getGrandCallerClass()))) {
@@ -271,12 +271,12 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     }
 
     /**
-     * Éú³ÉÅäÖÃµÄ·½·¨£¬Ö´ĞĞÓë¡°Éú³ÉÅäÖÃ¡±°´Å¥Ïà¹ØµÄÂß¼­¡£
+     * ç”Ÿæˆé…ç½®çš„æ–¹æ³•ï¼Œæ‰§è¡Œä¸â€œç”Ÿæˆé…ç½®â€æŒ‰é’®ç›¸å…³çš„é€»è¾‘ã€‚
      */
     private void generateConfiguration(AnActionEvent e) {
         int selectedRow = envTable.getSelectedRow();
         if (selectedRow != -1) {
-            // ÔÚÕâÀïÖ´ĞĞ¡°²âÊÔÁ¬½Ó¡±°´Å¥µÄÂß¼­
+            // åœ¨è¿™é‡Œæ‰§è¡Œâ€œæµ‹è¯•è¿æ¥â€æŒ‰é’®çš„é€»è¾‘
             String address = (String) envTable.getValueAt(selectedRow, 2);
             String username = (String) envTable.getValueAt(selectedRow, 3);
             String password = (String) envTable.getValueAt(selectedRow, 4);
@@ -286,18 +286,18 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
             MyPluginLoader myPluginLoader = new MyPluginLoader(project, seeConfig);
             myPluginLoader.startBlockingLoadingProcess();
         } else {
-            showInfoMessage("ÇëÑ¡ÔñÒ»ĞĞ");
+            showInfoMessage("è¯·é€‰æ‹©ä¸€è¡Œ");
         }
     }
 
     /**
-     * ²âÊÔÁ¬½ÓµÄ·½·¨£¬Ö´ĞĞÓë¡°²âÊÔÁ¬½Ó¡±°´Å¥Ïà¹ØµÄÂß¼­¡£
+     * æµ‹è¯•è¿æ¥çš„æ–¹æ³•ï¼Œæ‰§è¡Œä¸â€œæµ‹è¯•è¿æ¥â€æŒ‰é’®ç›¸å…³çš„é€»è¾‘ã€‚
      */
     private void testConnection(AnActionEvent e) {
         try {
             int selectedRow = envTable.getSelectedRow();
             if (selectedRow != -1) {
-                // ÔÚÕâÀïÖ´ĞĞ¡°²âÊÔÁ¬½Ó¡±°´Å¥µÄÂß¼­
+                // åœ¨è¿™é‡Œæ‰§è¡Œâ€œæµ‹è¯•è¿æ¥â€æŒ‰é’®çš„é€»è¾‘
                 String address = (String) envTable.getValueAt(selectedRow, 2);
                 String username = (String) envTable.getValueAt(selectedRow, 3);
                 String password = (String) envTable.getValueAt(selectedRow, 4);
@@ -305,23 +305,23 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
                 SeeConfig seeConfig = new SeeConfig(address, username, password);
                 SeeRequest.login(seeConfig);
                 ApplicationManager.getApplication().invokeLater(() -> {
-                    Messages.showInfoMessage("Á¬½Ó³É¹¦", "ÌáÊ¾");
+                    Messages.showInfoMessage("è¿æ¥æˆåŠŸ", "æç¤º");
                 });
             } else {
-                showInfoMessage("ÇëÑ¡ÔñÒ»ĞĞ");
+                showInfoMessage("è¯·é€‰æ‹©ä¸€è¡Œ");
             }
         } catch (Exception ex) {
             String errMsg = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
 
             ApplicationManager.getApplication().invokeLater(() -> {
-                Messages.showErrorDialog("Á¬½ÓÊ§°Ü£¬Çë¼ì²é¡£" + errMsg, "´íÎó");
+                Messages.showErrorDialog("è¿æ¥å¤±è´¥ï¼Œè¯·æ£€æŸ¥ã€‚" + errMsg, "é”™è¯¯");
             });
             throw new RuntimeException(ex);
         }
     }
 
     /**
-     * Ë¢ĞÂ»·¾³±í¸ñµÄ·½·¨¡£
+     * åˆ·æ–°ç¯å¢ƒè¡¨æ ¼çš„æ–¹æ³•ã€‚
      */
     private void refreshEnvTable() {
         List<EasyEnvConfig.SeeConnectInfo> seeConnectInfos = config.getSeeConnectInfos();
@@ -361,7 +361,7 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     }
 
     /**
-     * »ñÈ¡»·¾³±í¸ñÄ£ĞÍµÄ·½·¨¡£
+     * è·å–ç¯å¢ƒè¡¨æ ¼æ¨¡å‹çš„æ–¹æ³•ã€‚
      */
     private DefaultTableModel getEnvTableModel(List<EasyEnvConfig.SeeConnectInfo> seeConnectInfos) {
         Vector<Vector<String>> customData = new Vector<>(seeConnectInfos.size());
@@ -379,16 +379,16 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     }
 
     /**
-     * ÅĞ¶ÏÊÇ·ñÓĞĞŞ¸Ä¡£
+     * åˆ¤æ–­æ˜¯å¦æœ‰ä¿®æ”¹ã€‚
      *
-     * @return Èç¹ûÓĞĞŞ¸Ä£¬·µ»Øtrue£»·ñÔò£¬·µ»Øfalse¡£
+     * @return å¦‚æœæœ‰ä¿®æ”¹ï¼Œè¿”å›trueï¼›å¦åˆ™ï¼Œè¿”å›falseã€‚
      */
     public boolean isModified() {
         return isModify;
     }
 
     /**
-     * ÖØÖÃ
+     * é‡ç½®
      */
     public void reset() {
         try {
@@ -402,7 +402,7 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     }
 
     /**
-     * ±£´æ
+     * ä¿å­˜
      */
     public void apply() {
         try {
@@ -414,11 +414,11 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     }
 
     /**
-     * ÏÔÊ¾ĞÅÏ¢ÌáÊ¾¿òµÄ·½·¨¡£
+     * æ˜¾ç¤ºä¿¡æ¯æç¤ºæ¡†çš„æ–¹æ³•ã€‚
      *
-     * @param message ÒªÏÔÊ¾µÄÏûÏ¢¡£
+     * @param message è¦æ˜¾ç¤ºçš„æ¶ˆæ¯ã€‚
      */
     private void showInfoMessage(String message) {
-        Messages.showInfoMessage(message, "ÌáÊ¾");
+        Messages.showInfoMessage(message, "æç¤º");
     }
 }

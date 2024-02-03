@@ -20,7 +20,7 @@ import java.util.UUID;
 import java.util.Vector;
 
 public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
-    // Ë½ÓĞ¾²Ì¬±äÁ¿£¬ÓÃÓÚ±£´æÎ¨Ò»ÊµÀı
+    // ç§æœ‰é™æ€å˜é‡ï¼Œç”¨äºä¿å­˜å”¯ä¸€å®ä¾‹
     private static EasyEnvRuleSettingsView instance;
 
 
@@ -47,10 +47,10 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
         }
     }
 
-    // ¹«¹²·½·¨£¬ÓÃÓÚ»ñÈ¡Î¨Ò»ÊµÀı
+    // å…¬å…±æ–¹æ³•ï¼Œç”¨äºè·å–å”¯ä¸€å®ä¾‹
     public static EasyEnvRuleSettingsView getInstance(EasyEnvConfig easyEnvConfig) {
         if (instance == null) {
-            // Èç¹ûÊµÀıÎª¿Õ£¬´´½¨Ò»¸öĞÂÊµÀı
+            // å¦‚æœå®ä¾‹ä¸ºç©ºï¼Œåˆ›å»ºä¸€ä¸ªæ–°å®ä¾‹
             instance = new EasyEnvRuleSettingsView(easyEnvConfig);
         }
         return instance;
@@ -79,7 +79,7 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
                     isModify = true;
                     refreshReplaceRuleTable();
                 } else {
-                    showInfoMessage("ÇëÑ¡ÔñÒ»ĞĞ");
+                    showInfoMessage("è¯·é€‰æ‹©ä¸€è¡Œ");
                 }
             }
         }).createPanel();
@@ -103,7 +103,7 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
                     isModify = true;
                     refreshExcludedFileTable();
                 } else {
-                    showInfoMessage("ÇëÑ¡ÔñÒ»ĞĞ");
+                    showInfoMessage("è¯·é€‰æ‹©ä¸€è¡Œ");
                 }
             }
         }).createPanel();
@@ -169,7 +169,7 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
                         String key = (String) customModel.getValueAt(row, 0);
                         String newValue = (String) customModel.getValueAt(row, 1);
 
-                        // ¸üĞÂÊı¾İ
+                        // æ›´æ–°æ•°æ®
                         for (int i = 0; i < excludedFiles.size(); i++) {
                             EasyEnvConfig.ExcludedFile excludedFile = excludedFiles.get(i);
                             if (excludedFile.getUuid().equals(key)) {
@@ -211,24 +211,24 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
     }
 
     /**
-     * ÏÔÊ¾ĞÅÏ¢ÌáÊ¾¿òµÄ·½·¨¡£
+     * æ˜¾ç¤ºä¿¡æ¯æç¤ºæ¡†çš„æ–¹æ³•ã€‚
      */
     private void showInfoMessage(String message) {
-        Messages.showInfoMessage(message, "ÌáÊ¾");
+        Messages.showInfoMessage(message, "æç¤º");
     }
 
     /**
-     * ÅĞ¶ÏÊÇ·ñÓĞĞŞ¸Ä¡£
+     * åˆ¤æ–­æ˜¯å¦æœ‰ä¿®æ”¹ã€‚
      *
-     * @return Èç¹ûÓĞĞŞ¸Ä£¬·µ»Øtrue£»·ñÔò£¬·µ»Øfalse¡£
+     * @return å¦‚æœæœ‰ä¿®æ”¹ï¼Œè¿”å›trueï¼›å¦åˆ™ï¼Œè¿”å›falseã€‚
      */
     public boolean isModified() {
         return isModify;
     }
 
     /**
-     * ¡¿
-     * Ó¦ÓÃÅäÖÃ
+     * ã€‘
+     * åº”ç”¨é…ç½®
      */
     public void apply() {
         try {
@@ -241,7 +241,7 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
     }
 
     /**
-     * ÖØÖÃÅäÖÃ
+     * é‡ç½®é…ç½®
      */
     public void reset() {
         try {

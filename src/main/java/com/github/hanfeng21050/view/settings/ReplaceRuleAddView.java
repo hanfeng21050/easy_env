@@ -21,7 +21,7 @@ public class ReplaceRuleAddView extends DialogWrapper {
     public ReplaceRuleAddView() {
         super(false);
         init();
-        setTitle("添加");
+        setTitle("娣诲姞");
     }
 
     @Override
@@ -47,10 +47,10 @@ public class ReplaceRuleAddView extends DialogWrapper {
     @Override
     protected ValidationInfo doValidate() {
         if (StringUtils.isBlank(fileNameTextField.getText())) {
-            return new ValidationInfo("请输入文件名", fileNameTextField);
+            return new ValidationInfo("璇疯緭鍏ユ枃浠跺悕", fileNameTextField);
         }
         if (StringUtils.isBlank(regExpressionTextField.getText())) {
-            return new ValidationInfo("请输入正则表达式", regExpressionTextField);
+            return new ValidationInfo("璇疯緭鍏ユ鍒欒〃杈惧紡", regExpressionTextField);
         }
         return super.doValidate();
     }

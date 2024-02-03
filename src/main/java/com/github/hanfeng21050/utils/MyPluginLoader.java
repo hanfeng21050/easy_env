@@ -45,52 +45,52 @@ public class MyPluginLoader {
     }
 
     /**
-     * Æô¶¯×èÈû¼ÓÔØ½ø³Ì
+     * å¯åŠ¨é˜»å¡åŠ è½½è¿›ç¨‹
      */
     public void startBlockingLoadingProcess() {
-        // ½ûÓÃUI£¬Ê¹ÓÃ»§²»ÄÜ½øĞĞÆäËû²Ù×÷
+        // ç¦ç”¨UIï¼Œä½¿ç”¨æˆ·ä¸èƒ½è¿›è¡Œå…¶ä»–æ“ä½œ
         ApplicationManager.getApplication().invokeLater(() -> DumbService.getInstance(project).setAlternativeResolveEnabled(true));
 
-        // Ö´ĞĞ¼ÓÔØÈÎÎñ
-        ProgressManager.getInstance().run(new Task.Modal(project, "¼ÓÔØÖĞ...", true) {
+        // æ‰§è¡ŒåŠ è½½ä»»åŠ¡
+        ProgressManager.getInstance().run(new Task.Modal(project, "åŠ è½½ä¸­...", true) {
             @Override
             public void run(@NotNull ProgressIndicator progressIndicator) {
-                // ÔÚÕâÀïÖ´ĞĞĞèÒª¼ÓÔØµÄÈÎÎñ£¬Í¬Ê±¸üĞÂ½ø¶È
-                // »ñÈ¡µ±Ç°ÏîÄ¿µÄÃû³Æ
+                // åœ¨è¿™é‡Œæ‰§è¡Œéœ€è¦åŠ è½½çš„ä»»åŠ¡ï¼ŒåŒæ—¶æ›´æ–°è¿›åº¦
+                // è·å–å½“å‰é¡¹ç›®çš„åç§°
                 String name = project.getName();
                 String applicationName = name + "-svr";
                 try {
-                    // µÇÂ¼²¢»ñÈ¡ auth ĞÅÏ¢
+                    // ç™»å½•å¹¶è·å– auth ä¿¡æ¯
                     SeeRequest.login(seeConfig);
 
                     String auth = SeeRequest.getAuth(seeConfig);
-                    progressIndicator.setText("auth»ñÈ¡³É¹¦, auth£º" + auth);
+                    progressIndicator.setText("authè·å–æˆåŠŸ, authï¼š" + auth);
 
-                    // »ñÈ¡Ó¦ÓÃid
+                    // è·å–åº”ç”¨id
                     String applicationId = SeeRequest.getApplication(seeConfig, applicationName, auth);
-                    progressIndicator.setText(applicationName + "»ñÈ¡»ñÈ¡Ó¦ÓÃid³É¹¦£¬applicationId:" + applicationId);
+                    progressIndicator.setText(applicationName + "è·å–è·å–åº”ç”¨idæˆåŠŸï¼ŒapplicationId:" + applicationId);
 
                     if (StringUtils.isNotBlank(applicationId)) {
-                        // »ñÈ¡ÅäÖÃĞÅÏ¢
+                        // è·å–é…ç½®ä¿¡æ¯
                         JSONObject config = SeeRequest.getConfigInfo(seeConfig, applicationId, auth);
-                        progressIndicator.setText(applicationName + "»ñÈ¡ÏîÄ¿ÅäÖÃĞÅÏ¢³É¹¦");
+                        progressIndicator.setText(applicationName + "è·å–é¡¹ç›®é…ç½®ä¿¡æ¯æˆåŠŸ");
 
-                        // ±£´æÅäÖÃ
+                        // ä¿å­˜é…ç½®
                         saveConfigToFile(progressIndicator, config);
 
                         ApplicationManager.getApplication().invokeLater(() -> {
-                            Messages.showInfoMessage("ÏîÄ¿" + applicationName + "ÅäÖÃ»ñÈ¡³É¹¦", "ĞÅÏ¢");
+                            Messages.showInfoMessage("é¡¹ç›®" + applicationName + "é…ç½®è·å–æˆåŠŸ", "ä¿¡æ¯");
                         });
                     } else {
                         ApplicationManager.getApplication().invokeLater(() -> {
-                            Messages.showInfoMessage("Î´»ñÈ¡µ½µ±Ç°ÏîÄ¿" + applicationName + "µÄÅäÖÃÎÄ¼ş£¬Çë¼ì²é", "ÌáÊ¾");
+                            Messages.showInfoMessage("æœªè·å–åˆ°å½“å‰é¡¹ç›®" + applicationName + "çš„é…ç½®æ–‡ä»¶ï¼Œè¯·æ£€æŸ¥", "æç¤º");
                         });
                     }
                 } catch (Exception ex) {
                     String errMsg = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
 
                     ApplicationManager.getApplication().invokeLater(() -> {
-                        Messages.showErrorDialog("Á¬½ÓÊ§°Ü£¬Çë¼ì²é¡£" + errMsg, "´íÎó");
+                        Messages.showErrorDialog("è¿æ¥å¤±è´¥ï¼Œè¯·æ£€æŸ¥ã€‚" + errMsg, "é”™è¯¯");
                     });
                     throw new RuntimeException(ex);
                 }
@@ -99,7 +99,7 @@ public class MyPluginLoader {
 
             @Override
             public void onFinished() {
-                // ÈÎÎñÍê³Éºó£¬ÆôÓÃUI
+                // ä»»åŠ¡å®Œæˆåï¼Œå¯ç”¨UI
                 ApplicationManager.getApplication().invokeLater(() -> DumbService.getInstance(project).setAlternativeResolveEnabled(false));
             }
         });
@@ -113,13 +113,13 @@ public class MyPluginLoader {
         JSONArray array = mergeNonEmptyConfig(jsonObject);
         for (int i = 0; i < array.size(); i++) {
             JSONObject config = array.getJSONObject(i);
-            // »ñÈ¡ÎÄ¼şÃû³Æ
+            // è·å–æ–‡ä»¶åç§°
             String path = (String) config.get("path");
             Pattern pattern = Pattern.compile("([^/]+)$");
             Matcher matcher = pattern.matcher(path);
             if (matcher.find()) {
                 String fileName = matcher.group(1);
-                indicator.setText("ÕıÔÚ±£´æÅäÖÃ£º" + fileName);
+                indicator.setText("æ­£åœ¨ä¿å­˜é…ç½®ï¼š" + fileName);
                 String content = (String) config.get("content");
                 saveFile(fileName, content);
             }
@@ -128,7 +128,7 @@ public class MyPluginLoader {
 
 
     /**
-     * »ñÈ¡ËùÓĞµÄconfigÅäÖÃÎÄ¼ş
+     * è·å–æ‰€æœ‰çš„configé…ç½®æ–‡ä»¶
      *
      * @param jsonObject
      * @return
@@ -167,13 +167,13 @@ public class MyPluginLoader {
 
 
     /**
-     * ±£´æÎÄ¼ş
+     * ä¿å­˜æ–‡ä»¶
      *
      * @param fileName
      * @param content
      */
     public void saveFile(String fileName, String content) {
-        // ÅĞ¶ÏÊÇ·ñÔÚ¹ıÂËÁĞ±íÄÚ£¬Èç¹ûÔÚÔòÌø¹ı
+        // åˆ¤æ–­æ˜¯å¦åœ¨è¿‡æ»¤åˆ—è¡¨å†…ï¼Œå¦‚æœåœ¨åˆ™è·³è¿‡
         List<EasyEnvConfig.ExcludedFile> excludedFiles = config.getExcludedFiles();
         for (EasyEnvConfig.ExcludedFile excludedFile : excludedFiles) {
             String excludeFileName = excludedFile.getFileName();
@@ -182,7 +182,7 @@ public class MyPluginLoader {
             }
         }
 
-        // ¸ù¾İÅäÖÃ¹æÔòÌæ»»ÎÄ±¾ÄÚÈİ
+        // æ ¹æ®é…ç½®è§„åˆ™æ›¿æ¢æ–‡æœ¬å†…å®¹
         List<EasyEnvConfig.ConfigReplaceRule> configReplaceRules = config.getConfigReplaceRules();
         for (EasyEnvConfig.ConfigReplaceRule configReplaceRule : configReplaceRules) {
             if (CommonValidateUtil.isFileNameMatch(fileName, configReplaceRule.getFileName())) {
@@ -199,24 +199,24 @@ public class MyPluginLoader {
         for (VirtualFile module : modules) {
             if (module.getPath().contains("deploy")) {
                 try {
-                    String resourceDirPath = "src/main/resources"; // ¸ù¾İÏîÄ¿½á¹¹ÊÊµ±ĞŞ¸ÄÂ·¾¶
-                    // Ê¹ÓÃLocalFileSystem¹¹½¨×ÊÔ´Ä¿Â¼µÄ¾ø¶ÔÂ·¾¶
+                    String resourceDirPath = "src/main/resources"; // æ ¹æ®é¡¹ç›®ç»“æ„é€‚å½“ä¿®æ”¹è·¯å¾„
+                    // ä½¿ç”¨LocalFileSystemæ„å»ºèµ„æºç›®å½•çš„ç»å¯¹è·¯å¾„
                     VirtualFile resourceDirectory = LocalFileSystem.getInstance().findFileByPath(module.getPath() + "/" + resourceDirPath);
 
                     File file = new File(resourceDirectory.getPath() + "/" + fileName);
-                    // Èç¹ûÎÄ¼ş´æÔÚ£¬ÔòÉ¾³ıËü
+                    // å¦‚æœæ–‡ä»¶å­˜åœ¨ï¼Œåˆ™åˆ é™¤å®ƒ
                     if (file.exists()) {
                         file.delete();
                     }
                     if (fileName.contains(".dat")) {
-                        // ÅäÖÃÎÄ¼ş×ª»»¶ş½øÖÆ±£´æ
+                        // é…ç½®æ–‡ä»¶è½¬æ¢äºŒè¿›åˆ¶ä¿å­˜
                         byte[] bytes = Base64.decodeBase64(content);
                         FileUtils.writeByteArrayToFile(file, bytes);
                     } else {
                         FileUtils.writeStringToFile(file, content, StandardCharsets.UTF_8);
                     }
 
-                    // Ë¢ĞÂ×ÊÔ´Ä¿Â¼£¬ÒÔ±ãÔÚIDEÖĞÏÔÊ¾ÎÄ¼ş
+                    // åˆ·æ–°èµ„æºç›®å½•ï¼Œä»¥ä¾¿åœ¨IDEä¸­æ˜¾ç¤ºæ–‡ä»¶
                     VfsUtil.markDirtyAndRefresh(true, true, true, resourceDirectory);
                 } catch (IOException e) {
                     throw new RuntimeException(e);

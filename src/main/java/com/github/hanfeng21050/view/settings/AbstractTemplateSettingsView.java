@@ -17,20 +17,20 @@ public abstract class AbstractTemplateSettingsView {
     static {
         headers1 = new Vector<>(5);
         headers1.add("uuid");
-        headers1.add("Ãû³Æ");
-        headers1.add("µØÖ·");
-        headers1.add("ÓÃ»§Ãû");
-        headers1.add("ÃÜÂë");
+        headers1.add("åç§°");
+        headers1.add("åœ°å€");
+        headers1.add("ç”¨æˆ·å");
+        headers1.add("å¯†ç ");
 
         headers2 = new Vector<>(4);
         headers2.add("uuid");
-        headers2.add("ÎÄ¼şÃû");
-        headers2.add("ÕıÔò±í´ïÊ½");
-        headers2.add("Ìæ»»ÎÄ±¾ ");
+        headers2.add("æ–‡ä»¶å");
+        headers2.add("æ­£åˆ™è¡¨è¾¾å¼");
+        headers2.add("æ›¿æ¢æ–‡æœ¬ ");
 
         headers3 = new Vector<>(2);
         headers3.add("uuid");
-        headers3.add("ÎÄ¼şÃû");
+        headers3.add("æ–‡ä»¶å");
 
     }
 
