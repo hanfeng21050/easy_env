@@ -13,14 +13,21 @@
         <applicationConfigurable id="com.github.hanfeng21050.view.settings" displayName="EasyEnv" instance="com.github.hanfeng21050.view.settings.EasyEnvSettingsConfigurable">
             <configurable parentId="com.github.hanfeng21050.view.settings" displayName="EasyEnvConfig" instance="com.github.hanfeng21050.view.settings.EasyEnvRuleSettingsConfigurable" />
         </applicationConfigurable>
+        <toolWindow id="testToolWindow" factoryClass="com.github.hanfeng21050.view.ToolWindow.testToolWindowFactory"
+                    anchor="bottom"/>
     </extensions>
 
 
     <applicationListeners>
     </applicationListeners>
     <actions>
-        <group id="ConfigCreateGroup" text="Halo Tool" popup="true" class="com.github.hanfeng21050.actions.ConfigCreateGroup">
+        <group id="com.github.hanfeng21050.actions.EasyEnvGroup" text="Halo Tool" popup="true"
+               class="com.github.hanfeng21050.actions.EasyEnvGroup">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
         </group>
+
+        <action id="copy" class="com.github.hanfeng21050.actions.FilePathCopyAction" text="复制文件路径">
+            <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" anchor="last"/>
+        </action>
     </actions>
 </idea-plugin>

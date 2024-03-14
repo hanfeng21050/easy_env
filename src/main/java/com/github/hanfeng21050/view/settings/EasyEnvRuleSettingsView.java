@@ -50,8 +50,12 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
     // 公共方法，用于获取唯一实例
     public static EasyEnvRuleSettingsView getInstance(EasyEnvConfig easyEnvConfig) {
         if (instance == null) {
-            // 如果实例为空，创建一个新实例
-            instance = new EasyEnvRuleSettingsView(easyEnvConfig);
+            synchronized (EasyEnvRuleSettingsView.class) {
+                if (instance == null) {
+                    // 如果实例为空，创建一个新实例
+                    instance = new EasyEnvRuleSettingsView(easyEnvConfig);
+                }
+            }
         }
         return instance;
     }

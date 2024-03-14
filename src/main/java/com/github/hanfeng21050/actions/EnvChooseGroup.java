@@ -19,13 +19,13 @@ import java.util.List;
  * @Author hanfeng32305
  * @Date 2023/10/31 21:53
  */
-public class ConfigCreateGroup extends ActionGroup {
+public class EnvChooseGroup extends ActionGroup {
 
     private final EasyEnvConfig config = ServiceManager.getService(EasyEnvConfigComponent.class).getState();
 
-    public ConfigCreateGroup() {
+    public EnvChooseGroup() {
         // 设置 Action 组的显示文本
-        getTemplatePresentation().setText("启动配置生成");
+        getTemplatePresentation().setText("环境配置");
     }
 
     /**
