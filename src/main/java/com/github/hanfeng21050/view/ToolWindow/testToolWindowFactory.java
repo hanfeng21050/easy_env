@@ -1,5 +1,6 @@
 package com.github.hanfeng21050.view.ToolWindow;
 
+import com.github.hanfeng21050.utils.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -22,20 +23,24 @@ public class testToolWindowFactory implements ToolWindowFactory {
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
 
-
-        ViewBars viewPanel = new ViewBars(project);
-        // 获取内容工厂的实例
-        ContentFactory contentFactory = ContentFactory.getInstance();
-
-        //创建一个Content，也就是toolwindow里面的一个tab页
-        Content content = contentFactory.createContent(viewPanel, "任务执行监控", false);
-        //将Content加入到toolwindow中
-        toolWindow.getContentManager().addContent(content);
     }
 
     @Override
     public void init(@NotNull ToolWindow toolWindow) {
         ToolWindowFactory.super.init(toolWindow);
+        Project project = toolWindow.getProject();
+        ViewBars viewPanel = new ViewBars(project, toolWindow);
+        // 获取内容工厂的实例
+        ContentFactory contentFactory = ContentFactory.getInstance();
+
+        //创建一个Content，也就是toolwindow里面的一个tab页
+        Content content = contentFactory.createContent(viewPanel, "执行日志", false);
+        //将Content加入到toolwindow中
+        toolWindow.getContentManager().addContent(content);
+
+        // 设置Logger的实例和工具窗口
+        Logger.setViewBarsInstance(viewPanel, toolWindow);
+
     }
 
     @Override

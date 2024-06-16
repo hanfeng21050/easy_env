@@ -65,15 +65,18 @@ public class MyPluginLoader {
 
                     String auth = SeeRequest.getAuth(seeConfig);
                     progressIndicator.setText("auth获取成功, auth：" + auth);
+                    Logger.info("auth获取成功, auth：" + auth);
 
                     // 获取应用id
                     String applicationId = SeeRequest.getApplication(seeConfig, applicationName, auth);
                     progressIndicator.setText(applicationName + "获取获取应用id成功，applicationId:" + applicationId);
+                    Logger.info(applicationName + "获取获取应用id成功，applicationId:" + applicationId);
 
                     if (StringUtils.isNotBlank(applicationId)) {
                         // 获取配置信息
                         JSONObject config = SeeRequest.getConfigInfo(seeConfig, applicationId, auth);
                         progressIndicator.setText(applicationName + "获取项目配置信息成功");
+                        Logger.info(applicationName + "获取项目配置信息成功");
 
                         // 保存配置
                         saveConfigToFile(progressIndicator, config);
@@ -215,7 +218,7 @@ public class MyPluginLoader {
                     } else {
                         FileUtils.writeStringToFile(file, content, StandardCharsets.UTF_8);
                     }
-
+                    Logger.info(file.getCanonicalPath());
                     // 刷新资源目录，以便在IDE中显示文件
                     VfsUtil.markDirtyAndRefresh(true, true, true, resourceDirectory);
                 } catch (IOException e) {

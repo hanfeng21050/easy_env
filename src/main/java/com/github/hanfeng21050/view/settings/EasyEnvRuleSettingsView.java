@@ -144,7 +144,7 @@ public class EasyEnvRuleSettingsView extends AbstractTemplateSettingsView {
                         ConfigReplaceRule configReplaceRule = configReplaceRules.get(i);
                         if (configReplaceRule.getUuid().equals(key)) {
                             configReplaceRule.setFileName(fileName);
-                            configReplaceRule.setReplaceStr(regExpression);
+                            configReplaceRule.setRegExpression(regExpression);
                             configReplaceRule.setReplaceStr(replaceStr);
                             isModify = true;
                         }

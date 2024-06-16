@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.JBSplitter;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,30 +18,44 @@ public class ViewBars extends SimpleToolWindowPanel {
 
     JTextArea jTextArea = new JTextArea();
     private Project project;
+    private ToolWindow toolWindow;
 
-    public ViewBars(Project project) {
+    public ViewBars(Project project, ToolWindow toolWindow) {
         super(false, true);
         this.project = project;
+        this.toolWindow = toolWindow;
 
         // 设置窗体侧边栏按钮
         DefaultActionGroup group = new DefaultActionGroup();
-        group.add(new SettingBar(this));
         group.add(new RefreshBar(this));
 
         ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("bar", group, false);
         toolbar.setTargetComponent(this);
         setToolbar(toolbar.getComponent());
 
-        // 添加
+        // 添加滚动面板
+        JScrollPane scrollPane = new JScrollPane(jTextArea);
+        jTextArea.setEditable(false);
         JBSplitter splitter = new JBSplitter(false);
         splitter.setSplitterProportionKey("main.splitter.key");
-        jTextArea.setEditable(false);
-        splitter.setFirstComponent(jTextArea);
+        splitter.setFirstComponent(scrollPane);
         setContent(splitter);
     }
 
     public Project getProject() {
         return project;
+    }
+
+    public void appendLog(String message) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            jTextArea.append(message + "\n");
+            jTextArea.setCaretPosition(jTextArea.getDocument().getLength());
+        } else {
+            SwingUtilities.invokeLater(() -> {
+                jTextArea.append(message + "\n");
+                jTextArea.setCaretPosition(jTextArea.getDocument().getLength());
+            });
+        }
     }
 
     static class RefreshBar extends DumbAwareAction {
@@ -54,24 +69,7 @@ public class ViewBars extends SimpleToolWindowPanel {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
+            panel.jTextArea.setText("");
         }
-
-    }
-
-
-    static class SettingBar extends DumbAwareAction {
-        private ViewBars panel;
-
-        public SettingBar(ViewBars panel) {
-            super("配置股票", "Click to setting", IconLoader.getIcon("/META-INF/icon-gen.png"));
-            this.panel = panel;
-        }
-
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-        }
-
     }
 }
-
-
