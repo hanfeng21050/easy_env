@@ -1,0 +1,43 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.intellij' version '0.7.3'
+}
+
+group 'om.github.hanfeng21050.easyenv'
+version '1.1.2'
+repositories {
+    mavenCentral()
+    maven { url "https://maven.aliyun.com/repository/public" }
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+    implementation 'com.alibaba.fastjson2:fastjson2:2.0.34'
+}
+
+// See https://github.com/JetBrains/gradle-intellij-plugin/
+intellij {
+    version '2020.2.2'
+    plugins = ['java']
+    pluginName 'easy_env'
+    sameSinceUntilBuild = false
+    updateSinceUntilBuild false
+}
+
+patchPluginXml {
+    changeNotes """
+       First .<br>
+      <em>first</em>"""
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+// 添加 setupDependencies 任务
+task setupDependencies {
+    doLast {
+    }
+}
