@@ -26,6 +26,7 @@ repositories {
 dependencies {
 //    implementation(libs.annotations)
     implementation("com.alibaba.fastjson2:fastjson2:2.0.42")
+        implementation("com.github.jsqlparser:jsqlparser:4.2")
 }
 
 // Set the JVM language level used to build the project. Use Java 11 for 2020.3+, and Java 17 for 2022.2+.
@@ -85,7 +86,7 @@ tasks {
             val start = "<!-- Plugin description -->"
             val end = "<!-- Plugin description end -->"
 
-            with (it.lines()) {
+            with(it.lines()) {
                 if (!containsAll(listOf(start, end))) {
                     throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
                 }

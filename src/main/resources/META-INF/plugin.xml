@@ -5,6 +5,8 @@
     <vendor>hanfeng21050</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.java</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
@@ -15,6 +17,8 @@
         </applicationConfigurable>
         <toolWindow id="testToolWindow" factoryClass="com.github.hanfeng21050.view.ToolWindow.testToolWindowFactory"
                     anchor="bottom"/>
+
+        <localInspection enabledByDefault="true" displayName="EasyEnv-Check" groupName="EasyEnv-Check" implementationClass="com.github.hanfeng21050.inspection.JRESMacroInspection"/>
     </extensions>
 
 
