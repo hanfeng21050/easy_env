@@ -1,4 +1,4 @@
-package com.github.hanfeng21050.view.settings;
+package com.github.hanfeng21050.extensions.settings;
 
 import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.github.hanfeng21050.config.SeeConfig;
@@ -87,8 +87,8 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
         envPanel = ToolbarDecorator.createDecorator(envTable)
                 .setAddAction(anActionButton -> addSetting())
                 .setRemoveAction(anActionButton -> removeSetting())
-                .addExtraAction(createActionButton("生成配置", "/META-INF/icon-gen.png", this::generateConfiguration))
-                .addExtraAction(createActionButton("测试连接", "/META-INF/icon-test.png", this::testConnection))
+                .addExtraAction(createActionButton("生成配置", "/icons/icon-gen.png", this::generateConfiguration))
+                .addExtraAction(createActionButton("测试连接", "/icons/icon-test.png", this::testConnection))
                 .createPanel();
     }
 

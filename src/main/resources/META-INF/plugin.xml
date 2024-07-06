@@ -5,16 +5,25 @@
     <vendor>hanfeng21050</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.java</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.github.hanfeng21050.config.EasyEnvConfigComponent" order="first"/>
-        <applicationConfigurable id="com.github.hanfeng21050.view.settings" displayName="EasyEnv" instance="com.github.hanfeng21050.view.settings.EasyEnvSettingsConfigurable">
-            <configurable parentId="com.github.hanfeng21050.view.settings" displayName="EasyEnvConfig" instance="com.github.hanfeng21050.view.settings.EasyEnvRuleSettingsConfigurable" />
+        <applicationService serviceImplementation="com.github.hanfeng21050.extensions.EasyEnvConfigComponent"
+                            order="first"/>
+        <applicationConfigurable id="com.github.hanfeng21050.extensions.settings" displayName="EasyEnv"
+                                 instance="com.github.hanfeng21050.extensions.settings.EasyEnvSettingsConfigurable">
+            <configurable parentId="com.github.hanfeng21050.extensions.settings" displayName="EasyEnvConfig"
+                          instance="com.github.hanfeng21050.extensions.settings.EasyEnvRuleSettingsConfigurable"/>
         </applicationConfigurable>
-        <toolWindow id="testToolWindow" factoryClass="com.github.hanfeng21050.view.ToolWindow.testToolWindowFactory"
+        <toolWindow id="EasyEnvLog" factoryClass="com.github.hanfeng21050.extensions.ToolWindow.EasyEnvLogWindowFactory"
                     anchor="bottom"/>
+
+        <localInspection enabledByDefault="true" displayName="EasyEnv-Check" groupName="EasyEnv-Check"
+                         implementationClass="com.github.hanfeng21050.extensions.inspection.JRESMacroInspection"
+                         language="JAVA"/>
     </extensions>
 
 

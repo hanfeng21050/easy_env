@@ -1,4 +1,4 @@
-package com.github.hanfeng21050.view.ToolWindow;
+package com.github.hanfeng21050.extensions.ToolWindow;
 
 import com.github.hanfeng21050.utils.Logger;
 import com.intellij.openapi.project.Project;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class testToolWindowFactory implements ToolWindowFactory {
+public class EasyEnvLogWindowFactory implements ToolWindowFactory {
     private static final String DISPLAY_NAME = "";
 
     @Override
@@ -29,7 +29,7 @@ public class testToolWindowFactory implements ToolWindowFactory {
     public void init(@NotNull ToolWindow toolWindow) {
         ToolWindowFactory.super.init(toolWindow);
         Project project = toolWindow.getProject();
-        ViewBars viewPanel = new ViewBars(project, toolWindow);
+        EasyEnvLogWindow viewPanel = new EasyEnvLogWindow(project, toolWindow);
         // 获取内容工厂的实例
         ContentFactory contentFactory = ContentFactory.getInstance();
 

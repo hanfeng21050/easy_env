@@ -25,6 +25,8 @@ public class SeeRequest {
     private static final String ACM_SYSTEM_AUTH_JSON_URL = "/acm/system/auth.json";
     private static final String ACM_DSSP_APPLICATION_QUERY_JSON_URL = "/acm/dssp/application/authority/query.json";
     private static final String ACM_DSSP_CONFIG_GET_COMPARE_CONFIG_JSON_URL = "/acm/dssp/config/getCompareConfig.json";
+    private static final String ACM_BROKER_UF30DEPLOY_EXPORTAPPCONFIG_URL = "/acm/broker/uf30Deploy/exportAppConfig.json";
+
 
     // 登录方法
     public static void login(SeeConfig seeConfig) throws Exception {
@@ -109,6 +111,18 @@ public class SeeRequest {
 
         // 发起获取配置信息的请求
         String response = HttpClientUtil.httpPost(seeConfig.getAddress() + ACM_DSSP_CONFIG_GET_COMPARE_CONFIG_JSON_URL, body, header);
+        return JSONObject.parse(response);
+    }
+
+
+    public static JSONObject getConfigInfoNew(SeeConfig seeConfig, String applicationId, String auth) throws IOException {
+        Map<String, String> body = new HashMap<>();
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+        body.put("appId", applicationId);
+
+        // 发起获取配置信息的请求
+        String response = HttpClientUtil.httpPost(seeConfig.getAddress() + ACM_BROKER_UF30DEPLOY_EXPORTAPPCONFIG_URL, body, header);
         return JSONObject.parse(response);
     }
 

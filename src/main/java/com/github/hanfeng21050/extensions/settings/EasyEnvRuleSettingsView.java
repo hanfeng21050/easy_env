@@ -1,4 +1,4 @@
-package com.github.hanfeng21050.view.settings;
+package com.github.hanfeng21050.extensions.settings;
 
 import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.github.hanfeng21050.config.EasyEnvConfig.ConfigReplaceRule;

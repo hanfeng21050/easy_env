@@ -367,6 +367,14 @@ public class HttpClientUtil {
         }
     }
 
+    public static CloseableHttpResponse httpGetResponse(String url) throws URISyntaxException, IOException {
+        URIBuilder uriBuilder = new URIBuilder(url);
+        // 设置请求参数
+        HttpGet httpGet = new HttpGet(uriBuilder.build());
+        httpGet.getParams().setParameter("http.protocol.allow-circular-redirects", true);
+        return request(httpGet);
+    }
+
 
     /**
      * post

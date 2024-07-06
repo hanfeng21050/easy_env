@@ -1,8 +1,8 @@
 package com.github.hanfeng21050.actions;
 
 import com.github.hanfeng21050.config.EasyEnvConfig;
-import com.github.hanfeng21050.config.EasyEnvConfigComponent;
 import com.github.hanfeng21050.config.SeeConfig;
+import com.github.hanfeng21050.extensions.EasyEnvConfigComponent;
 import com.github.hanfeng21050.utils.MyPluginLoader;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
