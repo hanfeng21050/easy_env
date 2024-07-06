@@ -2,7 +2,10 @@ package com.github.hanfeng21050.extensions.settings;
 
 import com.github.hanfeng21050.config.EasyEnvConfig.SeeConnectInfo;
 import com.github.hanfeng21050.utils.CommonValidateUtil;
-import com.github.hanfeng21050.utils.CryptUtil;
+import com.github.hanfeng21050.utils.PasswordUtil;
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.Credentials;
+import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import org.apache.commons.lang.StringUtils;
@@ -66,7 +69,9 @@ public class SettingAddView extends DialogWrapper {
             seeConnectInfo.setLabel(labelTextField.getText());
             seeConnectInfo.setAddress(addressTextField.getText());
             seeConnectInfo.setUsername(usernameTextField.getText());
-            seeConnectInfo.setPassword(CryptUtil.encryptPassword(passwordTextField.getText()));
+            CredentialAttributes easyEnv = PasswordUtil.createCredentialAttributes(uuid);
+            Credentials credentials = new Credentials(uuid, passwordTextField.getPassword());
+            PasswordSafe.getInstance().set(easyEnv, credentials);
             return seeConnectInfo;
         } catch (Exception e) {
             throw new RuntimeException(e);

@@ -5,6 +5,10 @@ import com.github.hanfeng21050.config.SeeConfig;
 import com.github.hanfeng21050.request.SeeRequest;
 import com.github.hanfeng21050.utils.MyPluginLoader;
 import com.github.hanfeng21050.utils.ObjectUtil;
+import com.github.hanfeng21050.utils.PasswordUtil;
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.Credentials;
+import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -15,6 +19,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ReflectionUtil;
+import org.apache.commons.lang3.SerializationUtils;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -121,6 +126,15 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
                 JAXBContext context = JAXBContext.newInstance(EasyEnvConfig.class);
                 Unmarshaller unmarshaller = context.createUnmarshaller();
                 EasyEnvConfig importedConfig = (EasyEnvConfig) unmarshaller.unmarshal(file);
+
+                // 处理密码
+                List<EasyEnvConfig.SeeConnectInfo> seeConnectInfos = importedConfig.getSeeConnectInfos();
+                for (EasyEnvConfig.SeeConnectInfo seeConnectInfo : seeConnectInfos) {
+                    CredentialAttributes easyEnv = PasswordUtil.createCredentialAttributes(seeConnectInfo.getUuid());
+                    Credentials credentials = new Credentials(seeConnectInfo.getUuid(), seeConnectInfo.getPassword());
+                    PasswordSafe.getInstance().set(easyEnv, credentials);
+                    seeConnectInfo.setPassword("");
+                }
                 // 在这里处理导入的配置对象
                 handleImportedConfig(importedConfig);
                 this.isModify = true;
@@ -212,7 +226,18 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
             context = JAXBContext.newInstance(EasyEnvConfig.class);
             Marshaller marshaller = context.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            marshaller.marshal(config, outputFile);
+
+            EasyEnvConfig clone = SerializationUtils.clone(config);
+
+            for (EasyEnvConfig.SeeConnectInfo seeConnectInfo : clone.getSeeConnectInfos()) {
+                CredentialAttributes credentialAttributes = PasswordUtil.createCredentialAttributes(seeConnectInfo.getUuid());
+                Credentials credentials = PasswordSafe.getInstance().get(credentialAttributes);
+                if (credentials != null) {
+                    String password = credentials.getPasswordAsString();
+                    seeConnectInfo.setPassword(password);
+                }
+            }
+            marshaller.marshal(clone, outputFile);
 
             // 导出成功，显示提示信息
             String successMessage = "配置成功导出到: " + outputFile.getAbsolutePath();
@@ -277,11 +302,10 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
         int selectedRow = envTable.getSelectedRow();
         if (selectedRow != -1) {
             // 在这里执行“测试连接”按钮的逻辑
+            String uuid = (String) envTable.getValueAt(selectedRow, 0);
             String address = (String) envTable.getValueAt(selectedRow, 2);
             String username = (String) envTable.getValueAt(selectedRow, 3);
-            String password = (String) envTable.getValueAt(selectedRow, 4);
-
-            SeeConfig seeConfig = new SeeConfig(address, username, password);
+            SeeConfig seeConfig = new SeeConfig(uuid, address, username);
             Project project = e.getProject();
             MyPluginLoader myPluginLoader = new MyPluginLoader(project, seeConfig);
             myPluginLoader.startBlockingLoadingProcess();
@@ -298,11 +322,10 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
             int selectedRow = envTable.getSelectedRow();
             if (selectedRow != -1) {
                 // 在这里执行“测试连接”按钮的逻辑
+                String uuid = (String) envTable.getValueAt(selectedRow, 0);
                 String address = (String) envTable.getValueAt(selectedRow, 2);
                 String username = (String) envTable.getValueAt(selectedRow, 3);
-                String password = (String) envTable.getValueAt(selectedRow, 4);
-
-                SeeConfig seeConfig = new SeeConfig(address, username, password);
+                SeeConfig seeConfig = new SeeConfig(uuid, address, username);
                 SeeRequest.login(seeConfig);
                 ApplicationManager.getApplication().invokeLater(() -> {
                     Messages.showInfoMessage("连接成功", "提示");
@@ -343,7 +366,6 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
                     String label = (String) customModel.getValueAt(row, 1);
                     String address = (String) customModel.getValueAt(row, 2);
                     String username = (String) customModel.getValueAt(row, 3);
-                    String password = (String) customModel.getValueAt(row, 4);
 
                     for (int i = 0; i < seeConnectInfos.size(); i++) {
                         EasyEnvConfig.SeeConnectInfo seeConnectInfo = seeConnectInfos.get(i);
@@ -351,7 +373,6 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
                             seeConnectInfo.setLabel(label);
                             seeConnectInfo.setAddress(address);
                             seeConnectInfo.setUsername(username);
-                            seeConnectInfo.setPassword(password);
                             isModify = true;
                         }
                     }
@@ -375,7 +396,12 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
             row.add(seeConnectInfo.getPassword());
             customData.add(row);
         }
-        return new DefaultTableModel(customData, headers1);
+        return new DefaultTableModel(customData, headers1) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
     }
 
     /**
