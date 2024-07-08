@@ -26,6 +26,9 @@ public class SeeRequest {
     private static final String ACM_DSSP_APPLICATION_QUERY_JSON_URL = "/acm/dssp/application/authority/query.json";
     private static final String ACM_DSSP_CONFIG_GET_COMPARE_CONFIG_JSON_URL = "/acm/dssp/config/getCompareConfig.json";
     private static final String ACM_BROKER_UF30DEPLOY_EXPORTAPPCONFIG_URL = "/acm/broker/uf30Deploy/exportAppConfig.json";
+    private static final String ACM_APPLICATION_COMPUTERSTATUS_UF30ANDXONEAPPS_URL = "/acm/application/computerStatus/uf30AndXoneApps.json";
+    private static final String ACM_BROKER_APPMENU_LOCALCACHEFORMDATAONLYCOMPUTER_URL = "/acm/broker/appMenu/localCacheFormDataOnlyComputer.json";
+    private static final String ACM_BROKER_APPMENU_LOCALCACHEFORMDATAONLYTABLE_URL = "/acm/broker/appMenu/localCacheFormDataOnlyTable.json";
 
 
     // 登录方法
@@ -114,7 +117,7 @@ public class SeeRequest {
         return JSONObject.parse(response);
     }
 
-
+    // 获取新版配置文件
     public static JSONObject getConfigInfoNew(SeeConfig seeConfig, String applicationId, String auth) throws IOException {
         Map<String, String> body = new HashMap<>();
         Map<String, String> header = new HashMap<>();
@@ -125,6 +128,36 @@ public class SeeRequest {
         String response = HttpClientUtil.httpPost(seeConfig.getAddress() + ACM_BROKER_UF30DEPLOY_EXPORTAPPCONFIG_URL, body, header);
         return JSONObject.parse(response);
     }
+
+    public static JSONObject getUf30AndXoneApps(SeeConfig seeConfig, String auth) throws IOException, URISyntaxException {
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpGet(seeConfig.getAddress() + ACM_APPLICATION_COMPUTERSTATUS_UF30ANDXONEAPPS_URL, null, header);
+        return JSONObject.parse(response);
+    }
+
+    public static JSONObject getLocalCacheFormDataOnlyComputer(SeeConfig seeConfig, String auth, String appId) throws IOException, URISyntaxException {
+        Map<String, String> header = new HashMap<>();
+        Map<String, String> params = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+        params.put("appId", appId);
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpGet(seeConfig.getAddress() + ACM_BROKER_APPMENU_LOCALCACHEFORMDATAONLYCOMPUTER_URL, params, header);
+        return JSONObject.parse(response);
+    }
+
+    public static JSONObject getLocalCacheFormDataOnlyTable(SeeConfig seeConfig, String auth, String ip, String port) throws IOException, URISyntaxException {
+        Map<String, String> header = new HashMap<>();
+        Map<String, String> body = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+        body.put("ip", ip);
+        body.put("port", port);
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpPostJSON(seeConfig.getAddress() + ACM_BROKER_APPMENU_LOCALCACHEFORMDATAONLYTABLE_URL, body, header);
+        return JSONObject.parse(response);
+    }
+
 
     // 处理错误信息方法
     private static   void handleError(String errorInfo) {

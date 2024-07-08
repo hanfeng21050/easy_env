@@ -18,6 +18,8 @@
             <configurable parentId="com.github.hanfeng21050.extensions.settings" displayName="EasyEnvConfig"
                           instance="com.github.hanfeng21050.extensions.settings.EasyEnvRuleSettingsConfigurable"/>
         </applicationConfigurable>
+        <toolWindow id="cacheMgr" factoryClass="com.github.hanfeng21050.extensions.ToolWindow.CacheMgrWindowFactory"
+                    anchor="right"/>
         <toolWindow id="EasyEnvLog" factoryClass="com.github.hanfeng21050.extensions.ToolWindow.EasyEnvLogWindowFactory"
                     anchor="bottom"/>
 

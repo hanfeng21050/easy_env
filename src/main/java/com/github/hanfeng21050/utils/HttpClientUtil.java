@@ -1,5 +1,6 @@
 package com.github.hanfeng21050.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
@@ -229,6 +230,27 @@ public class HttpClientUtil {
             }
         }
     }
+
+
+    public static String httpPostJSON(String url, Map<String, String> body, Map<String, String> header) throws IOException {
+        HttpPost httpPost = new HttpPost(url);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonBody = objectMapper.writeValueAsString(body);
+        StringEntity entity = new StringEntity(jsonBody, Consts.UTF_8);
+        httpPost.setEntity(entity);
+        httpPost.setHeader("Content-Type", "application/json");
+        setRequestHeader(httpPost, header);
+        CloseableHttpResponse response = null;
+        try {
+            response = request(httpPost);
+            return EntityUtils.toString(response.getEntity(), Consts.UTF_8);
+        } finally {
+            if (null != response) {
+                EntityUtils.consume(response.getEntity());
+            }
+        }
+    }
+
 
     /**
      * post请求
