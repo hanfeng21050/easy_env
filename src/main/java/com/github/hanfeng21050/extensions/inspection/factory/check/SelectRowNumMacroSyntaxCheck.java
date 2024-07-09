@@ -80,12 +80,12 @@ public class SelectRowNumMacroSyntaxCheck extends MacroSyntaxCheck implements Sy
         }
 
         if (StringUtils.isNotBlank(param5)) {
-            param5 = param3.replace(",", " and ");
-            try {
-                CCJSqlParserUtil.parse("select * from table where " + param5);
-            } catch (Exception e) {
-                return generateError("错误：无法解析[自定义动态条件].", e.getMessage(), template, doc);
-            }
+//            param5 = param3.replace(",", " and ");
+//            try {
+//                CCJSqlParserUtil.parse("select * from table where " + param5);
+//            } catch (Exception e) {
+//                return generateError("错误：无法解析[自定义动态条件].", e.getMessage(), template, doc);
+//            }
         }
 
         if (StringUtils.isNotBlank(param6)) {

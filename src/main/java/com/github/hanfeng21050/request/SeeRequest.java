@@ -159,6 +159,14 @@ public class SeeRequest {
     }
 
 
+    public static JSONObject getCacheData(String url, Map<String, String> params) throws IOException, URISyntaxException {
+        Map<String, String> header = new HashMap<>();
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpPostJSON(url, params, header);
+        return JSONObject.parse(response);
+    }
+
+
     // 处理错误信息方法
     private static   void handleError(String errorInfo) {
         ApplicationManager.getApplication().invokeLater(() -> {

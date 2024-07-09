@@ -96,12 +96,12 @@ public class SelectMacroSyntaxCheck extends MacroSyntaxCheck implements SyntaxCh
         }
 
         if (StringUtils.isNotBlank(param4)) {
-            param4 = param3.replace(",", " and ");
-            try {
-                CCJSqlParserUtil.parse("select * from table where " + param4);
-            } catch (Exception e) {
-                return generateError("错误：无法解析[自定义动态条件].", e.getMessage(), template, doc);
-            }
+//            param4 = param3.replace(",", " and ");
+//            try {
+//                CCJSqlParserUtil.parse("select * from table where " + param4);
+//            } catch (Exception e) {
+//                return generateError("错误：无法解析[自定义动态条件].", e.getMessage(), template, doc);
+//            }
         }
 
         if (StringUtils.isNotBlank(param5)) {

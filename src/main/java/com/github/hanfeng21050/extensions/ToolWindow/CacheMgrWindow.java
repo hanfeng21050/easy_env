@@ -5,7 +5,6 @@ import com.alibaba.fastjson2.JSONObject;
 import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.github.hanfeng21050.config.SeeConfig;
 import com.github.hanfeng21050.request.SeeRequest;
-import com.github.hanfeng21050.utils.HttpClientUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,30 +14,27 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class CacheMgrWindow {
-    private final static Logger log = LoggerFactory.getLogger(CacheMgrWindow.class);
+    private static final Logger log = LoggerFactory.getLogger(CacheMgrWindow.class);
 
     // 登录信息
     private String auth = "";
     private Map<String, Map<String, String>> dicts = new HashMap<>();
-
-
     private final EasyEnvConfig config;
     private JComboBox<String> macroSvr;
     private JComboBox<String> nodeIp;
     private JComboBox<String> memoryTable;
     private JTable table1;
-    private JButton RefresButton;
-    private JPanel Jpanel;
+    private JButton refreshButton;
+    private JPanel panel;
     private JButton queryButton;
     private JTextField condition;
     private JComboBox<String> env;
+
+    private Model model;
 
     public CacheMgrWindow(EasyEnvConfig easyEnvConfig) {
         this.config = easyEnvConfig;
@@ -47,18 +43,29 @@ public class CacheMgrWindow {
         queryButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                performQuery();
+                try {
+                    performQuery();
+                } catch (IOException | URISyntaxException ex) {
+                    handleError(ex);
+                }
             }
         });
 
-        RefresButton.addActionListener(new ActionListener() {
+        refreshButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                clearFields();
+                env.removeAllItems();
+                macroSvr.removeAllItems();
+                nodeIp.removeAllItems();
+                memoryTable.removeAllItems();
+                condition.setText("");
+                table1.setModel(new javax.swing.table.DefaultTableModel(new String[0][0], new String[0]));
+
+                initializeComponents();
             }
         });
 
-        // 初始化其他组件，比如JComboBox和JTable的数据
+        // 初始化组件
         initializeComponents();
 
         // 添加下拉框的事件监听器
@@ -66,30 +73,27 @@ public class CacheMgrWindow {
     }
 
     private void initializeComponents() {
+        model = new Model();
         List<EasyEnvConfig.SeeConnectInfo> seeConnectInfos = config.getSeeConnectInfos();
         if (!seeConnectInfos.isEmpty()) {
-            env.addItem(null);
+            env.removeAllItems();
             for (EasyEnvConfig.SeeConnectInfo seeConnectInfo : seeConnectInfos) {
                 env.addItem(seeConnectInfo.getLabel());
             }
+            model.setEnv((String) env.getSelectedItem());
+
             String selectedItem = (String) env.getSelectedItem();
-            Optional<EasyEnvConfig.SeeConnectInfo> first = config.getSeeConnectInfos().stream().filter(x -> x.getLabel().equals(selectedItem)).findFirst();
-            if (first.isPresent()) {
-                EasyEnvConfig.SeeConnectInfo seeConnectInfo = first.get();
-                SeeConfig seeConfig = new SeeConfig(seeConnectInfo);
-                refreshMacroSvr(seeConfig);
+            if (selectedItem != null) {
+                Optional<EasyEnvConfig.SeeConnectInfo> first = config.getSeeConnectInfos().stream()
+                        .filter(x -> x.getLabel().equals(selectedItem))
+                        .findFirst();
+                first.ifPresent(seeConnectInfo -> {
+                    SeeConfig seeConfig = new SeeConfig(seeConnectInfo);
+                    refreshMacroSvr(seeConfig);
+                });
             }
         }
-
-        // 示例：初始化JTable
-        String[] columnNames = {"Column1", "Column2"};
-        Object[][] data = {
-                {"Data1", "Data2"},
-                {"Data3", "Data4"}
-        };
-        table1.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
     }
-
 
     private void addComboBoxListeners() {
         env.addActionListener(new ActionListener() {
@@ -97,12 +101,13 @@ public class CacheMgrWindow {
             public void actionPerformed(ActionEvent e) {
                 String selectedItem = (String) env.getSelectedItem();
                 if (selectedItem != null) {
-                    Optional<EasyEnvConfig.SeeConnectInfo> first = config.getSeeConnectInfos().stream().filter(x -> x.getLabel().equals(selectedItem)).findFirst();
-                    if (first.isPresent()) {
-                        EasyEnvConfig.SeeConnectInfo seeConnectInfo = first.get();
+                    Optional<EasyEnvConfig.SeeConnectInfo> first = config.getSeeConnectInfos().stream()
+                            .filter(x -> x.getLabel().equals(selectedItem))
+                            .findFirst();
+                    first.ifPresent(seeConnectInfo -> {
                         SeeConfig seeConfig = new SeeConfig(seeConnectInfo);
                         refreshMacroSvr(seeConfig);
-                    }
+                    });
                 }
             }
         });
@@ -111,15 +116,18 @@ public class CacheMgrWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String selectedItem = (String) env.getSelectedItem();
-                if (selectedItem != null) {
-                    Optional<EasyEnvConfig.SeeConnectInfo> first = config.getSeeConnectInfos().stream().filter(x -> x.getLabel().equals(selectedItem)).findFirst();
-                    if (first.isPresent()) {
-                        EasyEnvConfig.SeeConnectInfo seeConnectInfo = first.get();
+                String macroSvrSelectedItem = (String) macroSvr.getSelectedItem();
+                model.setMacroName(macroSvrSelectedItem);
+
+                if (macroSvrSelectedItem != null) {
+                    Optional<EasyEnvConfig.SeeConnectInfo> first = config.getSeeConnectInfos().stream()
+                            .filter(x -> x.getLabel().equals(selectedItem))
+                            .findFirst();
+                    first.ifPresent(seeConnectInfo -> {
                         SeeConfig seeConfig = new SeeConfig(seeConnectInfo);
                         refreshNodeIp(seeConfig);
-                    }
+                    });
                 }
-
             }
         });
 
@@ -127,71 +135,121 @@ public class CacheMgrWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String selectedItem = (String) env.getSelectedItem();
+                String nodeIpSelectedItem = (String) nodeIp.getSelectedItem();
+
+                if (nodeIpSelectedItem != null) {
+                    String[] split = dicts.get("nodeIp").get(nodeIpSelectedItem).split(":");
+                    model.setNodeIp(new NodeIp(split[0], split[1]));
+                }
+
                 if (selectedItem != null) {
-                    Optional<EasyEnvConfig.SeeConnectInfo> first = config.getSeeConnectInfos().stream().filter(x -> x.getLabel().equals(selectedItem)).findFirst();
-                    if (first.isPresent()) {
-                        EasyEnvConfig.SeeConnectInfo seeConnectInfo = first.get();
+                    Optional<EasyEnvConfig.SeeConnectInfo> first = config.getSeeConnectInfos().stream()
+                            .filter(x -> x.getLabel().equals(selectedItem))
+                            .findFirst();
+                    first.ifPresent(seeConnectInfo -> {
                         SeeConfig seeConfig = new SeeConfig(seeConnectInfo);
                         refreshMemoryTable(seeConfig);
-                    }
+                    });
                 }
+            }
+        });
+
+        memoryTable.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String selectedItem = (String) memoryTable.getSelectedItem();
+                model.setMemoryTable(selectedItem);
             }
         });
     }
 
-    private void performQuery() {
-        // 查询逻辑
-        String conditionText = condition.getText();
-        // 根据conditionText执行查询操作
-        System.out.println("查询条件: " + conditionText);
+    private void performQuery() throws IOException, URISyntaxException {
+        ApplicationManager.getApplication().invokeLater(() -> {
+            Map<String, String> params = new HashMap<>();
+            params.put("tableName", model.getMemoryTable());
+            params.put("pageNum", "1");
+            params.put("pageSize", "1000");
+
+            String url = "http://" + model.getNodeIp().getIp() + ":" + model.getNodeIp().getPort() + "/localCache/getCacheByPage";
+
+            JSONObject cacheData = null;
+            try {
+                cacheData = SeeRequest.getCacheData(url, params);
+            } catch (IOException | URISyntaxException ex) {
+                handleError(ex);
+            }
+
+            if (cacheData != null && "true".equals(cacheData.getString("success"))) {
+                JSONObject jsonData = cacheData.getJSONObject("data").getJSONObject("data");
+
+                Set<String> rowKeys = jsonData.keySet();
+                String[][] table = new String[rowKeys.size()][];
+                String[] columnNames = null;
+
+                int rowIndex = 0;
+                for (String rowKey : rowKeys) {
+                    JSONArray rowArray = jsonData.getJSONArray(rowKey);
+                    JSONObject firstRowObject = rowArray.getJSONObject(0);
+                    Set<String> columnKeys = firstRowObject.keySet();
+
+                    if (columnNames == null) {
+                        columnNames = columnKeys.toArray(new String[0]);
+                    }
+
+                    String[] rowData = new String[columnKeys.size()];
+                    int colIndex = 0;
+                    for (String columnKey : columnKeys) {
+                        rowData[colIndex++] = firstRowObject.getString(columnKey);
+                    }
+                    table[rowIndex++] = rowData;
+                }
+
+                table1.setModel(new javax.swing.table.DefaultTableModel(table, columnNames));
+                table1.setDefaultEditor(Object.class, null);
+            }
+
+        });
     }
 
-    private void clearFields() {
-        // 清空所有输入字段和选择框
-        condition.setText("");
-        macroSvr.setSelectedIndex(-1);
-        nodeIp.setSelectedIndex(-1);
-        memoryTable.setSelectedIndex(-1);
+    public JPanel getPanel() {
+        return panel;
     }
-
-    public JPanel getPanel1() {
-        return Jpanel;
-    }
-
 
     // 刷新微服务列表
     private void refreshMacroSvr(SeeConfig seeConfig) {
         macroSvr.removeAllItems();
         nodeIp.removeAllItems();
         memoryTable.removeAllItems();
-        this.dicts = new HashMap<>();
-        this.auth = "";
+        dicts = new HashMap<>();
+        auth = "";
+
         // 更新 UI 必须在事件调度线程上进行
         ApplicationManager.getApplication().invokeLater(() -> {
             CompletableFuture.supplyAsync(() -> {
                 try {
                     SeeRequest.login(seeConfig);
-                    this.auth = SeeRequest.getAuth(seeConfig);
-                    return SeeRequest.getUf30AndXoneApps(seeConfig, this.auth);
+                    auth = SeeRequest.getAuth(seeConfig);
+                    return SeeRequest.getUf30AndXoneApps(seeConfig, auth);
                 } catch (Exception ex) {
-                    throw new RuntimeException(ex);
+                    handleError(ex);
+                    return null;
                 }
             }).thenAccept(uf30AndXoneApps -> {
+                if (uf30AndXoneApps != null) {
+                    macroSvr.removeAllItems();
+                    JSONArray data = uf30AndXoneApps.getJSONArray("data");
 
-                macroSvr.removeAllItems();
-                JSONArray data = uf30AndXoneApps.getJSONArray("data");
-
-                Map<String, String> dict = new HashMap<>();
-                macroSvr.addItem(null);
-                for (int i = 0; i < data.size(); i++) {
-                    JSONObject jsonObject = data.getJSONObject(i);
-                    macroSvr.addItem(jsonObject.getString("name"));
-                    dict.put(jsonObject.getString("name"), jsonObject.getString("id"));
+                    Map<String, String> dict = new HashMap<>();
+                    macroSvr.addItem(null);
+                    for (int i = 0; i < data.size(); i++) {
+                        JSONObject jsonObject = data.getJSONObject(i);
+                        macroSvr.addItem(jsonObject.getString("name"));
+                        dict.put(jsonObject.getString("name"), jsonObject.getString("id"));
+                    }
+                    dicts.put("macroSvr", dict);
                 }
-                this.dicts.put("macroSvr", dict);
-
             }).exceptionally(ex -> {
-                log.error("刷新微服务失败：{}", ex.getMessage(), ex); // 异常处理
+                log.error("刷新微服务失败：{}", ex.getMessage(), ex);
                 return null;
             });
         });
@@ -207,31 +265,31 @@ public class CacheMgrWindow {
                 String value = dicts.get("macroSvr").get((String) macroSvr.getSelectedItem());
                 if (value != null) {
                     try {
-                        return SeeRequest.getLocalCacheFormDataOnlyComputer(seeConfig, this.auth, value);
+                        return SeeRequest.getLocalCacheFormDataOnlyComputer(seeConfig, auth, value);
                     } catch (IOException | URISyntaxException e) {
-                        throw new RuntimeException(e);
+                        handleError(e);
+                        return null;
                     }
                 }
                 return null;
             }).thenAccept(uf30AndXoneApps -> {
-                if (uf30AndXoneApps == null) return;
-                JSONArray data = uf30AndXoneApps.getJSONArray("data");
-                Map<String, String> dict = new HashMap<>();
-                nodeIp.addItem(null);
-                for (int i = 0; i < data.size(); i++) {
-                    JSONObject jsonObject = data.getJSONObject(i);
-                    nodeIp.addItem(jsonObject.getString("address"));
-                    dict.put(jsonObject.getString("address"), jsonObject.getString("address") + ":" + jsonObject.getString("httpPort"));
+                if (uf30AndXoneApps != null) {
+                    JSONArray data = uf30AndXoneApps.getJSONArray("data");
+                    Map<String, String> dict = new HashMap<>();
+                    nodeIp.addItem(null);
+                    for (int i = 0; i < data.size(); i++) {
+                        JSONObject jsonObject = data.getJSONObject(i);
+                        nodeIp.addItem(jsonObject.getString("address"));
+                        dict.put(jsonObject.getString("address"), jsonObject.getString("address") + ":" + jsonObject.getString("httpPort"));
+                    }
+                    dicts.put("nodeIp", dict);
                 }
-                this.dicts.put("nodeIp", dict);
             }).exceptionally(ex -> {
-                log.error("刷新微服务失败：{}", ex.getMessage(), ex); // 异常处理
+                log.error("刷新节点IP失败：{}", ex.getMessage(), ex);
                 return null;
             });
         });
-
     }
-
 
     // 刷新内存表
     private void refreshMemoryTable(SeeConfig seeConfig) {
@@ -243,28 +301,108 @@ public class CacheMgrWindow {
                 if (value != null) {
                     String[] split = value.split(":");
                     try {
-                        return SeeRequest.getLocalCacheFormDataOnlyTable(seeConfig, this.auth, split[0], split[1]);
+                        return SeeRequest.getLocalCacheFormDataOnlyTable(seeConfig, auth, split[0], split[1]);
                     } catch (IOException | URISyntaxException e) {
-                        throw new RuntimeException(e);
+                        handleError(e);
+                        return null;
                     }
                 }
                 return null;
             }).thenAccept(uf30AndXoneApps -> {
-                if (uf30AndXoneApps == null) return;
-
-                JSONArray data = uf30AndXoneApps.getJSONArray("data");
-                Map<String, String> dict = new HashMap<>();
-                memoryTable.addItem(null);
-                for (int i = 0; i < data.size(); i++) {
-                    String table = data.getString(i);
-                    memoryTable.addItem(table);
-                    dict.put(table, table);
+                if (uf30AndXoneApps != null) {
+                    JSONArray data = uf30AndXoneApps.getJSONArray("data");
+                    Map<String, String> dict = new HashMap<>();
+                    memoryTable.addItem(null);
+                    for (int i = 0; i < data.size(); i++) {
+                        String table = data.getString(i);
+                        memoryTable.addItem(table);
+                        dict.put(table, table);
+                    }
+                    dicts.put("memoryTable", dict);
                 }
-                this.dicts.put("memoryTable", dict);
             }).exceptionally(ex -> {
-                log.error("刷新微服务失败：{}", ex.getMessage(), ex); // 异常处理
+                log.error("刷新内存表失败：{}", ex.getMessage(), ex);
                 return null;
             });
         });
+    }
+
+    private void handleError(Exception ex) {
+        log.error("操作失败：{}", ex.getMessage(), ex);
+        JOptionPane.showMessageDialog(panel, "操作失败：" + ex.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+    }
+
+    class Model {
+        private String env;
+        private String macroName;
+        private NodeIp nodeIp;
+        private String memoryTable;
+        private String condition;
+
+        public String getEnv() {
+            return env;
+        }
+
+        public void setEnv(String env) {
+            this.env = env;
+        }
+
+        public String getMacroName() {
+            return macroName;
+        }
+
+        public void setMacroName(String macroName) {
+            this.macroName = macroName;
+        }
+
+        public NodeIp getNodeIp() {
+            return nodeIp;
+        }
+
+        public void setNodeIp(NodeIp nodeIp) {
+            this.nodeIp = nodeIp;
+        }
+
+        public String getMemoryTable() {
+            return memoryTable;
+        }
+
+        public void setMemoryTable(String memoryTable) {
+            this.memoryTable = memoryTable;
+        }
+
+        public String getCondition() {
+            return condition;
+        }
+
+        public void setCondition(String condition) {
+            this.condition = condition;
+        }
+    }
+
+    class NodeIp {
+        private String ip;
+        private String port;
+
+        public NodeIp(String ip, String port) {
+            this.ip = ip;
+            this.port = port;
+        }
+
+        public String getIp() {
+            return ip;
+        }
+
+        public void setIp(String ip) {
+            this.ip = ip;
+        }
+
+        public String getPort() {
+            return port;
+        }
+
+        public void setPort(String port) {
+            this.port = port;
+        }
     }
 }

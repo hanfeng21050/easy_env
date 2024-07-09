@@ -22,7 +22,7 @@ public class CacheMgrWindowFactory implements ToolWindowFactory {
         ContentFactory contentFactory = ContentFactory.getInstance();
 
         //创建一个Content，也就是toolwindow里面的一个tab页
-        Content content = contentFactory.createContent(cacheMgrWindow.getPanel1(), "缓存管理", false);
+        Content content = contentFactory.createContent(cacheMgrWindow.getPanel(), "缓存管理", false);
 
         //将Content加入到toolwindow中
         toolWindow.getContentManager().addContent(content);

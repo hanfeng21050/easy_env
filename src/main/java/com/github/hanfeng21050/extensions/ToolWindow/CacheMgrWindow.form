@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.github.hanfeng21050.extensions.ToolWindow.CacheMgrWindow">
-  <grid id="27dc6" binding="Jpanel" layout-manager="GridLayoutManager" row-count="3" column-count="9" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="panel" layout-manager="GridLayoutManager" row-count="3" column-count="9" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="5" left="5" bottom="5" right="5"/>
     <constraints>
       <xy x="20" y="20" width="967" height="545"/>
@@ -13,11 +13,15 @@
           <grid row="2" column="0" row-span="1" col-span="9" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
-        <border type="none" title=""/>
+        <border type="none" title="缓存"/>
         <children>
           <component id="71ade" class="javax.swing.JTable" binding="table1" default-binding="true">
             <constraints/>
-            <properties/>
+            <properties>
+              <autoCreateRowSorter value="true"/>
+              <autoResizeMode value="2"/>
+              <enabled value="true"/>
+            </properties>
           </component>
         </children>
       </scrollpane>
@@ -105,7 +109,7 @@
           <editable value="false"/>
         </properties>
       </component>
-      <component id="8e95a" class="javax.swing.JButton" binding="RefresButton">
+      <component id="8e95a" class="javax.swing.JButton" binding="refreshButton">
         <constraints>
           <grid row="1" column="7" row-span="1" col-span="1" vsize-policy="0" hsize-policy="4" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
