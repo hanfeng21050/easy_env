@@ -17,8 +17,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class CacheMgrWindow {
     private static final Logger log = LoggerFactory.getLogger(CacheMgrWindow.class);
@@ -197,7 +195,7 @@ public class CacheMgrWindow {
         String nodeIpItem = (String) nodeIp.getSelectedItem();
         String memoryTableItem = (String) memoryTable.getSelectedItem();
 
-        if(StringUtils.isBlank(envItem) || StringUtils.isBlank(macroSvrItem) || StringUtils.isBlank(nodeIpItem) || StringUtils.isBlank(memoryTableItem)) {
+        if (StringUtils.isBlank(envItem) || StringUtils.isBlank(macroSvrItem) || StringUtils.isBlank(nodeIpItem) || StringUtils.isBlank(memoryTableItem)) {
             return;
         }
 
@@ -362,6 +360,13 @@ public class CacheMgrWindow {
 
     public void setTableData(JSONObject jsonData, String condition) {
         Set<String> rowKeys = jsonData.keySet();
+
+        if (rowKeys.isEmpty() || rowKeys.contains("all#")) {
+            table1.setModel(new javax.swing.table.DefaultTableModel(new String[0][0], new String[0]));
+            table1.setDefaultEditor(Object.class, null);
+            return;
+        }
+
         List<List<String>> arr = new ArrayList<>();
         List<String> header = new ArrayList<>();
         int rowIndex = 0;
@@ -374,7 +379,7 @@ public class CacheMgrWindow {
 
             List<String> row = new ArrayList<>();
             for (String columnKey : columnKeys) {
-                if(rowIndex == 0) {
+                if (rowIndex == 0) {
                     String index = "";
                     for (int i = 0; i < split.length; i++) {
                         if (i % 2 == 0 && columnKey.replaceAll("_", "").equalsIgnoreCase(split[i].replaceAll("_", ""))) {
@@ -402,7 +407,7 @@ public class CacheMgrWindow {
             if (!row.isEmpty()) {
                 arr.add(row);
             }
-            rowIndex ++;
+            rowIndex++;
         }
         table1.setModel(new javax.swing.table.DefaultTableModel(listTo2DArray(arr), header.toArray()));
         table1.setDefaultEditor(Object.class, null);
@@ -425,30 +430,6 @@ public class CacheMgrWindow {
         }
 
         return array;
-    }
-
-    public static String convertSnakeToCamel(String snakeCaseString) {
-        if (snakeCaseString == null || snakeCaseString.isEmpty()) {
-            return snakeCaseString;
-        }
-
-        StringBuilder camelCaseString = new StringBuilder();
-        boolean nextCharUpperCase = false;
-
-        for (char c : snakeCaseString.toCharArray()) {
-            if (c == '_') {
-                nextCharUpperCase = true;
-            } else {
-                if (nextCharUpperCase) {
-                    camelCaseString.append(Character.toUpperCase(c));
-                    nextCharUpperCase = false;
-                } else {
-                    camelCaseString.append(c);
-                }
-            }
-        }
-
-        return camelCaseString.toString();
     }
 
     static class Model {
