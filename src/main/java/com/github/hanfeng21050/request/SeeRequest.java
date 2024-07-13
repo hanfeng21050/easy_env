@@ -29,6 +29,8 @@ public class SeeRequest {
     private static final String ACM_APPLICATION_COMPUTERSTATUS_UF30ANDXONEAPPS_URL = "/acm/application/computerStatus/uf30AndXoneApps.json";
     private static final String ACM_BROKER_APPMENU_LOCALCACHEFORMDATAONLYCOMPUTER_URL = "/acm/broker/appMenu/localCacheFormDataOnlyComputer.json";
     private static final String ACM_BROKER_APPMENU_LOCALCACHEFORMDATAONLYTABLE_URL = "/acm/broker/appMenu/localCacheFormDataOnlyTable.json";
+    private static final String ACM_GOVERNANCE_SERVICE_PAGESERVICELIST_URL = "/acm/governance/service/pageServiceList.json";
+    private static final String ACM_GOVERNANCE_SERVICE_SERVICEINFOQUERY_URL = "/acm/governance/service/serviceInfoQuery.json";
 
 
     // 登录方法
@@ -173,5 +175,29 @@ public class SeeRequest {
             Messages.showErrorDialog("error: " + errorInfo, "错误");
         });
         throw new RuntimeException(errorInfo);
+    }
+
+    public static JSONObject getServiceList(SeeConfig seeConfig, String applicationId, String auth) throws IOException {
+        Map<String, String> body = new HashMap<>();
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+        body.put("appId", applicationId);
+        body.put("offset", "0");
+        body.put("limit", "9999");
+        body.put("runStatus", "running");
+
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpPost(seeConfig.getAddress() + ACM_GOVERNANCE_SERVICE_PAGESERVICELIST_URL, body, header);
+        JSONObject parse = JSONObject.parse(response);
+        return parse;
+    }
+
+    public static JSONObject getServiceInfo(SeeConfig seeConfig, String auth, Map<String, String> body) throws IOException {
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpPost(seeConfig.getAddress() + ACM_GOVERNANCE_SERVICE_SERVICEINFOQUERY_URL, body, header);
+        return JSONObject.parse(response);
     }
 }

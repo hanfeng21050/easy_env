@@ -23,7 +23,7 @@ public class CacheMgrWindow {
 
     // 登录信息
     private String auth = "";
-    private Map<String, Map<String, String>> dicts = new HashMap<>();
+    List<ServerInfo> serverInfos;
     private final EasyEnvConfig config;
     private JComboBox<String> macroSvr;
     private JComboBox<String> nodeIp;
@@ -34,8 +34,8 @@ public class CacheMgrWindow {
     private JButton queryButton;
     private JTextField condition;
     private JComboBox<String> env;
-
     private Model model;
+    private String appId = "";
 
     /**
      * 构造事件
@@ -102,7 +102,6 @@ public class CacheMgrWindow {
                         .findFirst();
                 first.ifPresent(seeConnectInfo -> {
                     SeeConfig seeConfig = new SeeConfig(seeConnectInfo);
-                    refreshMacroSvr(seeConfig);
                 });
             }
         }
@@ -155,11 +154,7 @@ public class CacheMgrWindow {
             public void actionPerformed(ActionEvent e) {
                 String selectedItem = (String) env.getSelectedItem();
                 String nodeIpSelectedItem = (String) nodeIp.getSelectedItem();
-
-                if (nodeIpSelectedItem != null) {
-                    String[] split = dicts.get("nodeIp").get(nodeIpSelectedItem).split(":");
-                    model.setNodeIp(new NodeIp(split[0], split[1]));
-                }
+                model.setNodeIp(nodeIpSelectedItem);
 
                 if (selectedItem != null) {
                     Optional<EasyEnvConfig.SeeConnectInfo> first = config.getSeeConnectInfos().stream()
@@ -205,7 +200,9 @@ public class CacheMgrWindow {
             params.put("pageNum", "1");
             params.put("pageSize", "1000");
 
-            String url = "http://" + model.getNodeIp().getIp() + ":" + model.getNodeIp().getPort() + "/localCache/getCacheByPage";
+            String[] split = model.getNodeIp().split(":");
+
+            String url = "http://" + split[0].trim() + ":" + split[1].trim() + "/localCache/getCacheByPage";
 
             JSONObject cacheData = null;
             try {
@@ -231,7 +228,6 @@ public class CacheMgrWindow {
         macroSvr.removeAllItems();
         nodeIp.removeAllItems();
         memoryTable.removeAllItems();
-        dicts = new HashMap<>();
         auth = "";
 
         // 更新 UI 必须在事件调度线程上进行
@@ -240,25 +236,34 @@ public class CacheMgrWindow {
                 try {
                     SeeRequest.login(seeConfig);
                     auth = SeeRequest.getAuth(seeConfig);
-                    return SeeRequest.getUf30AndXoneApps(seeConfig, auth);
+                    appId = SeeRequest.getApplication(seeConfig, "服务控制台", auth);
+                    JSONObject serviceList = SeeRequest.getServiceList(seeConfig, appId, auth);
+
+                    serverInfos = new ArrayList<>();
+                    if (serviceList != null && serviceList.getString("message").equals("success")) {
+                        JSONArray jsonArray = serviceList.getJSONObject("data").getJSONArray("data_list");
+                        for (int i = 0; i < jsonArray.size(); i++) {
+                            ServerInfo serverInfo = new ServerInfo();
+                            JSONObject server = jsonArray.getJSONObject(i);
+
+                            serverInfo.setMacroName(server.getString("service_name"));
+                            serverInfo.setGroup(server.getString("group"));
+                            serverInfo.setVersion(server.getString("version"));
+                            serverInfos.add(serverInfo);
+                        }
+                    }
+
+                    return serverInfos;
                 } catch (Exception ex) {
                     handleError(ex);
                     return null;
                 }
-            }).thenAccept(uf30AndXoneApps -> {
-                if (uf30AndXoneApps != null) {
+            }).thenAccept(serviceList -> {
+                if (!serviceList.isEmpty()) {
                     macroSvr.removeAllItems();
-                    JSONArray data = uf30AndXoneApps.getJSONArray("data");
-
-                    if (data != null) {
-                        Map<String, String> dict = new HashMap<>();
-                        macroSvr.addItem(null);
-                        for (int i = 0; i < data.size(); i++) {
-                            JSONObject jsonObject = data.getJSONObject(i);
-                            macroSvr.addItem(jsonObject.getString("name"));
-                            dict.put(jsonObject.getString("name"), jsonObject.getString("id"));
-                        }
-                        dicts.put("macroSvr", dict);
+                    macroSvr.addItem(null);
+                    for (ServerInfo serverInfo : serverInfos) {
+                        macroSvr.addItem(serverInfo.getMacroName());
                     }
                 }
             }).exceptionally(ex -> {
@@ -279,27 +284,44 @@ public class CacheMgrWindow {
 
         ApplicationManager.getApplication().invokeLater(() -> {
             CompletableFuture.supplyAsync(() -> {
-                String value = dicts.get("macroSvr").get((String) macroSvr.getSelectedItem());
-                if (value != null) {
-                    try {
-                        return SeeRequest.getLocalCacheFormDataOnlyComputer(seeConfig, auth, value);
-                    } catch (IOException | URISyntaxException e) {
-                        handleError(e);
-                        return null;
+                try {
+                    String value = (String) macroSvr.getSelectedItem();
+                    if (value != null) {
+                        Optional<ServerInfo> any = serverInfos.stream().filter(e -> e.getMacroName().equals(value)).findAny();
+                        if (any.isPresent()) {
+                            ServerInfo serverInfo = any.get();
+                            Map<String, String> body = new HashMap<>();
+                            body.put("service_name", serverInfo.getMacroName());
+                            body.put("group", serverInfo.getGroup());
+                            body.put("version", serverInfo.getVersion());
+                            body.put("m_pid", "pid");
+                            body.put("appId", appId);
+                            JSONObject serviceInfo = SeeRequest.getServiceInfo(seeConfig, auth, body);
+
+                            JSONArray data = serviceInfo.getJSONObject("data").getJSONArray("data");
+                            List<String> nodeIps = new ArrayList<>();
+                            for (int i = 0; i < data.size(); i++) {
+                                JSONObject item = data.getJSONObject(i);
+                                String protocol = item.getString("protocol");
+                                if (protocol.equals("http")) {
+                                    nodeIps.add(item.getString("addr"));
+                                }
+                            }
+                            return nodeIps;
+                        }
                     }
+                } catch (Exception ex) {
+                    handleError(ex);
+                    return null;
                 }
                 return null;
-            }).thenAccept(uf30AndXoneApps -> {
-                if (uf30AndXoneApps != null) {
-                    JSONArray data = uf30AndXoneApps.getJSONArray("data");
-                    Map<String, String> dict = new HashMap<>();
+            }).thenAccept(nodeIps -> {
+                if (!nodeIps.isEmpty()) {
+                    nodeIp.removeAllItems();
                     nodeIp.addItem(null);
-                    for (int i = 0; i < data.size(); i++) {
-                        JSONObject jsonObject = data.getJSONObject(i);
-                        nodeIp.addItem(jsonObject.getString("address"));
-                        dict.put(jsonObject.getString("address"), jsonObject.getString("address") + ":" + jsonObject.getString("httpPort"));
+                    for (String ip : nodeIps) {
+                        nodeIp.addItem(ip);
                     }
-                    dicts.put("nodeIp", dict);
                 }
             }).exceptionally(ex -> {
                 log.error("刷新节点IP失败：{}", ex.getMessage(), ex);
@@ -318,32 +340,24 @@ public class CacheMgrWindow {
         // 更新 UI 必须在事件调度线程上进行
         ApplicationManager.getApplication().invokeLater(() -> {
             CompletableFuture.supplyAsync(() -> {
-                Map<String, String> nodeIpDict = dicts.get("nodeIp");
-                if (nodeIpDict != null) {
-                    String value = nodeIpDict.get((String) nodeIp.getSelectedItem());
-                    if (value != null) {
-                        String[] split = value.split(":");
-                        try {
-                            return SeeRequest.getLocalCacheFormDataOnlyTable(seeConfig, auth, split[0], split[1]);
-                        } catch (IOException | URISyntaxException e) {
-                            handleError(e);
-                            return null;
-                        }
+                try {
+                    String nodeIp = model.getNodeIp();
+                    if (StringUtils.isNotBlank(nodeIp)) {
+                        String[] split = nodeIp.split(":");
+                        JSONObject localCacheFormDataOnlyTable = SeeRequest.getLocalCacheFormDataOnlyTable(seeConfig, auth, split[0].trim(), split[1].trim());
+                        return localCacheFormDataOnlyTable.getJSONArray("data");
                     }
+                } catch (IOException | URISyntaxException e) {
+                    handleError(e);
+                    return null;
                 }
                 return null;
-            }).thenAccept(uf30AndXoneApps -> {
-                if (uf30AndXoneApps != null) {
-                    JSONArray data = uf30AndXoneApps.getJSONArray("data");
-                    if (data != null) {
-                        Map<String, String> dict = new HashMap<>();
-                        memoryTable.addItem(null);
-                        for (int i = 0; i < data.size(); i++) {
-                            String table = data.getString(i);
-                            memoryTable.addItem(table);
-                            dict.put(table, table);
-                        }
-                        dicts.put("memoryTable", dict);
+            }).thenAccept(data -> {
+                if (data != null) {
+                    memoryTable.addItem(null);
+                    for (int i = 0; i < data.size(); i++) {
+                        String table = data.getString(i);
+                        memoryTable.addItem(table);
                     }
                 }
             }).exceptionally(ex -> {
@@ -361,7 +375,7 @@ public class CacheMgrWindow {
     public void setTableData(JSONObject jsonData, String condition) {
         Set<String> rowKeys = jsonData.keySet();
 
-        if (rowKeys.isEmpty() || rowKeys.contains("all#")) {
+        if (rowKeys.isEmpty()) {
             table1.setModel(new javax.swing.table.DefaultTableModel(new String[0][0], new String[0]));
             table1.setDefaultEditor(Object.class, null);
             return;
@@ -371,6 +385,10 @@ public class CacheMgrWindow {
         List<String> header = new ArrayList<>();
         int rowIndex = 0;
         for (String rowKey : rowKeys) {
+            if (rowKey.equals("all#")) {
+                continue;
+            }
+
             JSONArray rowArray = jsonData.getJSONArray(rowKey);
             JSONObject firstRowObject = rowArray.getJSONObject(0);
             Set<String> columnKeys = firstRowObject.keySet();
@@ -435,7 +453,7 @@ public class CacheMgrWindow {
     static class Model {
         private String env;
         private String macroName;
-        private NodeIp nodeIp;
+        private String nodeIp;
         private String memoryTable;
         private String condition;
 
@@ -465,11 +483,11 @@ public class CacheMgrWindow {
             this.macroName = macroName;
         }
 
-        public NodeIp getNodeIp() {
+        public String getNodeIp() {
             return nodeIp;
         }
 
-        public void setNodeIp(NodeIp nodeIp) {
+        public void setNodeIp(String nodeIp) {
             this.nodeIp = nodeIp;
         }
 
@@ -490,29 +508,34 @@ public class CacheMgrWindow {
         }
     }
 
-    static class NodeIp {
-        private String ip;
-        private String port;
 
-        public NodeIp(String ip, String port) {
-            this.ip = ip;
-            this.port = port;
+    static class ServerInfo {
+        private String macroName;
+        private String group;
+        private String version;
+
+        public String getMacroName() {
+            return macroName;
         }
 
-        public String getIp() {
-            return ip;
+        public void setMacroName(String macroName) {
+            this.macroName = macroName;
         }
 
-        public void setIp(String ip) {
-            this.ip = ip;
+        public String getGroup() {
+            return group;
         }
 
-        public String getPort() {
-            return port;
+        public void setGroup(String group) {
+            this.group = group;
         }
 
-        public void setPort(String port) {
-            this.port = port;
+        public String getVersion() {
+            return version;
+        }
+
+        public void setVersion(String version) {
+            this.version = version;
         }
     }
 }
