@@ -21,6 +21,12 @@ public class SeeConfig {
         this.username = username;
     }
 
+    public SeeConfig(EasyEnvConfig.SeeConnectInfo seeConnectInfo) {
+        this.uuid = seeConnectInfo.getUuid();
+        this.address = seeConnectInfo.getAddress();
+        this.username = seeConnectInfo.getUsername();
+    }
+
     @Override
     public String toString() {
         return "SeeConfig{" +
