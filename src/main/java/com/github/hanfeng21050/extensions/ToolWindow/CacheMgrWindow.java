@@ -6,15 +6,20 @@ import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.github.hanfeng21050.config.SeeConfig;
 import com.github.hanfeng21050.request.SeeRequest;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.Messages;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -34,6 +39,7 @@ public class CacheMgrWindow {
     private JButton queryButton;
     private JTextField condition;
     private JComboBox<String> env;
+    private JButton updateButton;
     private Model model;
     private String appId = "";
 
@@ -50,7 +56,7 @@ public class CacheMgrWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    performQuery();
+                    queryCache();
                 } catch (IOException | URISyntaxException ex) {
                     handleError(ex);
                 }
@@ -68,6 +74,17 @@ public class CacheMgrWindow {
                 table1.setModel(new javax.swing.table.DefaultTableModel(new String[0][0], new String[0]));
 
                 initializeComponents();
+            }
+        });
+
+        updateButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    updateCache();
+                } catch (IOException | URISyntaxException ex) {
+                    handleError(ex);
+                }
             }
         });
 
@@ -105,7 +122,35 @@ public class CacheMgrWindow {
                 });
             }
         }
+        // 设置表格支持单元格选择和多选
+        table1.setCellSelectionEnabled(true);
+        table1.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+        // 自定义复制功能
+        table1.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("ctrl C"), "copy");
+        table1.getActionMap().put("copy", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int[] selectedRows = table1.getSelectedRows();
+                int[] selectedCols = table1.getSelectedColumns();
+                StringJoiner joiner = new StringJoiner("\n");
+
+                for (int row : selectedRows) {
+                    StringJoiner rowJoiner = new StringJoiner("\t");
+                    for (int col : selectedCols) {
+                        Object cellValue = table1.getValueAt(row, col);
+                        rowJoiner.add(cellValue != null ? cellValue.toString() : "");
+                    }
+                    joiner.add(rowJoiner.toString());
+                }
+
+                StringSelection stringSelection = new StringSelection(joiner.toString());
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                clipboard.setContents(stringSelection, null);
+            }
+        });
     }
+
 
     /**
      * 设置事件
@@ -184,7 +229,7 @@ public class CacheMgrWindow {
      * @throws IOException
      * @throws URISyntaxException
      */
-    private void performQuery() throws IOException, URISyntaxException {
+    private void queryCache() throws IOException, URISyntaxException {
         String envItem = (String) env.getSelectedItem();
         String macroSvrItem = (String) macroSvr.getSelectedItem();
         String nodeIpItem = (String) nodeIp.getSelectedItem();
@@ -195,7 +240,7 @@ public class CacheMgrWindow {
         }
 
         ApplicationManager.getApplication().invokeLater(() -> {
-            Map<String, String> params = new HashMap<>();
+            Map<String, Object> params = new HashMap<>();
             params.put("tableName", model.getMemoryTable());
             params.put("pageNum", "1");
             params.put("pageSize", "1000");
@@ -218,6 +263,44 @@ public class CacheMgrWindow {
             }
         });
     }
+
+    private void updateCache() throws IOException, URISyntaxException {
+        String envItem = (String) env.getSelectedItem();
+        String macroSvrItem = (String) macroSvr.getSelectedItem();
+        String nodeIpItem = (String) nodeIp.getSelectedItem();
+        String memoryTableItem = (String) memoryTable.getSelectedItem();
+        if (StringUtils.isBlank(envItem) || StringUtils.isBlank(macroSvrItem) || StringUtils.isBlank(nodeIpItem) || StringUtils.isBlank(memoryTableItem)) {
+            return;
+        }
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+            Map<String, Object> params = new HashMap<>();
+            params.put("refreshType", "2");
+            params.put("sync", true);
+            params.put("timeout", 15);
+            params.put("nodes", new String[]{model.getNodeIp()});
+            params.put("tables", new String[]{model.getMemoryTable()});
+
+            Optional<EasyEnvConfig.SeeConnectInfo> first = config.getSeeConnectInfos().stream()
+                    .filter(x -> x.getLabel().equals(envItem))
+                    .findFirst();
+            if (first.isPresent()) {
+                EasyEnvConfig.SeeConnectInfo seeConnectInfo = first.get();
+                SeeConfig seeConfig = new SeeConfig(seeConnectInfo);
+                try {
+                    JSONObject jsonObject = SeeRequest.localCacheRefresh(seeConfig, auth, params);
+                    if (jsonObject != null && jsonObject.getString("success").equals("true")) {
+                        Messages.showInfoMessage("缓存[" + model.getMemoryTable() + "]更新成功", "成功");
+                    } else {
+                        handleError(new RuntimeException("缓存[" + model.getMemoryTable() + "]更新失败"));
+                    }
+                } catch (IOException ex) {
+                    handleError(ex);
+                }
+            }
+        });
+    }
+
 
     /**
      * 刷新微服务列表

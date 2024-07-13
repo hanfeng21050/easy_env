@@ -31,6 +31,7 @@ public class SeeRequest {
     private static final String ACM_BROKER_APPMENU_LOCALCACHEFORMDATAONLYTABLE_URL = "/acm/broker/appMenu/localCacheFormDataOnlyTable.json";
     private static final String ACM_GOVERNANCE_SERVICE_PAGESERVICELIST_URL = "/acm/governance/service/pageServiceList.json";
     private static final String ACM_GOVERNANCE_SERVICE_SERVICEINFOQUERY_URL = "/acm/governance/service/serviceInfoQuery.json";
+    private static final String ACM_BROKER_APPMENU_LOACALCACHEREFRESH_URL = "/acm/broker/appMenu/localCacheRefresh.json";
 
 
     // 登录方法
@@ -151,7 +152,7 @@ public class SeeRequest {
 
     public static JSONObject getLocalCacheFormDataOnlyTable(SeeConfig seeConfig, String auth, String ip, String port) throws IOException, URISyntaxException {
         Map<String, String> header = new HashMap<>();
-        Map<String, String> body = new HashMap<>();
+        Map<String, Object> body = new HashMap<>();
         header.put("Authorization", "Bearer " + auth);
         body.put("ip", ip);
         body.put("port", port);
@@ -161,7 +162,7 @@ public class SeeRequest {
     }
 
 
-    public static JSONObject getCacheData(String url, Map<String, String> params) throws IOException, URISyntaxException {
+    public static JSONObject getCacheData(String url, Map<String, Object> params) throws IOException, URISyntaxException {
         Map<String, String> header = new HashMap<>();
         // 发起获取应用信息的请求
         String response = HttpClientUtil.httpPostJSON(url, params, header);
@@ -198,6 +199,15 @@ public class SeeRequest {
 
         // 发起获取应用信息的请求
         String response = HttpClientUtil.httpPost(seeConfig.getAddress() + ACM_GOVERNANCE_SERVICE_SERVICEINFOQUERY_URL, body, header);
+        return JSONObject.parse(response);
+    }
+
+    public static JSONObject localCacheRefresh(SeeConfig seeConfig, String auth, Map<String, Object> body) throws IOException {
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpPostJSON(seeConfig.getAddress() + ACM_BROKER_APPMENU_LOACALCACHEREFRESH_URL, body, header);
         return JSONObject.parse(response);
     }
 }

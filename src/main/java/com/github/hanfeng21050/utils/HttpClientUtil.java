@@ -232,7 +232,7 @@ public class HttpClientUtil {
     }
 
 
-    public static String httpPostJSON(String url, Map<String, String> body, Map<String, String> header) throws IOException {
+    public static String httpPostJSON(String url, Map<String, Object> body, Map<String, String> header) throws IOException {
         HttpPost httpPost = new HttpPost(url);
         ObjectMapper objectMapper = new ObjectMapper();
         String jsonBody = objectMapper.writeValueAsString(body);
