@@ -3,6 +3,7 @@ package com.github.hanfeng21050.extensions.settings;
 import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.github.hanfeng21050.config.SeeConfig;
 import com.github.hanfeng21050.request.SeeRequest;
+import com.github.hanfeng21050.utils.MyIcons;
 import com.github.hanfeng21050.utils.MyPluginLoader;
 import com.github.hanfeng21050.utils.ObjectUtil;
 import com.github.hanfeng21050.utils.PasswordUtil;
@@ -13,12 +14,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ReflectionUtil;
 import org.apache.commons.lang3.SerializationUtils;
 
 import javax.swing.*;
@@ -33,7 +32,6 @@ import javax.xml.bind.Unmarshaller;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Vector;
 import java.util.function.Consumer;
 
@@ -92,8 +90,8 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
         envPanel = ToolbarDecorator.createDecorator(envTable)
                 .setAddAction(anActionButton -> addSetting())
                 .setRemoveAction(anActionButton -> removeSetting())
-                .addExtraAction(createActionButton("生成配置", "/icons/icon-gen.png", this::generateConfiguration))
-                .addExtraAction(createActionButton("测试连接", "/icons/icon-test.png", this::testConnection))
+                .addExtraAction(createGenActionButton(this::generateConfiguration))
+                .addExtraAction(createTestActionButton(this::testConnection))
                 .createPanel();
     }
 
@@ -285,9 +283,17 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     /**
      * 创建带有图标的 AnActionButton 的方法。
      */
-    private AnActionButton createActionButton(String text, String iconPath, Consumer<AnActionEvent> action) {
-        return new AnActionButton(text, IconLoader.getIcon(iconPath, Objects.requireNonNull(ReflectionUtil.getGrandCallerClass()))) {
+    private AnActionButton createGenActionButton(Consumer<AnActionEvent> action) {
+        return new AnActionButton("生成配置", MyIcons.genIcon) {
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+                action.accept(e);
+            }
+        };
+    }
 
+    private AnActionButton createTestActionButton(Consumer<AnActionEvent> action) {
+        return new AnActionButton("测试连接", MyIcons.testIcon) {
             @Override
             public void actionPerformed(AnActionEvent e) {
                 action.accept(e);

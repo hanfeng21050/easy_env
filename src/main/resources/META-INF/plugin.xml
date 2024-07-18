@@ -19,9 +19,9 @@
                           instance="com.github.hanfeng21050.extensions.settings.EasyEnvRuleSettingsConfigurable"/>
         </applicationConfigurable>
         <toolWindow id="CacheMgr" factoryClass="com.github.hanfeng21050.extensions.ToolWindow.CacheMgrWindowFactory"
-                    anchor="bottom"/>
+                    anchor="bottom" icon="com.github.hanfeng21050.utils.MyIcons.mainIcon"/>
         <toolWindow id="EasyEnvLog" factoryClass="com.github.hanfeng21050.extensions.ToolWindow.EasyEnvLogWindowFactory"
-                    anchor="bottom"/>
+                    anchor="bottom" icon="com.github.hanfeng21050.utils.MyIcons.mainIcon"/>
 
         <localInspection enabledByDefault="true" displayName="EasyEnv-Check" groupName="EasyEnv-Check"
                          implementationClass="com.github.hanfeng21050.extensions.inspection.JRESMacroInspection"
@@ -33,11 +33,11 @@
     </applicationListeners>
     <actions>
         <group id="com.github.hanfeng21050.actions.EasyEnvGroup" text="Halo Tool" popup="true"
-               class="com.github.hanfeng21050.actions.EasyEnvGroup">
+               class="com.github.hanfeng21050.actions.EasyEnvGroup" icon="com.github.hanfeng21050.utils.MyIcons.mainIcon">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
         </group>
 
-        <action id="copy" class="com.github.hanfeng21050.actions.FilePathCopyAction" text="复制文件路径">
+        <action id="copy" class="com.github.hanfeng21050.actions.FilePathCopyAction" text="复制文件路径" icon="com.github.hanfeng21050.utils.MyIcons.mainIcon">
             <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" anchor="last"/>
         </action>
     </actions>

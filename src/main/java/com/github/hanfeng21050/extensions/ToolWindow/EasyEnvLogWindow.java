@@ -1,5 +1,6 @@
 package com.github.hanfeng21050.extensions.ToolWindow;
 
+import com.github.hanfeng21050.utils.MyIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -7,14 +8,11 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.JBSplitter;
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Objects;
 
 public class EasyEnvLogWindow extends SimpleToolWindowPanel {
 
@@ -65,7 +63,7 @@ public class EasyEnvLogWindow extends SimpleToolWindowPanel {
         private final EasyEnvLogWindow panel;
 
         public RefreshBar(EasyEnvLogWindow panel) {
-            super("清除", "清除日志", IconLoader.getIcon("/icons/icon-delete.svg", Objects.requireNonNull(ReflectionUtil.getGrandCallerClass())));
+            super("清除", "清除日志", MyIcons.deleteIcon);
             this.panel = panel;
         }
 
