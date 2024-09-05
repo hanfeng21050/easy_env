@@ -43,8 +43,18 @@ public class SeeRequest {
         String response = HttpClientUtil.httpGet(loginUrl);
 
         // 从响应中提取 lt 和 execution 的值
-        String ltValue = extractValueFromResponse(response, "\"lt\":\"(.*?)\"");
-        String executionValue = extractValueFromResponse(response, "\"execution\":\"(.*?)\"");
+
+        String ltValue;
+        String executionValue;
+
+        ltValue = extractValueFromResponse(response, "name=\"lt\" value=\"(.*?)\"");
+        executionValue = extractValueFromResponse(response, "name=\"execution\" value=\"(.*?)\"");
+
+        if (StringUtils.isBlank(ltValue)) {
+            ltValue = extractValueFromResponse(response, "\"lt\":\"(.*?)\"");
+            executionValue = extractValueFromResponse(response, "\"execution\":\"(.*?)\"");
+        }
+
 
         // 构建登录参数
         Map<String, String> loginParams = new HashMap<>();
@@ -58,7 +68,7 @@ public class SeeRequest {
         // 发起登录请求
         String res = HttpClientUtil.httpPost(seeConfig.getAddress() + CAS_LOGIN_URL, loginParams);
 
-        if(SUCCESS.equals(res)) {
+        if (SUCCESS.equals(res)) {
             // 页面跳转，获取cookie
             String s = HttpClientUtil.httpGet(seeConfig.getAddress() + ACM_URL);
         } else {
@@ -171,7 +181,7 @@ public class SeeRequest {
 
 
     // 处理错误信息方法
-    private static   void handleError(String errorInfo) {
+    private static void handleError(String errorInfo) {
         ApplicationManager.getApplication().invokeLater(() -> {
             Messages.showErrorDialog("error: " + errorInfo, "错误");
         });
