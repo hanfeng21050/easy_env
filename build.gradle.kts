@@ -27,6 +27,7 @@ dependencies {
 //    implementation(libs.annotations)
     implementation("com.alibaba.fastjson2:fastjson2:2.0.42")
     implementation("com.github.jsqlparser:jsqlparser:4.2")
+    implementation("org.freemarker:freemarker:2.3.30")
 }
 
 // Set the JVM language level used to build the project. Use Java 11 for 2020.3+, and Java 17 for 2022.2+.
