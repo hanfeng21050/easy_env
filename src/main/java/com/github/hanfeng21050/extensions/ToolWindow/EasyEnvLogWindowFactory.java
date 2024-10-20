@@ -1,4 +1,4 @@
-package com.github.hanfeng21050.view.ToolWindow;
+package com.github.hanfeng21050.extensions.ToolWindow;
 
 import com.github.hanfeng21050.utils.Logger;
 import com.intellij.openapi.project.Project;
@@ -8,7 +8,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 
-public class testToolWindowFactory implements ToolWindowFactory {
+public class EasyEnvLogWindowFactory implements ToolWindowFactory {
     private static final String DISPLAY_NAME = "";
 
     @Override
@@ -23,12 +23,12 @@ public class testToolWindowFactory implements ToolWindowFactory {
     }
 
     public void init(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-        ViewBars viewPanel = new ViewBars(project, toolWindow);
+        EasyEnvLogWindow viewPanel = new EasyEnvLogWindow(project, toolWindow);
         // 获取内容工厂的实例
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
 
         // 创建一个Content，也就是toolwindow里面的一个tab页
-        Content content = contentFactory.createContent(viewPanel, "执行日志", false);
+        Content content = contentFactory.createContent(viewPanel.getComponent(), "执行日志", false);
         // 将Content加入到toolwindow中
         toolWindow.getContentManager().addContent(content);
 
