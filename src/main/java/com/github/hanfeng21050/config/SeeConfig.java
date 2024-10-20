@@ -1,26 +1,38 @@
 package com.github.hanfeng21050.config;
 
+import com.github.hanfeng21050.utils.CryptUtil;
+import com.github.hanfeng21050.utils.PasswordUtil;
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.Credentials;
+import com.intellij.ide.passwordSafe.PasswordSafe;
+
 /**
  * @Author hanfeng32305
  * @Date 2023/11/1 16:05
  */
 public class SeeConfig {
+    private String uuid;
     private String address;
     private String username;
-    private String password;
 
-    public SeeConfig(String address, String username, String password) {
+    public SeeConfig(String uuid, String address, String username) {
+        this.uuid = uuid;
         this.address = address;
         this.username = username;
-        this.password = password;
+    }
+
+    public SeeConfig(EasyEnvConfig.SeeConnectInfo seeConnectInfo) {
+        this.uuid = seeConnectInfo.getUuid();
+        this.address = seeConnectInfo.getAddress();
+        this.username = seeConnectInfo.getUsername();
     }
 
     @Override
     public String toString() {
         return "SeeConfig{" +
-                "address='" + address + '\'' +
+                "uuid='" + uuid + '\'' +
+                ", address='" + address + '\'' +
                 ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
                 '}';
     }
 
@@ -40,11 +52,22 @@ public class SeeConfig {
         this.username = username;
     }
 
-    public String getPassword() {
-        return password;
+    public String getPassword() throws Exception {
+        CredentialAttributes credentialAttributes = PasswordUtil.createCredentialAttributes(this.uuid);
+        Credentials credentials = PasswordSafe.getInstance().get(credentialAttributes);
+        if (credentials != null) {
+            String password = credentials.getPasswordAsString();
+            return CryptUtil.encryptPassword(password);
+        }
+        return "";
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 }

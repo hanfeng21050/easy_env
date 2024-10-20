@@ -1,4 +1,4 @@
-package com.github.hanfeng21050.view.settings;
+package com.github.hanfeng21050.extensions.settings;
 
 import com.github.hanfeng21050.config.EasyEnvConfig;
 
@@ -20,7 +20,6 @@ public abstract class AbstractTemplateSettingsView {
         headers1.add("名称");
         headers1.add("地址");
         headers1.add("用户名");
-        headers1.add("密码");
 
         headers2 = new Vector<>(4);
         headers2.add("uuid");

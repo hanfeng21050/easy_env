@@ -1,7 +1,7 @@
-package com.github.hanfeng21050.view.settings;
+package com.github.hanfeng21050.extensions.settings;
 
 import com.github.hanfeng21050.config.EasyEnvConfig;
-import com.github.hanfeng21050.config.EasyEnvConfigComponent;
+import com.github.hanfeng21050.extensions.EasyEnvConfigComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;

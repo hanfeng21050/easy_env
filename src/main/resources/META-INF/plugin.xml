@@ -5,16 +5,27 @@
     <vendor>hanfeng21050</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.java</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.github.hanfeng21050.config.EasyEnvConfigComponent" order="first"/>
-        <applicationConfigurable id="com.github.hanfeng21050.view.settings" displayName="EasyEnv" instance="com.github.hanfeng21050.view.settings.EasyEnvSettingsConfigurable">
-            <configurable parentId="com.github.hanfeng21050.view.settings" displayName="EasyEnvConfig" instance="com.github.hanfeng21050.view.settings.EasyEnvRuleSettingsConfigurable" />
+        <applicationService serviceImplementation="com.github.hanfeng21050.extensions.EasyEnvConfigComponent"
+                            order="first"/>
+        <applicationConfigurable id="com.github.hanfeng21050.extensions.settings" displayName="EasyEnv"
+                                 instance="com.github.hanfeng21050.extensions.settings.EasyEnvSettingsConfigurable">
+            <configurable parentId="com.github.hanfeng21050.extensions.settings" displayName="EasyEnvConfig"
+                          instance="com.github.hanfeng21050.extensions.settings.EasyEnvRuleSettingsConfigurable"/>
         </applicationConfigurable>
-        <toolWindow id="testToolWindow" factoryClass="com.github.hanfeng21050.view.ToolWindow.testToolWindowFactory"
-                    anchor="bottom"/>
+        <toolWindow id="CacheMgr" factoryClass="com.github.hanfeng21050.extensions.ToolWindow.CacheMgrWindowFactory"
+                    anchor="bottom" icon="com.github.hanfeng21050.utils.MyIcons.mainIcon"/>
+        <toolWindow id="EasyEnvLog" factoryClass="com.github.hanfeng21050.extensions.ToolWindow.EasyEnvLogWindowFactory"
+                    anchor="bottom" icon="com.github.hanfeng21050.utils.MyIcons.mainIcon"/>
+
+        <localInspection enabledByDefault="true" displayName="EasyEnv-Check" groupName="EasyEnv-Check"
+                         implementationClass="com.github.hanfeng21050.extensions.inspection.JRESMacroInspection"
+                         language="JAVA"/>
     </extensions>
 
 
@@ -22,11 +33,11 @@
     </applicationListeners>
     <actions>
         <group id="com.github.hanfeng21050.actions.EasyEnvGroup" text="Halo Tool" popup="true"
-               class="com.github.hanfeng21050.actions.EasyEnvGroup">
+               class="com.github.hanfeng21050.actions.EasyEnvGroup" icon="com.github.hanfeng21050.utils.MyIcons.mainIcon">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
         </group>
 
-        <action id="copy" class="com.github.hanfeng21050.actions.FilePathCopyAction" text="复制文件路径">
+        <action id="copy" class="com.github.hanfeng21050.actions.FilePathCopyAction" text="复制文件路径" icon="com.github.hanfeng21050.utils.MyIcons.mainIcon">
             <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" anchor="last"/>
         </action>
     </actions>

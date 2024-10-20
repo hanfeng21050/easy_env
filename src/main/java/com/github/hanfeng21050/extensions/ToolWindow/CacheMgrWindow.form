@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.github.hanfeng21050.extensions.ToolWindow.CacheMgrWindow">
+  <grid id="27dc6" binding="panel" layout-manager="GridLayoutManager" row-count="3" column-count="8" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="5" left="5" bottom="5" right="5"/>
+    <constraints>
+      <xy x="20" y="20" width="967" height="545"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <scrollpane id="e092a">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="8" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <horizontalScrollBarPolicy value="30"/>
+        </properties>
+        <border type="none" title="缓存"/>
+        <children>
+          <component id="71ade" class="javax.swing.JTable" binding="table1" default-binding="true">
+            <constraints/>
+            <properties>
+              <autoCreateColumnsFromModel value="true"/>
+              <autoCreateRowSorter value="true"/>
+              <autoResizeMode value="2"/>
+              <enabled value="true"/>
+            </properties>
+          </component>
+        </children>
+      </scrollpane>
+      <component id="ab476" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="检索条件"/>
+        </properties>
+      </component>
+      <component id="4b26" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="31" height="18"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="*内存表"/>
+        </properties>
+      </component>
+      <component id="93d38" class="javax.swing.JComboBox" binding="memoryTable">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="87e3f" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="*微服务"/>
+        </properties>
+      </component>
+      <component id="82add" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="31" height="17"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="*环境"/>
+        </properties>
+      </component>
+      <component id="dcd1b" class="javax.swing.JComboBox" binding="env">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="d24ea" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="*节点IP"/>
+        </properties>
+      </component>
+      <component id="185ba" class="javax.swing.JComboBox" binding="nodeIp">
+        <constraints>
+          <grid row="0" column="5" row-span="1" col-span="3" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="95" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="4e89f" class="javax.swing.JComboBox" binding="macroSvr">
+        <constraints>
+          <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="78" height="30"/>
+          </grid>
+        </constraints>
+        <properties>
+          <editable value="false"/>
+        </properties>
+      </component>
+      <component id="8e95a" class="javax.swing.JButton" binding="refreshButton">
+        <constraints>
+          <grid row="1" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="重置"/>
+        </properties>
+      </component>
+      <component id="6ed01" class="javax.swing.JButton" binding="queryButton">
+        <constraints>
+          <grid row="1" column="7" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="查询"/>
+        </properties>
+      </component>
+      <component id="a4ca5" class="javax.swing.JButton" binding="updateButton">
+        <constraints>
+          <grid row="1" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="更新缓存"/>
+        </properties>
+      </component>
+      <component id="e1d5f" class="javax.swing.JTextField" binding="condition">
+        <constraints>
+          <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="78" height="30"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value=""/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

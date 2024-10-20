@@ -1,5 +1,6 @@
-package com.github.hanfeng21050.view.ToolWindow;
+package com.github.hanfeng21050.extensions.ToolWindow;
 
+import com.github.hanfeng21050.utils.MyIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -7,20 +8,19 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.JBSplitter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ViewBars extends SimpleToolWindowPanel {
+public class EasyEnvLogWindow extends SimpleToolWindowPanel {
 
     JTextArea jTextArea = new JTextArea();
     private Project project;
     private ToolWindow toolWindow;
 
-    public ViewBars(Project project, ToolWindow toolWindow) {
+    public EasyEnvLogWindow(Project project, ToolWindow toolWindow) {
         super(false, true);
         this.project = project;
         this.toolWindow = toolWindow;
@@ -60,10 +60,10 @@ public class ViewBars extends SimpleToolWindowPanel {
 
     static class RefreshBar extends DumbAwareAction {
 
-        private ViewBars panel;
+        private final EasyEnvLogWindow panel;
 
-        public RefreshBar(ViewBars panel) {
-            super("清除", "清除日志", IconLoader.getIcon("/icons/icon-delete.svg"));
+        public RefreshBar(EasyEnvLogWindow panel) {
+            super("清除", "清除日志", MyIcons.deleteIcon);
             this.panel = panel;
         }
 

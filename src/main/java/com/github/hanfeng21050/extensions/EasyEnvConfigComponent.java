@@ -1,5 +1,6 @@
-package com.github.hanfeng21050.config;
+package com.github.hanfeng21050.extensions;
 
+import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;

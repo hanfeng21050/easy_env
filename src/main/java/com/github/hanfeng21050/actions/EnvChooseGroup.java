@@ -1,8 +1,8 @@
 package com.github.hanfeng21050.actions;
 
 import com.github.hanfeng21050.config.EasyEnvConfig;
-import com.github.hanfeng21050.config.EasyEnvConfigComponent;
 import com.github.hanfeng21050.config.SeeConfig;
+import com.github.hanfeng21050.extensions.EasyEnvConfigComponent;
 import com.github.hanfeng21050.utils.MyPluginLoader;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -48,7 +48,7 @@ public class EnvChooseGroup extends ActionGroup {
         if (seeConnectInfos != null) {
             for (int i = 0; i < seeConnectInfos.size(); i++) {
                 EasyEnvConfig.SeeConnectInfo seeConnectInfo = seeConnectInfos.get(i);
-                actions[i] = new SubAction(seeConnectInfo.getLabel(), seeConnectInfo.getAddress(), seeConnectInfo.getUsername(), seeConnectInfo.getPassword());
+                actions[i] = new SubAction(seeConnectInfo.getUuid(), seeConnectInfo.getLabel(), seeConnectInfo.getAddress(), seeConnectInfo.getUsername());
             }
         }
         return actions;
@@ -56,16 +56,16 @@ public class EnvChooseGroup extends ActionGroup {
 
 
     private static class SubAction extends AnAction {
+        private String uuid;
         private String label;
         private String address;
         private String username;
-        private String password;
 
-        public SubAction(String label, String address, String username, String password) {
+        public SubAction(String uuid, String label, String address, String username) {
+            this.uuid = uuid;
             this.label = label;
             this.address = address;
             this.username = username;
-            this.password = password;
             getTemplatePresentation().setText(label);
         }
 
@@ -73,7 +73,7 @@ public class EnvChooseGroup extends ActionGroup {
         public void actionPerformed(AnActionEvent e) {
             Project project = e.getProject();
             if (project != null) {
-                SeeConfig seeConfig = new SeeConfig(address, username, password);
+                SeeConfig seeConfig = new SeeConfig(uuid, address, username);
                 MyPluginLoader pluginLoader = new MyPluginLoader(project, seeConfig);
                 ApplicationManager.getApplication().invokeLater(pluginLoader::startBlockingLoadingProcess);
             }

@@ -1,8 +1,8 @@
 package com.github.hanfeng21050.actions;
 
 import com.github.hanfeng21050.config.EasyEnvConfig;
-import com.github.hanfeng21050.config.EasyEnvConfigComponent;
 import com.github.hanfeng21050.config.SeeConfig;
+import com.github.hanfeng21050.extensions.EasyEnvConfigComponent;
 import com.github.hanfeng21050.utils.MyPluginLoader;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -46,12 +46,14 @@ public class EasyEnvGroup extends ActionGroup {
 
 
     private static class SubAction extends AnAction {
+        private String uuid;
         private String label;
         private String address;
         private String username;
         private String password;
 
-        public SubAction(String label, String address, String username, String password) {
+        public SubAction(String uuid, String label, String address, String username, String password) {
+            this.uuid = uuid;
             this.label = label;
             this.address = address;
             this.username = username;
@@ -63,7 +65,7 @@ public class EasyEnvGroup extends ActionGroup {
         public void actionPerformed(AnActionEvent e) {
             Project project = e.getProject();
             if (project != null) {
-                SeeConfig seeConfig = new SeeConfig(address, username, password);
+                SeeConfig seeConfig = new SeeConfig(uuid, address, username);
                 MyPluginLoader pluginLoader = new MyPluginLoader(project, seeConfig);
                 ApplicationManager.getApplication().invokeLater(pluginLoader::startBlockingLoadingProcess);
             }

@@ -25,6 +25,14 @@ public class SeeRequest {
     private static final String ACM_SYSTEM_AUTH_JSON_URL = "/acm/system/auth.json";
     private static final String ACM_DSSP_APPLICATION_QUERY_JSON_URL = "/acm/dssp/application/authority/query.json";
     private static final String ACM_DSSP_CONFIG_GET_COMPARE_CONFIG_JSON_URL = "/acm/dssp/config/getCompareConfig.json";
+    private static final String ACM_BROKER_UF30DEPLOY_EXPORTAPPCONFIG_URL = "/acm/broker/uf30Deploy/exportAppConfig.json";
+    private static final String ACM_APPLICATION_COMPUTERSTATUS_UF30ANDXONEAPPS_URL = "/acm/application/computerStatus/uf30AndXoneApps.json";
+    private static final String ACM_BROKER_APPMENU_LOCALCACHEFORMDATAONLYCOMPUTER_URL = "/acm/broker/appMenu/localCacheFormDataOnlyComputer.json";
+    private static final String ACM_BROKER_APPMENU_LOCALCACHEFORMDATAONLYTABLE_URL = "/acm/broker/appMenu/localCacheFormDataOnlyTable.json";
+    private static final String ACM_GOVERNANCE_SERVICE_PAGESERVICELIST_URL = "/acm/governance/service/pageServiceList.json";
+    private static final String ACM_GOVERNANCE_SERVICE_SERVICEINFOQUERY_URL = "/acm/governance/service/serviceInfoQuery.json";
+    private static final String ACM_BROKER_APPMENU_LOACALCACHEREFRESH_URL = "/acm/broker/appMenu/localCacheRefresh.json";
+
 
     // 登录方法
     public static void login(SeeConfig seeConfig) throws Exception {
@@ -35,8 +43,18 @@ public class SeeRequest {
         String response = HttpClientUtil.httpGet(loginUrl);
 
         // 从响应中提取 lt 和 execution 的值
-        String ltValue = extractValueFromResponse(response, "\"lt\":\"(.*?)\"");
-        String executionValue = extractValueFromResponse(response, "\"execution\":\"(.*?)\"");
+
+        String ltValue;
+        String executionValue;
+
+        ltValue = extractValueFromResponse(response, "name=\"lt\" value=\"(.*?)\"");
+        executionValue = extractValueFromResponse(response, "name=\"execution\" value=\"(.*?)\"");
+
+        if (StringUtils.isBlank(ltValue)) {
+            ltValue = extractValueFromResponse(response, "\"lt\":\"(.*?)\"");
+            executionValue = extractValueFromResponse(response, "\"execution\":\"(.*?)\"");
+        }
+
 
         // 构建登录参数
         Map<String, String> loginParams = new HashMap<>();
@@ -50,7 +68,7 @@ public class SeeRequest {
         // 发起登录请求
         String res = HttpClientUtil.httpPost(seeConfig.getAddress() + CAS_LOGIN_URL, loginParams);
 
-        if(SUCCESS.equals(res)) {
+        if (SUCCESS.equals(res)) {
             // 页面跳转，获取cookie
             String s = HttpClientUtil.httpGet(seeConfig.getAddress() + ACM_URL);
         } else {
@@ -112,11 +130,94 @@ public class SeeRequest {
         return JSONObject.parse(response);
     }
 
+    // 获取新版配置文件
+    public static JSONObject getConfigInfoNew(SeeConfig seeConfig, String applicationId, String auth) throws IOException {
+        Map<String, String> body = new HashMap<>();
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+        body.put("appId", applicationId);
+
+        // 发起获取配置信息的请求
+        String response = HttpClientUtil.httpPost(seeConfig.getAddress() + ACM_BROKER_UF30DEPLOY_EXPORTAPPCONFIG_URL, body, header);
+        return JSONObject.parse(response);
+    }
+
+    public static JSONObject getUf30AndXoneApps(SeeConfig seeConfig, String auth) throws IOException, URISyntaxException {
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpGet(seeConfig.getAddress() + ACM_APPLICATION_COMPUTERSTATUS_UF30ANDXONEAPPS_URL, null, header);
+        return JSONObject.parse(response);
+    }
+
+    public static JSONObject getLocalCacheFormDataOnlyComputer(SeeConfig seeConfig, String auth, String appId) throws IOException, URISyntaxException {
+        Map<String, String> header = new HashMap<>();
+        Map<String, String> params = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+        params.put("appId", appId);
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpGet(seeConfig.getAddress() + ACM_BROKER_APPMENU_LOCALCACHEFORMDATAONLYCOMPUTER_URL, params, header);
+        return JSONObject.parse(response);
+    }
+
+    public static JSONObject getLocalCacheFormDataOnlyTable(SeeConfig seeConfig, String auth, String ip, String port) throws IOException, URISyntaxException {
+        Map<String, String> header = new HashMap<>();
+        Map<String, Object> body = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+        body.put("ip", ip);
+        body.put("port", port);
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpPostJSON(seeConfig.getAddress() + ACM_BROKER_APPMENU_LOCALCACHEFORMDATAONLYTABLE_URL, body, header);
+        return JSONObject.parse(response);
+    }
+
+
+    public static JSONObject getCacheData(String url, Map<String, Object> params) throws IOException, URISyntaxException {
+        Map<String, String> header = new HashMap<>();
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpPostJSON(url, params, header);
+        return JSONObject.parse(response);
+    }
+
+
     // 处理错误信息方法
-    private static   void handleError(String errorInfo) {
+    private static void handleError(String errorInfo) {
         ApplicationManager.getApplication().invokeLater(() -> {
             Messages.showErrorDialog("error: " + errorInfo, "错误");
         });
         throw new RuntimeException(errorInfo);
+    }
+
+    public static JSONObject getServiceList(SeeConfig seeConfig, String applicationId, String auth) throws IOException {
+        Map<String, String> body = new HashMap<>();
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+        body.put("appId", applicationId);
+        body.put("offset", "0");
+        body.put("limit", "9999");
+        body.put("runStatus", "running");
+
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpPost(seeConfig.getAddress() + ACM_GOVERNANCE_SERVICE_PAGESERVICELIST_URL, body, header);
+        JSONObject parse = JSONObject.parse(response);
+        return parse;
+    }
+
+    public static JSONObject getServiceInfo(SeeConfig seeConfig, String auth, Map<String, String> body) throws IOException {
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpPost(seeConfig.getAddress() + ACM_GOVERNANCE_SERVICE_SERVICEINFOQUERY_URL, body, header);
+        return JSONObject.parse(response);
+    }
+
+    public static JSONObject localCacheRefresh(SeeConfig seeConfig, String auth, Map<String, Object> body) throws IOException {
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpPostJSON(seeConfig.getAddress() + ACM_BROKER_APPMENU_LOACALCACHEREFRESH_URL, body, header);
+        return JSONObject.parse(response);
     }
 }
