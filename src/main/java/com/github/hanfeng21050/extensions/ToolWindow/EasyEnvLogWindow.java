@@ -1,6 +1,7 @@
 package com.github.hanfeng21050.extensions.ToolWindow;
 
 import com.github.hanfeng21050.utils.EasyIcons;
+import com.github.hanfeng21050.utils.LogLevel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;

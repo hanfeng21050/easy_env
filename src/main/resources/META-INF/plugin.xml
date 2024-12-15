@@ -18,9 +18,7 @@
             <configurable parentId="com.github.hanfeng21050.extensions.settings" displayName="EasyEnvConfig"
                           instance="com.github.hanfeng21050.extensions.settings.EasyEnvRuleSettingsConfigurable"/>
         </applicationConfigurable>
-        <toolWindow id="CacheMgr" factoryClass="com.github.hanfeng21050.extensions.ToolWindow.CacheMgrWindowFactory"
-                    anchor="bottom" icon="com.github.hanfeng21050.utils.EasyIcons.mainIcon"/>
-        <toolWindow id="EasyEnvLog" factoryClass="com.github.hanfeng21050.extensions.ToolWindow.EasyEnvLogWindowFactory"
+        <toolWindow id="EasyEnv" factoryClass="com.github.hanfeng21050.extensions.ToolWindow.EasyEnvToolWindowFactory"
                     anchor="bottom" icon="com.github.hanfeng21050.utils.EasyIcons.mainIcon"/>
 
         <localInspection enabledByDefault="true" displayName="EasyEnv-Check" groupName="EasyEnv-Check"

@@ -1,4 +1,4 @@
-package com.github.hanfeng21050.extensions.ToolWindow;
+package com.github.hanfeng21050.utils;
 
 /**
  * 日志级别枚举

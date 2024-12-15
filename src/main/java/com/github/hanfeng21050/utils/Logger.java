@@ -1,7 +1,6 @@
 package com.github.hanfeng21050.utils;
 
 import com.github.hanfeng21050.extensions.ToolWindow.EasyEnvLogWindow;
-import com.github.hanfeng21050.extensions.ToolWindow.LogLevel;
 import com.intellij.openapi.wm.ToolWindow;
 
 import javax.swing.*;
