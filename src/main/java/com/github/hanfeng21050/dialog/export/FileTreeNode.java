@@ -1,4 +1,4 @@
-package com.github.hanfeng21050.dialog;
+package com.github.hanfeng21050.dialog.export;
 
 import com.intellij.openapi.vfs.VirtualFile;
 

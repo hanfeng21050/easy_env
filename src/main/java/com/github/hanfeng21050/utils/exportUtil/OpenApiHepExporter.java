@@ -1,6 +1,6 @@
-package com.github.hanfeng21050.export;
+package com.github.hanfeng21050.utils.exportUtil;
 
-import com.github.hanfeng21050.export.exception.HepbizExportException;
+import com.github.hanfeng21050.utils.exportUtil.exception.HepExportException;
 import com.google.gson.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -25,7 +25,7 @@ import java.util.Map;
  * Hepbiz文件导出器
  * 用于将.hepbiz文件导出为OpenAPI格式
  */
-public class HepbizExporter {
+public class OpenApiHepExporter implements HepExporter {
     private final Project project;
     private final Map<String, JsonObject> typeMapping = new HashMap<>();
     private final Map<String, JsonObject> objCache = new HashMap<>();
@@ -37,7 +37,7 @@ public class HepbizExporter {
      *
      * @param project 当前IntelliJ项目实例
      */
-    public HepbizExporter(Project project) {
+    public OpenApiHepExporter(Project project) {
         this.project = project;
     }
 
@@ -49,7 +49,7 @@ public class HepbizExporter {
      */
     private void loadTypeDefinitions() throws IOException {
         // 从当前类的ClassLoader加载资源文件
-        try (InputStream inputStream = HepbizExporter.class.getResourceAsStream("/type_mappings.json")) {
+        try (InputStream inputStream = OpenApiHepExporter.class.getResourceAsStream("/type_mappings.json")) {
             if (inputStream == null) {
                 throw new IOException("无法找到type_mappings.json文件");
             }
@@ -92,9 +92,9 @@ public class HepbizExporter {
      *
      * @param project 当前项目
      * @return jresProject.xml文件
-     * @throws HepbizExportException 如果找不到文件
+     * @throws HepExportException 如果找不到文件
      */
-    private VirtualFile findJresProjectInModules(Project project) throws HepbizExportException {
+    private VirtualFile findJresProjectInModules(Project project) throws HepExportException {
         Module[] modules = ModuleManager.getInstance(project).getModules();
 
         for (Module module : modules) {
@@ -104,22 +104,21 @@ public class HepbizExporter {
                 for (VirtualFile root : contentRoots) {
                     VirtualFile jresFile = root.findFileByRelativePath("jresProject.xml");
                     if (jresFile != null && jresFile.exists()) {
-                        System.out.println("在模块 " + moduleName + " 中找到jresProject.xml文件");
                         return jresFile;
                     }
                 }
             }
         }
-        throw new HepbizExportException("在所有-pub模块中都找不到jresProject.xml文件");
+        throw new HepExportException("在所有-pub模块中都找不到jresProject.xml文件");
     }
 
     /**
      * 加载默认参数
      *
      * @param project 当前项目
-     * @throws HepbizExportException 加载异常
+     * @throws HepExportException 加载异常
      */
-    private void loadDefaultParams(Project project) throws HepbizExportException {
+    private void loadDefaultParams(Project project) throws HepExportException {
         try {
             VirtualFile jresFile = findJresProjectInModules(project);
             String content = new String(jresFile.contentsToByteArray(), StandardCharsets.UTF_8);
@@ -127,12 +126,12 @@ public class HepbizExporter {
 
             JsonObject extensibleModel = jresProject.getAsJsonObject("extensibleModel");
             if (extensibleModel == null) {
-                throw new HepbizExportException("jresProject.xml中找不到extensibleModel节点");
+                throw new HepExportException("jresProject.xml中找不到extensibleModel节点");
             }
 
             JsonObject data2 = extensibleModel.getAsJsonObject("data2");
             if (data2 == null) {
-                throw new HepbizExportException("jresProject.xml中找不到extensibleModel.data2节点");
+                throw new HepExportException("jresProject.xml中找不到extensibleModel.data2节点");
             }
 
             if (data2.has("biz_extend_property")) {
@@ -157,7 +156,7 @@ public class HepbizExporter {
             }
         } catch (Exception e) {
             System.out.println("解析jresProject.xml时出错：" + e.getMessage());
-            throw new HepbizExportException("解析jresProject.xml文件失败: " + e.getMessage(), e);
+            throw new HepExportException("解析jresProject.xml文件失败: " + e.getMessage(), e);
         }
     }
 
@@ -595,7 +594,7 @@ public class HepbizExporter {
      * @param files   文件列表
      * @return 导出的OpenAPI文档内容
      */
-    public String exportToOpenAPI(Project project, List<VirtualFile> files) throws HepbizExportException {
+    public String exportToOpenAPI(Project project, List<VirtualFile> files) throws HepExportException {
         try {
             // 加载类型定义和默认参数
             loadTypeDefinitions();
@@ -630,22 +629,22 @@ public class HepbizExporter {
             }
 
             // 导出到文件
-            return exportToFile(openapi);
+            return exportToFile(openapi, project);
 
         } catch (Exception e) {
-            throw new HepbizExportException("生成OpenAPI文档失败: " + e.getMessage());
+            throw new HepExportException("生成OpenAPI文档失败: " + e.getMessage());
         }
     }
 
     /**
      * 处理单个文件
      */
-    private void processFile(VirtualFile file, Project project, JsonObject openapi) throws IOException, HepbizExportException {
+    private void processFile(VirtualFile file, Project project, JsonObject openapi) throws IOException, HepExportException {
         // 解析Hepbiz文件内容
         String content = new String(file.contentsToByteArray(), StandardCharsets.UTF_8);
         JsonObject hepbizJson = JsonParser.parseString(content).getAsJsonObject();
         if (!hepbizJson.has("detail")) {
-            throw new HepbizExportException("文件缺少detail字段: " + file.getName());
+            throw new HepExportException("文件缺少detail字段: " + file.getName());
         }
 
         JsonObject detail = hepbizJson.getAsJsonObject("detail");
@@ -662,14 +661,10 @@ public class HepbizExporter {
 
         // 获取项目名并处理格式
         String projectPath = project.getName();
-        System.out.println("File path: " + file.getPath());
-        System.out.println("Project name: " + projectPath);
-
-        // 将第一个'-'替换为'.'
-        projectPath = projectPath.replaceFirst("-", ".");
+        String projectPathNew = projectPath.replaceFirst("-", ".");
 
         // 拼接最终路径 /g/项目名/v/接口名
-        path = "/g/" + projectPath + "/v" + path;
+        path = "/g/" + projectPathNew + "/v" + path;
 
         // 创建API操作对象
         JsonObject pathItem = new JsonObject();
@@ -698,7 +693,7 @@ public class HepbizExporter {
 
         // 添加operationId和描述
         if (!detail.has("name")) {
-            throw new HepbizExportException("文件缺少name字段: " + file.getName());
+            throw new HepExportException("文件缺少name字段: " + file.getName());
         }
         operation.addProperty("operationId", detail.get("name").getAsString());
         if (detail.has("description")) {
@@ -786,9 +781,10 @@ public class HepbizExporter {
      * 导出OpenAPI文档到文件
      *
      * @param openapi OpenAPI文档
+     * @param project 当前项目
      * @return 导出的文件内容
      */
-    private String exportToFile(JsonObject openapi) throws IOException {
+    private String exportToFile(JsonObject openapi, Project project) throws IOException {
         // 获取当前时间戳
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
 
@@ -803,6 +799,7 @@ public class HepbizExporter {
         fileChooser.setSelectedFile(new File(defaultFileName));
         fileChooser.setFileFilter(new FileNameExtensionFilter("JSON files (*.json)", "json"));
 
+        // 显示保存对话框
         if (fileChooser.showSaveDialog(null) != JFileChooser.APPROVE_OPTION) {
             return null;
         }
@@ -825,11 +822,33 @@ public class HepbizExporter {
             }
         }
 
+        // 使用try-with-resources确保资源正确关闭
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String jsonOutput = gson.toJson(openapi);
+
         try (FileWriter writer = new FileWriter(selectedFile)) {
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            String jsonOutput = gson.toJson(openapi);
             writer.write(jsonOutput);
             return jsonOutput;
         }
+    }
+
+    @Override
+    public String export(Project project, List<VirtualFile> files) throws HepExportException {
+        return exportToOpenAPI(project, files);
+    }
+
+    @Override
+    public String getName() {
+        return "OpenAPI";
+    }
+
+    @Override
+    public String getFileExtension() {
+        return "json";
+    }
+
+    @Override
+    public String getFileTypeDescription() {
+        return "OpenAPI JSON files";
     }
 }

@@ -1,4 +1,4 @@
-package com.github.hanfeng21050.dialog;
+package com.github.hanfeng21050.dialog.export;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
@@ -142,12 +142,10 @@ public class FileSelectDialog extends DialogWrapper {
                 new CheckboxTree.CheckboxTreeCellRenderer() {
                     @Override
                     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-                        if (!(value instanceof CheckedTreeNode)) return;
-                        CheckedTreeNode node = (CheckedTreeNode) value;
+                        if (!(value instanceof CheckedTreeNode node)) return;
 
-                        if (node.getUserObject() instanceof FileTreeNode) {
+                        if (node.getUserObject() instanceof FileTreeNode fileNode) {
                             // 文件节点显示
-                            FileTreeNode fileNode = (FileTreeNode) node.getUserObject();
                             getTextRenderer().append(fileNode.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
                             getTextRenderer().setIcon(AllIcons.FileTypes.Text);
                         } else if (node == root) {
