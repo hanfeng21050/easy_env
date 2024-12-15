@@ -14,7 +14,7 @@ public class MacroSyntaxCheckFactory {
         } else if ("insert".equalsIgnoreCase(macroName) || "batchInsert".equalsIgnoreCase(macroName) || "batchDelete".equalsIgnoreCase(macroName) || "getSerialNo".equalsIgnoreCase(macroName) || "getPrefetchSeq".equalsIgnoreCase(macroName)) {
             return new InsertMacroSyntaxCheck(macroName, value);
         } else if ("insertSelect".equalsIgnoreCase(macroName)) {
-            return new insertSelectMacroSyntaxCheck(value);
+            return new InsertSelectMacroSyntaxCheck(value);
         } else if ("select".equalsIgnoreCase(macroName) || "selectList".equalsIgnoreCase(macroName)) {
             return new SelectMacroSyntaxCheck(macroName, value);
         } else if ("selectPage".equalsIgnoreCase(macroName)) {
