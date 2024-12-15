@@ -11,9 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Hepbiz文件导出器
@@ -160,10 +158,30 @@ public class HepbizExporter {
      *
      * @param parameters 输入参数数组
      * @param operation  当前API操作
+     * @param category   接口类别
      */
-    private void processInputParameters(JsonArray parameters, JsonObject operation) {
-        if (parameters == null || parameters.isEmpty()) {
-            return;
+    private void processInputParameters(JsonArray parameters, JsonObject operation, String category) {
+        if (parameters == null) {
+            parameters = new JsonArray();
+        }
+
+        // 获取该类别的默认参数
+        JsonArray defaultParams = categoryParams.get(category);
+        if (defaultParams != null) {
+            // 创建一个新的参数数组，包含默认参数和自定义参数
+            JsonArray mergedParams = new JsonArray();
+
+            // 添加默认参数
+            for (JsonElement defaultParam : defaultParams) {
+                mergedParams.add(defaultParam);
+            }
+
+            // 添加自定义参数
+            for (JsonElement param : parameters) {
+                mergedParams.add(param);
+            }
+
+            parameters = mergedParams;
         }
 
         JsonObject requestBody = new JsonObject();
@@ -280,9 +298,6 @@ public class HepbizExporter {
         if (typeInfo.has("format")) {
             schema.addProperty("format", typeInfo.get("format").getAsString());
         }
-        if (typeInfo.has("length")) {
-            schema.addProperty("maxLength", typeInfo.get("length").getAsInt());
-        }
         if (typeInfo.has("decimal")) {
             schema.addProperty("format", "decimal");
             schema.addProperty("multipleOf", Math.pow(10, -typeInfo.get("decimal").getAsInt()));
@@ -389,11 +404,6 @@ public class HepbizExporter {
                     } else {
                         fieldSchema.addProperty("type", mapHepTypeToOpenAPI(fieldType));
                     }
-
-                    // 添加长度限制
-                    if (field.has("length")) {
-                        fieldSchema.addProperty("maxLength", Integer.parseInt(field.get("length").getAsString()));
-                    }
                 }
 
                 properties.add(fieldName, fieldSchema);
@@ -493,21 +503,36 @@ public class HepbizExporter {
     }
 
     /**
-     * 获取文件所在的目录类型
+     * 从文件路径获取接口分组
      *
-     * @param file 文件
-     * @return 目录类型（inner, ext, out, biz）
+     * @param file       文件
+     * @param projectName 项目名称
+     * @return 分组标签数组
      */
-    private String getFileCategory(VirtualFile file) {
-        String path = file.getPath().toLowerCase();
-        if (path.contains("/inner/") || path.contains("\\inner\\")) {
-            return "inner";
-        } else if (path.contains("/ext/") || path.contains("\\ext\\")) {
-            return "ext";
-        } else if (path.contains("/out/") || path.contains("\\out\\")) {
-            return "out";
+    private JsonArray getApiTags(VirtualFile file, String projectName) {
+        JsonArray tags = new JsonArray();
+        String path = file.getPath();
+
+        // 添加项目名称作为第一层分组
+        tags.add(projectName);
+
+        // 查找studio-resources目录的位置
+        int studioIndex = path.indexOf("studio-resources");
+        if (studioIndex == -1) {
+            return tags;
         }
-        return "biz";
+
+        // 获取studio-resources/biz之后的路径
+        String relativePath = path.substring(studioIndex);
+        String[] parts = relativePath.split("/");
+
+        StringBuilder groupPath = new StringBuilder(projectName);
+        for (int i = 2; i < parts.length - 1; i++) { // 跳过studio-resources和biz，以及最后的文件名
+            groupPath.append("/").append(parts[i]);
+            tags.add(groupPath.toString());
+        }
+
+        return tags;
     }
 
     /**
@@ -598,6 +623,14 @@ public class HepbizExporter {
         components.add("schemas", schemas);
         openapi.add("components", components);
 
+        // 创建tags数组，用于存储所有分组
+        Set<String> uniqueTags = new HashSet<>();
+        JsonArray tags = new JsonArray();
+        openapi.add("tags", tags);
+
+        // 获取项目名称
+        String projectName = project.getName();
+
         // 处理每个Hepbiz文件
         for (VirtualFile file : hepbizFiles) {
             try {
@@ -628,15 +661,47 @@ public class HepbizExporter {
                 }
 
                 // 处理API标签
-                JsonArray tags = new JsonArray();
-                String category = getFileCategory(file);
-                tags.add(getCategoryTag(category));
-                operation.add("tags", tags);
+                JsonArray fileTags = getApiTags(file, projectName);
+                if (fileTags.size() > 0) {
+                    // 添加新的标签到全局tags
+                    for (JsonElement tag : fileTags) {
+                        String tagName = tag.getAsString();
+                        if (uniqueTags.add(tagName)) {
+                            JsonObject tagObject = new JsonObject();
+                            tagObject.addProperty("name", tagName);
+                            // 如果是项目名称，使用特殊描述
+                            if (tagName.equals(projectName)) {
+                                tagObject.addProperty("description", "APIs in project: " + projectName);
+                            } else {
+                                tagObject.addProperty("description", "API group: " + tagName);
+                            }
+                            tags.add(tagObject);
+                        }
+                    }
+                    operation.add("tags", fileTags);
+                }
 
                 // 处理请求参数
                 if (detail.has("inputs")) {
                     JsonArray inputs = detail.getAsJsonArray("inputs");
-                    processInputParameters(inputs, operation);
+                    // 获取接口类别
+                    String category = "default";
+                    if (detail.has("category")) {
+                        category = detail.get("category").getAsString();
+                    } else {
+                        // 尝试从文件路径判断类别
+                        String filePath = file.getPath().toLowerCase();
+                        if (filePath.contains("/inner/") || filePath.contains("\\inner\\")) {
+                            category = "inner";
+                        } else if (filePath.contains("/ext/") || filePath.contains("\\ext\\")) {
+                            category = "ext";
+                        } else if (filePath.contains("/out/") || filePath.contains("\\out\\")) {
+                            category = "out";
+                        } else if (filePath.contains("/biz/") || filePath.contains("\\biz\\")) {
+                            category = "biz";
+                        }
+                    }
+                    processInputParameters(inputs, operation, category);
                 }
 
                 // 添加响应定义
@@ -672,26 +737,5 @@ public class HepbizExporter {
         openapi.add("paths", paths);
 
         return openapi.toString();
-    }
-
-    /**
-     * 获取类别对应的标签名称
-     *
-     * @param category 类别名称
-     * @return 标签名称
-     */
-    private String getCategoryTag(String category) {
-        switch (category) {
-            case "inner":
-                return "内部接口";
-            case "ext":
-                return "外部接口";
-            case "out":
-                return "出参接口";
-            case "biz":
-                return "业务接口";
-            default:
-                return "其他接口";
-        }
     }
 }
