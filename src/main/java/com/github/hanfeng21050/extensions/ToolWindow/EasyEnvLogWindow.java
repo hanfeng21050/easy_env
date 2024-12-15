@@ -1,5 +1,7 @@
 package com.github.hanfeng21050.extensions.ToolWindow;
 
+import com.github.hanfeng21050.utils.EasyIcons;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -52,6 +54,25 @@ public class EasyEnvLogWindow extends SimpleToolWindowPanel {
 
         // 创建滚动面板
         scrollPane = new JBScrollPane(logPane);
+
+        // 创建工具栏
+        DefaultActionGroup actionGroup = new DefaultActionGroup();
+        actionGroup.addAction(new AnAction("清除日志", "清除所有日志内容", EasyIcons.deleteIcon) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                clearLog();
+            }
+
+            @Override
+            public void update(@NotNull AnActionEvent e) {
+                e.getPresentation().setEnabled(true);
+            }
+        });
+
+        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("EasyEnvLog", actionGroup, true);
+        toolbar.setTargetComponent(this);
+        setToolbar(toolbar.getComponent());
+        
         setContent(scrollPane);
     }
 
@@ -190,6 +211,16 @@ public class EasyEnvLogWindow extends SimpleToolWindowPanel {
             document.remove(0, end);
         } catch (BadLocationException e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * 清除日志内容
+     */
+    private void clearLog() {
+        try {
+            document.remove(0, document.getLength());
+        } catch (BadLocationException ignored) {
         }
     }
 }

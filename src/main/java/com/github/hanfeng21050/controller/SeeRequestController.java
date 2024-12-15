@@ -1,4 +1,4 @@
-package com.github.hanfeng21050.request;
+package com.github.hanfeng21050.controller;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
@@ -16,8 +16,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SeeRequest {
-    private static final Logger LOGGER = Logger.getInstance(SeeRequest.class);
+public class SeeRequestController {
+    private static final Logger LOGGER = Logger.getInstance(SeeRequestController.class);
     // 常量定义
     private static final String SUCCESS = "success";
     private static final String CAS_LOGIN_URL = "/cas/login";

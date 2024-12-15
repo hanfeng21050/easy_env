@@ -1,8 +1,8 @@
 package com.github.hanfeng21050.actions;
 
+import com.github.hanfeng21050.controller.export.HepExporter;
+import com.github.hanfeng21050.controller.export.OpenApiExporterController;
 import com.github.hanfeng21050.dialog.export.FileSelectDialog;
-import com.github.hanfeng21050.utils.exportUtil.HepExporter;
-import com.github.hanfeng21050.utils.exportUtil.OpenApiHepExporter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -59,7 +59,7 @@ public class HepPlusGroup {
 
             try {
                 // 创建导出器并执行导出
-                HepExporter hepExporter = new OpenApiHepExporter(project);
+                HepExporter hepExporter = new OpenApiExporterController(project);
                 String openApiJson = hepExporter.export(project, selectedFiles);
                 if (openApiJson == null) {
                     // 用户取消了导出操作

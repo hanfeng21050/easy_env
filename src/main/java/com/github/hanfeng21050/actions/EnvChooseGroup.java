@@ -2,13 +2,14 @@ package com.github.hanfeng21050.actions;
 
 import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.github.hanfeng21050.config.SeeConfig;
+import com.github.hanfeng21050.controller.EnvConfigController;
 import com.github.hanfeng21050.extensions.EasyEnvConfigComponent;
-import com.github.hanfeng21050.utils.MyPluginLoader;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,8 +75,16 @@ public class EnvChooseGroup extends ActionGroup {
             Project project = e.getProject();
             if (project != null) {
                 SeeConfig seeConfig = new SeeConfig(uuid, address, username);
-                MyPluginLoader pluginLoader = new MyPluginLoader(project, seeConfig);
-                ApplicationManager.getApplication().invokeLater(pluginLoader::startBlockingLoadingProcess);
+                EnvConfigController pluginLoader = new EnvConfigController(project, seeConfig);
+
+                // 使用后台任务替代UI线程
+                Task.Backgroundable task = new Task.Backgroundable(project, "加载环境配置...", false) {
+                    @Override
+                    public void run(@NotNull ProgressIndicator indicator) {
+                        pluginLoader.getEnvConfig();
+                    }
+                };
+                task.queue();
             }
 
         }

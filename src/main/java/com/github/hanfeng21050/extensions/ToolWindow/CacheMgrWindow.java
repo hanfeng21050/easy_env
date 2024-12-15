@@ -4,7 +4,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.github.hanfeng21050.config.SeeConfig;
-import com.github.hanfeng21050.request.SeeRequest;
+import com.github.hanfeng21050.controller.SeeRequestController;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import org.apache.commons.lang.StringUtils;
@@ -251,7 +251,7 @@ public class CacheMgrWindow {
 
             JSONObject cacheData = null;
             try {
-                cacheData = SeeRequest.getCacheData(url, params);
+                cacheData = SeeRequestController.getCacheData(url, params);
             } catch (IOException | URISyntaxException ex) {
                 handleError(ex);
             }
@@ -288,7 +288,7 @@ public class CacheMgrWindow {
                 EasyEnvConfig.SeeConnectInfo seeConnectInfo = first.get();
                 SeeConfig seeConfig = new SeeConfig(seeConnectInfo);
                 try {
-                    JSONObject jsonObject = SeeRequest.localCacheRefresh(seeConfig, auth, params);
+                    JSONObject jsonObject = SeeRequestController.localCacheRefresh(seeConfig, auth, params);
                     if (jsonObject != null && jsonObject.getString("success").equals("true")) {
                         Messages.showInfoMessage("缓存[" + model.getMemoryTable() + "]更新成功", "成功");
                     } else {
@@ -317,10 +317,10 @@ public class CacheMgrWindow {
         ApplicationManager.getApplication().invokeLater(() -> {
             CompletableFuture.supplyAsync(() -> {
                 try {
-                    SeeRequest.login(seeConfig);
-                    auth = SeeRequest.getAuth(seeConfig);
-                    appId = SeeRequest.getApplication(seeConfig, "服务控制台", auth);
-                    JSONObject serviceList = SeeRequest.getServiceList(seeConfig, appId, auth);
+                    SeeRequestController.login(seeConfig);
+                    auth = SeeRequestController.getAuth(seeConfig);
+                    appId = SeeRequestController.getApplication(seeConfig, "服务控制台", auth);
+                    JSONObject serviceList = SeeRequestController.getServiceList(seeConfig, appId, auth);
 
                     serverInfos = new ArrayList<>();
                     if (serviceList != null && serviceList.getString("message").equals("success")) {
@@ -379,7 +379,7 @@ public class CacheMgrWindow {
                             body.put("version", serverInfo.getVersion());
                             body.put("m_pid", "pid");
                             body.put("appId", appId);
-                            JSONObject serviceInfo = SeeRequest.getServiceInfo(seeConfig, auth, body);
+                            JSONObject serviceInfo = SeeRequestController.getServiceInfo(seeConfig, auth, body);
 
                             JSONArray data = serviceInfo.getJSONObject("data").getJSONArray("data");
                             List<String> nodeIps = new ArrayList<>();
@@ -427,7 +427,7 @@ public class CacheMgrWindow {
                     String nodeIp = model.getNodeIp();
                     if (StringUtils.isNotBlank(nodeIp)) {
                         String[] split = nodeIp.split(":");
-                        JSONObject localCacheFormDataOnlyTable = SeeRequest.getLocalCacheFormDataOnlyTable(seeConfig, auth, split[0].trim(), split[1].trim());
+                        JSONObject localCacheFormDataOnlyTable = SeeRequestController.getLocalCacheFormDataOnlyTable(seeConfig, auth, split[0].trim(), split[1].trim());
                         return localCacheFormDataOnlyTable.getJSONArray("data");
                     }
                 } catch (IOException | URISyntaxException e) {

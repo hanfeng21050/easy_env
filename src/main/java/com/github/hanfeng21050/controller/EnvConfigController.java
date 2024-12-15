@@ -1,17 +1,15 @@
-package com.github.hanfeng21050.utils;
+package com.github.hanfeng21050.controller;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.github.hanfeng21050.config.SeeConfig;
 import com.github.hanfeng21050.extensions.EasyEnvConfigComponent;
-import com.github.hanfeng21050.request.SeeRequest;
+import com.github.hanfeng21050.utils.CommonValidateUtil;
+import com.github.hanfeng21050.utils.HttpClientUtil;
+import com.github.hanfeng21050.utils.Logger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -22,7 +20,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -37,101 +34,83 @@ import java.util.zip.ZipInputStream;
  * Author  hanfeng32305
  * Date  2023/11/1 0:26
  */
-public class MyPluginLoader {
+public class EnvConfigController {
 
     private final EasyEnvConfig config = ServiceManager.getService(EasyEnvConfigComponent.class).getState();
     private final SeeConfig seeConfig;
     private final Project project;
 
-    public MyPluginLoader(Project project, SeeConfig seeConfig) {
+    public EnvConfigController(Project project, SeeConfig seeConfig) {
         this.seeConfig = seeConfig;
         this.project = project;
     }
 
     /**
-     * 启动阻塞加载进程
+     * 获取环境配置文件
      */
-    public void startBlockingLoadingProcess() {
-        // 禁用UI，使用户不能进行其他操作
-        ApplicationManager.getApplication().invokeLater(() -> DumbService.getInstance(project).setAlternativeResolveEnabled(true));
+    public void getEnvConfig() {
+        String name = project.getName();
+        String applicationName = name + "-svr";
+        try {
+            // 登录并获取 auth 信息
+            Logger.info(String.format("[%s] 开始获取auth信息...", name));
+            SeeRequestController.login(seeConfig);
 
-        // 执行加载任务
-        ProgressManager.getInstance().run(new Task.Modal(project, "加载中...", true) {
-            @Override
-            public void run(@NotNull ProgressIndicator progressIndicator) {
-                // 在这里执行需要加载的任务，同时更新进度
-                // 获取当前项目的名称
-                String name = project.getName();
-                String applicationName = name + "-svr";
+            String auth = SeeRequestController.getAuth(seeConfig);
+            Logger.info(String.format("[%s] auth获取成功", name));
+
+            // 获取应用id
+            Logger.info(String.format("[%s] 开始获取应用ID，应用名称: %s", name, applicationName));
+            String applicationId = SeeRequestController.getApplication(seeConfig, applicationName, auth);
+            Logger.info(String.format("[%s] 获取应用ID成功: %s", name, applicationId));
+
+            if (StringUtils.isNotBlank(applicationId)) {
+                // 获取新版see的配置
+                boolean flag = false;
                 try {
-                    // 登录并获取 auth 信息
-                    SeeRequest.login(seeConfig);
-
-                    String auth = SeeRequest.getAuth(seeConfig);
-                    progressIndicator.setText(String.format("[%s] %s", name, "auth获取成功"));
-                    Logger.info(String.format("[%s] %s", name, "auth获取成功"));
-
-                    // 获取应用id
-                    String applicationId = SeeRequest.getApplication(seeConfig, applicationName, auth);
-                    progressIndicator.setText(String.format("[%s] %s %s", name, "获取获取应用id成功，applicationId:", applicationId));
-                    Logger.info(String.format(String.format("[%s] %s %s", name, "获取获取应用id成功，applicationId:", applicationId)));
-
-                    if (StringUtils.isNotBlank(applicationId)) {
-                        // 获取新版see的配置
-                        boolean flag = false;
-                        try {
-                            JSONObject config = SeeRequest.getConfigInfoNew(seeConfig, applicationId, auth);
-                            progressIndicator.setText(String.format("[%s] %s", name, "获取项目配置信息成功"));
-                            Logger.info(String.format("[%s] %s", name, "获取项目配置信息成功"));
-                            // 保存配置
-                            saveConfigToFileNew(progressIndicator, config);
-                            flag = true;
-                        } catch (Exception e) {
-                            progressIndicator.setText(String.format("[%s] %s", name, "see新版本配置获取失败"));
-                            Logger.info(String.format("[%s] %s", name, "see新版本配置获取失败"));
-                        }
-
-                        if (!flag) {
-                            JSONObject config = SeeRequest.getConfigInfo(seeConfig, applicationId, auth);
-                            progressIndicator.setText(String.format("[%s] %s", name, "获取项目配置信息成功"));
-                            Logger.info(String.format("[%s] %s", name, "获取项目配置信息成功"));
-
-                            // 保存配置
-                            saveConfigToFile(progressIndicator, config);
-                        }
-
-                        ApplicationManager.getApplication().invokeLater(() -> {
-                            Messages.showInfoMessage(String.format("[%s] %s", name, "获取项目配置信息成功"), "信息");
-                        });
-                    } else {
-                        ApplicationManager.getApplication().invokeLater(() -> {
-                            Messages.showInfoMessage(String.format("[%s] %s", name, "未获取到当前项目配置文件，请检查"), "提示");
-                        });
-                    }
-                } catch (Exception ex) {
-                    String errMsg = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
-
-                    ApplicationManager.getApplication().invokeLater(() -> {
-                        Messages.showErrorDialog("连接失败，请检查。" + errMsg, "错误");
-                    });
-                    throw new RuntimeException(ex);
+                    Logger.info(String.format("[%s] 尝试获取新版See配置...", name));
+                    JSONObject config = SeeRequestController.getConfigInfoNew(seeConfig, applicationId, auth);
+                    Logger.info(String.format("[%s] 新版See配置获取成功", name));
+                    // 保存配置
+                    saveConfigToFileNew(config);
+                    flag = true;
+                } catch (Exception e) {
+                    Logger.warn(String.format("[%s] 新版See配置获取失败: %s", name, e.getMessage()));
                 }
 
-            }
+                if (!flag) {
+                    Logger.info(String.format("[%s] 尝试获取旧版See配置...", name));
+                    JSONObject config = SeeRequestController.getConfigInfo(seeConfig, applicationId, auth);
+                    Logger.info(String.format("[%s] 旧版See配置获取成功", name));
 
-            @Override
-            public void onFinished() {
-                // 任务完成后，启用UI
-                ApplicationManager.getApplication().invokeLater(() -> DumbService.getInstance(project).setAlternativeResolveEnabled(false));
+                    // 保存配置
+                    saveConfigToFile(config);
+                }
+
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    Messages.showInfoMessage(String.format("[%s] %s", name, "获取项目配置信息成功"), "信息");
+                });
+            } else {
+                Logger.warn(String.format("[%s] 未获取到应用ID", name));
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    Messages.showInfoMessage(String.format("[%s] %s", name, "未获取到当前项目配置文件，请检查"), "提示");
+                });
             }
-        });
+        } catch (Exception ex) {
+            String errMsg = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+            Logger.error(String.format("[%s] 配置加载失败: %s", name, errMsg));
+            ApplicationManager.getApplication().invokeLater(() -> {
+                Messages.showErrorDialog("连接失败，请检查。" + errMsg, "错误");
+            });
+            throw new RuntimeException(ex);
+        }
     }
 
     /**
-     * @param indicator
      * @param jsonObject
      */
-    private void saveConfigToFile(@NotNull ProgressIndicator indicator, JSONObject jsonObject) {
+    private void saveConfigToFile(JSONObject jsonObject) {
+        Logger.info(String.format("[%s] 开始保存配置文件...", project.getName()));
         JSONArray array = mergeNonEmptyConfig(jsonObject);
         for (int i = 0; i < array.size(); i++) {
             JSONObject config = array.getJSONObject(i);
@@ -145,9 +124,14 @@ public class MyPluginLoader {
                 saveFile(fileName, content);
             }
         }
+        Logger.info(String.format("[%s] 配置文件保存完成", project.getName()));
     }
 
-    private void saveConfigToFileNew(@NotNull ProgressIndicator indicator, JSONObject jsonObject) {
+    /**
+     * @param jsonObject
+     */
+    private void saveConfigToFileNew(JSONObject jsonObject) {
+        Logger.info(String.format("[%s] 开始保存新版配置文件...", project.getName()));
         if (jsonObject != null) {
             String fileName = jsonObject.getJSONObject("data").getString("fileName");
             String path = jsonObject.getJSONObject("data").getString("path");
@@ -157,17 +141,24 @@ public class MyPluginLoader {
                 if (module.getPath().contains("deploy")) {
                     try {
                         String resourceDirPath = "src/main/resources"; // 根据项目结构适当修改路径
+                        Logger.info(String.format("[%s] 检查资源目录: %s", project.getName(), resourceDirPath));
                         // 使用 LocalFileSystem 构建资源目录的绝对路径
                         VirtualFile resourceDirectory = LocalFileSystem.getInstance().findFileByPath(module.getPath() + "/" + resourceDirPath);
 
                         File file = null;
                         if (resourceDirectory != null) {
                             file = new File(resourceDirectory.getPath() + "/" + fileName);
+                            Logger.info(String.format("[%s] 目标文件路径: %s", project.getName(), file.getPath()));
+                        } else {
+                            Logger.warn(String.format("[%s] 资源目录不存在: %s", project.getName(), resourceDirPath));
+                            continue;
                         }
 
-                        // 如果文件存在，则删除它
                         if (file != null && file.exists()) {
                             boolean delete = file.delete();
+                            if (!delete) {
+                                Logger.warn(String.format("[%s] 文件删除失败: %s", project.getName(), file.getPath()));
+                            }
                         }
                         try (CloseableHttpResponse response = HttpClientUtil.httpGetResponse(seeConfig.getAddress() + "/acm/" + path)) {
                             int statusCode = response.getStatusLine().getStatusCode();
@@ -183,28 +174,33 @@ public class MyPluginLoader {
                                         }
                                     }
                                 }
+                                Logger.info(String.format("[%s] 文件下载成功: %s", project.getName(), file.getCanonicalPath()));
                                 // 解压文件， 获取配置
                                 extractFilesFromNestedZip(resourceDirectory.getPath() + "/" + fileName, resourceDirectory.getPath());
                             }
                         }
                     } catch (Exception e) {
+                        Logger.error(String.format("[%s] 保存新版配置文件失败: %s", project.getName(), e.getMessage()));
                         throw new RuntimeException(e);
                     }
                 }
             }
         }
+        Logger.info(String.format("[%s] 新版配置文件保存完成", project.getName()));
     }
 
     public void extractFilesFromNestedZip(String zipFilePath, String outputDir) throws IOException {
+        Logger.info(String.format("[%s] 开始解压嵌套ZIP文件: %s", project.getName(), zipFilePath));
         String regex = "home/hundsun/server/[^/]*(/config|/cust-config)/";
         Pattern pattern = Pattern.compile(regex);
 
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFilePath))) {
             ZipEntry zipEntry;
             while ((zipEntry = zis.getNextEntry()) != null) {
+                Logger.info(String.format("[%s] 处理ZIP条目: %s", project.getName(), zipEntry.getName()));
                 if (zipEntry.getName().endsWith(".zip")) {
-                    // Extract the nested zip file to a temporary location
                     File tempFile = File.createTempFile("tempZip", ".zip");
+                    Logger.info(String.format("[%s] 创建临时ZIP文件: %s", project.getName(), tempFile.getPath()));
                     try (FileOutputStream fos = new FileOutputStream(tempFile)) {
                         byte[] buffer = new byte[1024];
                         int length;
@@ -225,6 +221,7 @@ public class MyPluginLoader {
                                 List<EasyEnvConfig.ExcludedFile> excludedFiles = config.getExcludedFiles();
                                 Optional<EasyEnvConfig.ExcludedFile> any = excludedFiles.stream().filter(excludedFile -> CommonValidateUtil.isFileNameMatch(fileName, excludedFile.getFileName())).findAny();
                                 if (any.isPresent()) {
+                                    Logger.info(String.format("[%s] 文件在排除列表中，跳过: %s", project.getName(), fileName));
                                     continue;
                                 }
 
@@ -241,7 +238,6 @@ public class MyPluginLoader {
                                     if (fileName.endsWith(".dat")) {
                                         while ((length = nestedZis.read(buffer)) > 0) {
                                             fos.write(buffer, 0, length);
-                                            Logger.info(String.format("[%s] %s", project.getName(), outputFile.getCanonicalPath()));
                                         }
                                     } else {
                                         while ((length = nestedZis.read(buffer)) > 0) {
@@ -250,6 +246,8 @@ public class MyPluginLoader {
                                             List<EasyEnvConfig.ConfigReplaceRule> configReplaceRules = config.getConfigReplaceRules();
                                             for (EasyEnvConfig.ConfigReplaceRule configReplaceRule : configReplaceRules) {
                                                 if (CommonValidateUtil.isFileNameMatch(fileName, configReplaceRule.getFileName())) {
+                                                    Logger.info(String.format("[%s] 应用替换规则: %s -> %s", project.getName(),
+                                                            configReplaceRule.getRegExpression(), configReplaceRule.getReplaceStr()));
                                                     String regExpression = configReplaceRule.getRegExpression();
                                                     String replaceStr = configReplaceRule.getReplaceStr();
 
@@ -260,10 +258,8 @@ public class MyPluginLoader {
                                             }
                                             fos.write(content.getBytes());
                                         }
-                                        Logger.info(String.format("[%s] %s", project.getName(), outputFile.getCanonicalPath()));
                                     }
-
-
+                                    Logger.info(String.format("[%s] 文件保存成功: %s", project.getName(), outputFile.getCanonicalPath()));
                                 }
                             }
                             nestedZis.closeEntry();
@@ -277,7 +273,6 @@ public class MyPluginLoader {
             }
         }
     }
-
 
     /**
      * 获取所有的config配置文件
@@ -317,7 +312,6 @@ public class MyPluginLoader {
         return mergedConfigs;
     }
 
-
     /**
      * 保存文件
      *
@@ -325,19 +319,22 @@ public class MyPluginLoader {
      * @param content
      */
     public void saveFile(String fileName, String content) {
-        // 判断是否在过滤列表内，如果在则跳过
+        // 判断是否在过滤列表内
         List<EasyEnvConfig.ExcludedFile> excludedFiles = config.getExcludedFiles();
         for (EasyEnvConfig.ExcludedFile excludedFile : excludedFiles) {
             String excludeFileName = excludedFile.getFileName();
             if (CommonValidateUtil.isFileNameMatch(fileName, excludeFileName)) {
+                Logger.info(String.format("[%s] 文件在排除列表中，跳过: %s", project.getName(), fileName));
                 return;
             }
         }
 
-        // 根据配置规则替换文本内容
+        // 应用配置替换规则
         List<EasyEnvConfig.ConfigReplaceRule> configReplaceRules = config.getConfigReplaceRules();
         for (EasyEnvConfig.ConfigReplaceRule configReplaceRule : configReplaceRules) {
             if (CommonValidateUtil.isFileNameMatch(fileName, configReplaceRule.getFileName())) {
+                Logger.info(String.format("[%s] 应用替换规则: %s -> %s", project.getName(),
+                        configReplaceRule.getRegExpression(), configReplaceRule.getReplaceStr()));
                 String regExpression = configReplaceRule.getRegExpression();
                 String replaceStr = configReplaceRule.getReplaceStr();
 
@@ -352,31 +349,35 @@ public class MyPluginLoader {
             if (module.getPath().contains("deploy")) {
                 try {
                     String resourceDirPath = "src/main/resources"; // 根据项目结构适当修改路径
-                    // 使用LocalFileSystem构建资源目录的绝对路径
                     VirtualFile resourceDirectory = LocalFileSystem.getInstance().findFileByPath(module.getPath() + "/" + resourceDirPath);
 
-                    File file = new File(resourceDirectory.getPath() + "/" + fileName);
-                    // 如果文件存在，则删除它
-                    if (file.exists()) {
-                        file.delete();
+                    if (resourceDirectory == null) {
+                        continue;
                     }
+
+                    File file = new File(resourceDirectory.getPath() + "/" + fileName);
+                    if (file.exists()) {
+                        if (!file.delete()) {
+                            Logger.warn(String.format("[%s] 文件删除失败: %s", project.getName(), file.getPath()));
+                        }
+                    }
+
                     if (fileName.contains(".dat")) {
-                        // 配置文件转换二进制保存
                         byte[] bytes = Base64.decodeBase64(content);
                         FileUtils.writeByteArrayToFile(file, bytes);
                     } else {
                         FileUtils.writeStringToFile(file, content, StandardCharsets.UTF_8);
                     }
-                    Logger.info(String.format("[%s] %s", project.getName(), file.getCanonicalPath()));
+                    Logger.info(String.format("[%s] 文件保存成功: %s", project.getName(), file.getCanonicalPath()));
 
-                    // 刷新资源目录，以便在IDE中显示文件
+                    // 刷新资源目录
                     VfsUtil.markDirtyAndRefresh(true, true, true, resourceDirectory);
                 } catch (IOException e) {
+                    Logger.error(String.format("[%s] 保存文件失败: %s, 错误: %s",
+                            project.getName(), fileName, e.getMessage()));
                     throw new RuntimeException(e);
                 }
             }
         }
-
-
     }
 }

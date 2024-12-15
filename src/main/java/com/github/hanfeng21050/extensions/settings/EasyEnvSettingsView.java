@@ -2,9 +2,9 @@ package com.github.hanfeng21050.extensions.settings;
 
 import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.github.hanfeng21050.config.SeeConfig;
-import com.github.hanfeng21050.request.SeeRequest;
-import com.github.hanfeng21050.utils.MyIcons;
-import com.github.hanfeng21050.utils.MyPluginLoader;
+import com.github.hanfeng21050.controller.EnvConfigController;
+import com.github.hanfeng21050.controller.SeeRequestController;
+import com.github.hanfeng21050.utils.EasyIcons;
 import com.github.hanfeng21050.utils.ObjectUtil;
 import com.github.hanfeng21050.utils.PasswordUtil;
 import com.intellij.credentialStore.CredentialAttributes;
@@ -284,7 +284,7 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
      * 创建带有图标的 AnActionButton 的方法。
      */
     private AnActionButton createGenActionButton(Consumer<AnActionEvent> action) {
-        return new AnActionButton("生成配置", MyIcons.genIcon) {
+        return new AnActionButton("生成配置", EasyIcons.genIcon) {
             @Override
             public void actionPerformed(AnActionEvent e) {
                 action.accept(e);
@@ -293,7 +293,7 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
     }
 
     private AnActionButton createTestActionButton(Consumer<AnActionEvent> action) {
-        return new AnActionButton("测试连接", MyIcons.testIcon) {
+        return new AnActionButton("测试连接", EasyIcons.testIcon) {
             @Override
             public void actionPerformed(AnActionEvent e) {
                 action.accept(e);
@@ -313,8 +313,8 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
             String username = (String) envTable.getValueAt(selectedRow, 3);
             SeeConfig seeConfig = new SeeConfig(uuid, address, username);
             Project project = e.getProject();
-            MyPluginLoader myPluginLoader = new MyPluginLoader(project, seeConfig);
-            myPluginLoader.startBlockingLoadingProcess();
+            EnvConfigController envConfigController = new EnvConfigController(project, seeConfig);
+            envConfigController.getEnvConfig();
         } else {
             showInfoMessage("请选择一行");
         }
@@ -332,7 +332,7 @@ public class EasyEnvSettingsView extends AbstractTemplateSettingsView {
                 String address = (String) envTable.getValueAt(selectedRow, 2);
                 String username = (String) envTable.getValueAt(selectedRow, 3);
                 SeeConfig seeConfig = new SeeConfig(uuid, address, username);
-                SeeRequest.login(seeConfig);
+                SeeRequestController.login(seeConfig);
                 ApplicationManager.getApplication().invokeLater(() -> {
                     Messages.showInfoMessage("连接成功", "提示");
                 });

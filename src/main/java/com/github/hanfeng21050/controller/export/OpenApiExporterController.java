@@ -1,7 +1,7 @@
-package com.github.hanfeng21050.utils.exportUtil;
+package com.github.hanfeng21050.controller.export;
 
+import com.github.hanfeng21050.exception.HepExportException;
 import com.github.hanfeng21050.utils.Logger;
-import com.github.hanfeng21050.utils.exportUtil.exception.HepExportException;
 import com.google.gson.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -26,7 +26,7 @@ import java.util.Map;
  * Hepbiz文件导出器
  * 用于将.hepbiz文件导出为OpenAPI格式
  */
-public class OpenApiHepExporter implements HepExporter {
+public class OpenApiExporterController implements HepExporter {
     private final Project project;
     private final Map<String, JsonObject> typeMapping = new HashMap<>();
     private final Map<String, JsonObject> objCache = new HashMap<>();
@@ -38,7 +38,7 @@ public class OpenApiHepExporter implements HepExporter {
      *
      * @param project 当前IntelliJ项目实例
      */
-    public OpenApiHepExporter(Project project) {
+    public OpenApiExporterController(Project project) {
         this.project = project;
     }
 
@@ -51,7 +51,7 @@ public class OpenApiHepExporter implements HepExporter {
     private void loadTypeDefinitions() throws IOException {
         Logger.info("开始加载类型定义文件...");
         // 从当前类的ClassLoader加载资源文件
-        try (InputStream inputStream = OpenApiHepExporter.class.getResourceAsStream("/type_mappings.json")) {
+        try (InputStream inputStream = OpenApiExporterController.class.getResourceAsStream("/type_mappings.json")) {
             if (inputStream == null) {
                 Logger.error("无法找到type_mappings.json文件");
                 throw new IOException("无法找到type_mappings.json文件");
