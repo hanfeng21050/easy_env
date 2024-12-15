@@ -1,5 +1,6 @@
 package com.github.hanfeng21050.utils.exportUtil;
 
+import com.github.hanfeng21050.utils.Logger;
 import com.github.hanfeng21050.utils.exportUtil.exception.HepExportException;
 import com.google.gson.*;
 import com.intellij.openapi.module.Module;
@@ -48,9 +49,11 @@ public class OpenApiHepExporter implements HepExporter {
      * @throws IOException 当读取或解析类型定义文件时发生错误
      */
     private void loadTypeDefinitions() throws IOException {
+        Logger.info("开始加载类型定义文件...");
         // 从当前类的ClassLoader加载资源文件
         try (InputStream inputStream = OpenApiHepExporter.class.getResourceAsStream("/type_mappings.json")) {
             if (inputStream == null) {
+                Logger.error("无法找到type_mappings.json文件");
                 throw new IOException("无法找到type_mappings.json文件");
             }
 
@@ -59,6 +62,7 @@ public class OpenApiHepExporter implements HepExporter {
             JsonObject mappings = JsonParser.parseString(content).getAsJsonObject();
 
             if (!mappings.has("typeMapping")) {
+                Logger.error("type_mappings.json文件格式错误：缺少typeMapping字段");
                 throw new IOException("type_mappings.json文件格式错误：缺少typeMapping字段");
             }
 
@@ -69,20 +73,25 @@ public class OpenApiHepExporter implements HepExporter {
             for (Map.Entry<String, JsonElement> entry : types.entrySet()) {
                 String typeName = entry.getKey();
                 if (!entry.getValue().isJsonObject()) {
+                    Logger.error(String.format("类型'%s'的定义不是有效的JSON对象", typeName));
                     throw new IOException(String.format("类型'%s'的定义不是有效的JSON对象", typeName));
                 }
                 JsonObject typeInfo = entry.getValue().getAsJsonObject();
 
                 // 验证必要的字段
                 if (!typeInfo.has("openApiType")) {
+                    Logger.error(String.format("类型'%s'缺少openApiType字段", typeName));
                     throw new IOException(String.format("类型'%s'缺少openApiType字段", typeName));
                 }
 
                 typeMapping.put(typeName, typeInfo);
             }
+            Logger.info("类型定义加载完成，共加载 " + typeMapping.size() + " 个类型");
         } catch (JsonSyntaxException e) {
+            Logger.error("解析type_mappings.json文件时发生错误", e);
             throw new IOException("解析type_mappings.json文件时发生错误: " + e.getMessage(), e);
         } catch (Exception e) {
+            Logger.error("处理type_mappings.json文件时发生错误", e);
             throw new IOException("处理type_mappings.json文件时发生错误: " + e.getMessage(), e);
         }
     }
@@ -95,20 +104,25 @@ public class OpenApiHepExporter implements HepExporter {
      * @throws HepExportException 如果找不到文件
      */
     private VirtualFile findJresProjectInModules(Project project) throws HepExportException {
+        Logger.info("开始在项目模块中查找jresProject.xml文件...");
         Module[] modules = ModuleManager.getInstance(project).getModules();
 
         for (Module module : modules) {
             String moduleName = module.getName();
+            Logger.info("检查模块: " + moduleName);
             if (moduleName.endsWith("-pub")) {
                 VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
                 for (VirtualFile root : contentRoots) {
                     VirtualFile jresFile = root.findFileByRelativePath("jresProject.xml");
                     if (jresFile != null && jresFile.exists()) {
+                        String path = jresFile.getPath().replace('\\', '/');
+                        Logger.info("找到jresProject.xml文件: " + path);
                         return jresFile;
                     }
                 }
             }
         }
+        Logger.error("在所有-pub模块中都找不到jresProject.xml文件");
         throw new HepExportException("在所有-pub模块中都找不到jresProject.xml文件");
     }
 
@@ -150,12 +164,12 @@ public class OpenApiHepExporter implements HepExporter {
             }
 
             if (categoryParams.isEmpty()) {
-                System.out.println("警告：未在jresProject.xml中找到任何分类参数");
+                Logger.warn("未在jresProject.xml中找到任何分类参数");
             } else {
-                System.out.println("成功加载分类参数：" + String.join(", ", categoryParams.keySet()));
+                Logger.info("成功加载分类参数：" + String.join(", ", categoryParams.keySet()));
             }
         } catch (Exception e) {
-            System.out.println("解析jresProject.xml时出错：" + e.getMessage());
+            Logger.error("解析jresProject.xml时出错：" + e.getMessage());
             throw new HepExportException("解析jresProject.xml文件失败: " + e.getMessage(), e);
         }
     }
@@ -429,7 +443,7 @@ public class OpenApiHepExporter implements HepExporter {
             return schema;
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error("读取对象定义文件时出错", e);
             return null;
         }
     }
@@ -595,11 +609,14 @@ public class OpenApiHepExporter implements HepExporter {
      * @return 导出的OpenAPI文档内容
      */
     public String exportToOpenAPI(Project project, List<VirtualFile> files) throws HepExportException {
+        Logger.info("开始导出OpenAPI文档...");
         try {
             // 加载类型定义和默认参数
             loadTypeDefinitions();
             loadDefaultParams(project);
 
+            Logger.info("开始处理 " + files.size() + " 个文件");
+            
             // 创建OpenAPI文档
             JsonObject openapi = new JsonObject();
             this.openapi = openapi;
@@ -624,14 +641,23 @@ public class OpenApiHepExporter implements HepExporter {
             openapi.add("tags", new JsonArray());
 
             // 处理每个文件
+            int processedCount = 0;
             for (VirtualFile file : files) {
+                Logger.info("处理文件 (" + (++processedCount) + "/" + files.size() + "): " + file.getPath());
                 processFile(file, project, openapi);
             }
 
             // 导出到文件
-            return exportToFile(openapi, project);
+            String result = exportToFile(openapi, project);
+            if (result != null) {
+                Logger.info("OpenAPI文档导出成功");
+            } else {
+                Logger.warn("用户取消了文件导出");
+            }
+            return result;
 
         } catch (Exception e) {
+            Logger.error("生成OpenAPI文档失败", e);
             throw new HepExportException("生成OpenAPI文档失败: " + e.getMessage());
         }
     }
@@ -785,6 +811,8 @@ public class OpenApiHepExporter implements HepExporter {
      * @return 导出的文件内容
      */
     private String exportToFile(JsonObject openapi, Project project) throws IOException {
+        Logger.info("准备导出OpenAPI文档到文件...");
+        
         // 获取当前时间戳
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
 
@@ -801,6 +829,7 @@ public class OpenApiHepExporter implements HepExporter {
 
         // 显示保存对话框
         if (fileChooser.showSaveDialog(null) != JFileChooser.APPROVE_OPTION) {
+            Logger.info("用户取消了文件保存");
             return null;
         }
 
@@ -808,6 +837,8 @@ public class OpenApiHepExporter implements HepExporter {
         if (!selectedFile.getName().toLowerCase().endsWith(".json")) {
             selectedFile = new File(selectedFile.getAbsolutePath() + ".json");
         }
+
+        Logger.info("选择的导出文件路径: " + selectedFile.getAbsolutePath());
 
         // 检查文件是否已存在
         if (selectedFile.exists()) {
@@ -818,6 +849,7 @@ public class OpenApiHepExporter implements HepExporter {
                     JOptionPane.WARNING_MESSAGE);
 
             if (response != JOptionPane.YES_OPTION) {
+                Logger.info("用户取消了文件覆盖");
                 return null;
             }
         }
@@ -828,7 +860,11 @@ public class OpenApiHepExporter implements HepExporter {
 
         try (FileWriter writer = new FileWriter(selectedFile)) {
             writer.write(jsonOutput);
+            Logger.info("文件导出成功: " + selectedFile.getAbsolutePath());
             return jsonOutput;
+        } catch (IOException e) {
+            Logger.error("文件导出失败", e);
+            throw e;
         }
     }
 
