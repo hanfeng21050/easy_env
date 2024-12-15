@@ -17,7 +17,7 @@
         </properties>
         <border type="none" title="缓存"/>
         <children>
-          <component id="71ade" class="javax.swing.JTable" binding="table1" default-binding="true">
+          <component id="71ade" class="com.intellij.ui.table.JBTable" binding="table1" default-binding="true">
             <constraints/>
             <properties>
               <autoCreateColumnsFromModel value="true"/>
