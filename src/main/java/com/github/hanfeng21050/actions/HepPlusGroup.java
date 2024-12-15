@@ -60,37 +60,24 @@ public class HepPlusGroup {
                 // 创建导出器并执行导出
                 HepbizExporter exporter = new HepbizExporter(project);
                 String openApiJson = exporter.exportToOpenAPI(project, selectedFiles);
+                if (openApiJson == null) {
+                    // 用户取消了导出操作
+                    return;
+                }
 
                 // 在写入动作中创建和更新文件
                 WriteCommandAction.runWriteCommandAction(project, () -> {
                     try {
-                        VirtualFile baseDir = project.getBaseDir();
-                        VirtualFile openApiFile = baseDir.findChild("openapi.json");
-
-                        // 在写入动作中创建文件
-                        if (openApiFile == null) {
-                            openApiFile = baseDir.createChildData(this, "openapi.json");
-                        }
-
+                        // 获取或创建输出目录
+                        VirtualFile outputDir = getOrCreateOutputDirectory(project);
+                        // 创建输出文件
+                        VirtualFile outputFile = outputDir.findOrCreateChildData(this, "openapi.json");
                         // 写入内容
-                        openApiFile.setBinaryContent(openApiJson.getBytes(StandardCharsets.UTF_8));
-
-                        // 保存文件路径以在写入动作后显示
-                        final String filePath = openApiFile.getPath();
-
-                        // 使用 ApplicationManager.getApplication().invokeLater 在写入动作后显示消息
-                        ApplicationManager.getApplication().invokeLater(() ->
-                                Messages.showInfoMessage(project,
-                                        "OpenAPI规范已导出到: " + filePath,
-                                        "导出成功")
-                        );
+                        outputFile.setBinaryContent(openApiJson.getBytes(StandardCharsets.UTF_8));
+                        // 显示通知
+                        showSuccessNotification(project);
                     } catch (IOException ex) {
-                        final String errorMessage = ex.getMessage();
-                        ApplicationManager.getApplication().invokeLater(() ->
-                                Messages.showErrorDialog(project,
-                                        "写入文件失败: " + errorMessage,
-                                        "错误")
-                        );
+                        showErrorNotification(project, ex);
                     }
                 });
             } catch (Exception ex) {
@@ -98,6 +85,31 @@ public class HepPlusGroup {
                         "导出失败: " + ex.getMessage(),
                         "错误");
             }
+        }
+
+        private VirtualFile getOrCreateOutputDirectory(Project project) throws IOException {
+            VirtualFile baseDir = project.getBaseDir();
+            VirtualFile outputDir = baseDir.findChild("output");
+            if (outputDir == null) {
+                outputDir = baseDir.createChildDirectory(this, "output");
+            }
+            return outputDir;
+        }
+
+        private void showSuccessNotification(Project project) {
+            ApplicationManager.getApplication().invokeLater(() ->
+                    Messages.showInfoMessage(project,
+                            "OpenAPI规范已导出",
+                            "导出成功")
+            );
+        }
+
+        private void showErrorNotification(Project project, IOException e) {
+            ApplicationManager.getApplication().invokeLater(() ->
+                    Messages.showErrorDialog(project,
+                            "写入文件失败: " + e.getMessage(),
+                            "错误")
+            );
         }
     }
 }

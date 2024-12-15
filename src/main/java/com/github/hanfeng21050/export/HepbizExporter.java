@@ -15,6 +15,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -594,27 +596,6 @@ public class HepbizExporter {
      * @return 导出的OpenAPI文档内容
      */
     public String exportToOpenAPI(Project project, List<VirtualFile> files) throws HepbizExportException {
-        // 创建文件选择器
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("选择导出位置");
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setSelectedFile(new File("openapi.json"));
-
-        // 设置文件过滤器
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("JSON files", "json");
-        fileChooser.setFileFilter(filter);
-
-        // 显示保存对话框
-        if (fileChooser.showSaveDialog(null) != JFileChooser.APPROVE_OPTION) {
-            return null;
-        }
-
-        File selectedFile = fileChooser.getSelectedFile();
-        // 如果文件名没有.json后缀，添加它
-        if (!selectedFile.getName().toLowerCase().endsWith(".json")) {
-            selectedFile = new File(selectedFile.getAbsolutePath() + ".json");
-        }
-
         try {
             // 加载类型定义和默认参数
             loadTypeDefinitions();
@@ -645,144 +626,210 @@ public class HepbizExporter {
 
             // 处理每个文件
             for (VirtualFile file : files) {
-                try {
-                    // 解析Hepbiz文件内容
-                    String content = new String(file.contentsToByteArray(), StandardCharsets.UTF_8);
-                    JsonObject hepbizJson = JsonParser.parseString(content).getAsJsonObject();
-                    if (!hepbizJson.has("detail")) {
-                        throw new HepbizExportException("文件缺少detail字段: " + file.getName());
-                    }
-                    JsonObject detail = hepbizJson.getAsJsonObject("detail");
-                    JsonObject basicInfo = hepbizJson.getAsJsonObject("basic_info");
-
-                    // 获取API路径
-                    if (!detail.has("httpURL") && !basicInfo.has("name")) {
-                        continue;
-                    }
-                    String path = detail.has("httpURL") ? detail.get("httpURL").getAsString() : basicInfo.get("name").getAsString();
-                    if (!path.startsWith("/")) {
-                        path = "/" + path;
-                    }
-
-                    // 获取项目名并处理格式
-                    String projectPath = project.getName();
-                    System.out.println("File path: " + file.getPath());
-                    System.out.println("Project name: " + projectPath);
-
-                    // 将第一个'-'替换为'.'
-                    projectPath = projectPath.replaceFirst("-", ".");
-
-                    // 拼接最终路径 /g/项目名/v/接口名
-                    path = "/g/" + projectPath + "/v" + path;
-
-                    // 创建API操作对象
-                    JsonObject pathItem = new JsonObject();
-                    JsonObject operation = new JsonObject();
-
-                    // 添加API摘要信息
-                    if (detail.has("chineseName")) {
-                        operation.addProperty("summary", detail.get("chineseName").getAsString());
-                    }
-
-                    // 处理API标签
-                    JsonArray fileTags = getApiTags(file, project.getName());
-                    if (fileTags.size() > 0) {
-                        // 添加新的标签到全局tags
-                        for (JsonElement tag : fileTags) {
-                            String tagName = tag.getAsString();
-                            if (!openapi.has("tags")) {
-                                openapi.add("tags", new JsonArray());
-                            }
-                            JsonArray tags = openapi.getAsJsonArray("tags");
-                            boolean found = false;
-                            for (JsonElement existingTag : tags) {
-                                if (existingTag.getAsJsonObject().get("name").getAsString().equals(tagName)) {
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            if (!found) {
-                                JsonObject tagObject = new JsonObject();
-                                tagObject.addProperty("name", tagName);
-                                // 如果是项目名称，使用特殊描述
-                                if (tagName.equals(project.getName())) {
-                                    tagObject.addProperty("description", "APIs in project: " + project.getName());
-                                } else {
-                                    tagObject.addProperty("description", "API group: " + tagName);
-                                }
-                                tags.add(tagObject);
-                            }
-                        }
-                        operation.add("tags", fileTags);
-                    }
-
-                    // 处理请求参数
-                    if (detail.has("inputs")) {
-                        JsonArray inputs = detail.getAsJsonArray("inputs");
-                        // 获取接口类别
-                        String category = "default";
-                        if (detail.has("category")) {
-                            category = detail.get("category").getAsString();
-                        } else {
-                            // 尝试从文件路径判断类别
-                            String filePath = file.getPath().toLowerCase();
-                            if (filePath.contains("/inner/") || filePath.contains("\\inner\\")) {
-                                category = "inner";
-                            } else if (filePath.contains("/ext/") || filePath.contains("\\ext\\")) {
-                                category = "ext";
-                            } else if (filePath.contains("/out/") || filePath.contains("\\out\\")) {
-                                category = "out";
-                            } else {
-                                category = "biz";
-                            }
-                        }
-                        processInputParameters(inputs, operation, category);
-                    }
-
-                    // 添加响应定义
-                    addResponseSchema(operation, openapi.getAsJsonObject("components").getAsJsonObject("schemas"));
-
-                    // 设置HTTP方法，默认为post
-                    String httpMethod = "post";
-                    if (detail.has("httpMethod")) {
-                        JsonElement httpMethodElement = detail.get("httpMethod");
-                        if (httpMethodElement != null && !httpMethodElement.isJsonNull()) {
-                            httpMethod = httpMethodElement.getAsString().toLowerCase();
-                        }
-                    }
-
-                    // 添加operationId和描述
-                    if (!detail.has("name")) {
-                        throw new HepbizExportException("文件缺少name字段: " + file.getName());
-                    }
-                    operation.addProperty("operationId", detail.get("name").getAsString());
-                    if (detail.has("description")) {
-                        operation.addProperty("description", detail.get("description").getAsString());
-                    }
-
-                    // 将操作添加到路径中
-                    pathItem.add(httpMethod, operation);
-                    if (!openapi.getAsJsonObject("paths").has(path)) {
-                        openapi.getAsJsonObject("paths").add(path, pathItem);
-                    } else {
-                        openapi.getAsJsonObject("paths").getAsJsonObject(path).add(httpMethod, operation);
-                    }
-                } catch (IOException e) {
-                    throw new HepbizExportException("Failed to read hepbiz file: " + file.getName(), e);
-                }
+                processFile(file, project, openapi);
             }
 
-            // 将OpenAPI文档写入文件
-            try (FileWriter writer = new FileWriter(selectedFile)) {
-                Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                String jsonOutput = gson.toJson(openapi);
-                writer.write(jsonOutput);
-                return jsonOutput;
-            } catch (IOException e) {
-                throw new HepbizExportException("导出文件失败: " + e.getMessage());
-            }
+            // 导出到文件
+            return exportToFile(openapi);
+
         } catch (Exception e) {
             throw new HepbizExportException("生成OpenAPI文档失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 处理单个文件
+     */
+    private void processFile(VirtualFile file, Project project, JsonObject openapi) throws IOException, HepbizExportException {
+        // 解析Hepbiz文件内容
+        String content = new String(file.contentsToByteArray(), StandardCharsets.UTF_8);
+        JsonObject hepbizJson = JsonParser.parseString(content).getAsJsonObject();
+        if (!hepbizJson.has("detail")) {
+            throw new HepbizExportException("文件缺少detail字段: " + file.getName());
+        }
+
+        JsonObject detail = hepbizJson.getAsJsonObject("detail");
+        JsonObject basicInfo = hepbizJson.getAsJsonObject("basic_info");
+
+        // 获取API路径
+        if (!detail.has("httpURL") && !basicInfo.has("name")) {
+            return;
+        }
+        String path = detail.has("httpURL") ? detail.get("httpURL").getAsString() : basicInfo.get("name").getAsString();
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
+
+        // 获取项目名并处理格式
+        String projectPath = project.getName();
+        System.out.println("File path: " + file.getPath());
+        System.out.println("Project name: " + projectPath);
+
+        // 将第一个'-'替换为'.'
+        projectPath = projectPath.replaceFirst("-", ".");
+
+        // 拼接最终路径 /g/项目名/v/接口名
+        path = "/g/" + projectPath + "/v" + path;
+
+        // 创建API操作对象
+        JsonObject pathItem = new JsonObject();
+        JsonObject operation = new JsonObject();
+
+        // 添加API摘要信息
+        if (detail.has("chineseName")) {
+            operation.addProperty("summary", detail.get("chineseName").getAsString());
+        }
+
+        // 处理API标签
+        processApiTags(file, project.getName(), operation, openapi);
+
+        // 处理请求参数
+        if (detail.has("inputs")) {
+            JsonArray inputs = detail.getAsJsonArray("inputs");
+            String category = determineCategory(detail, file);
+            processInputParameters(inputs, operation, category);
+        }
+
+        // 添加响应定义
+        addResponseSchema(operation, openapi.getAsJsonObject("components").getAsJsonObject("schemas"));
+
+        // 设置HTTP方法
+        String httpMethod = determineHttpMethod(detail);
+
+        // 添加operationId和描述
+        if (!detail.has("name")) {
+            throw new HepbizExportException("文件缺少name字段: " + file.getName());
+        }
+        operation.addProperty("operationId", detail.get("name").getAsString());
+        if (detail.has("description")) {
+            operation.addProperty("description", detail.get("description").getAsString());
+        }
+
+        // 将操作添加到路径中
+        pathItem.add(httpMethod, operation);
+        if (!openapi.getAsJsonObject("paths").has(path)) {
+            openapi.getAsJsonObject("paths").add(path, pathItem);
+        } else {
+            openapi.getAsJsonObject("paths").getAsJsonObject(path).add(httpMethod, operation);
+        }
+    }
+
+    /**
+     * 确定API类别
+     */
+    private String determineCategory(JsonObject detail, VirtualFile file) {
+        if (detail.has("category")) {
+            return detail.get("category").getAsString();
+        }
+
+        String filePath = file.getPath().toLowerCase();
+        if (filePath.contains("/inner/") || filePath.contains("\\inner\\")) {
+            return "inner";
+        } else if (filePath.contains("/ext/") || filePath.contains("\\ext\\")) {
+            return "ext";
+        } else if (filePath.contains("/out/") || filePath.contains("\\out\\")) {
+            return "out";
+        }
+        return "biz";
+    }
+
+    /**
+     * 确定HTTP方法
+     */
+    private String determineHttpMethod(JsonObject detail) {
+        if (detail.has("httpMethod")) {
+            JsonElement httpMethodElement = detail.get("httpMethod");
+            if (httpMethodElement != null && !httpMethodElement.isJsonNull()) {
+                return httpMethodElement.getAsString().toLowerCase();
+            }
+        }
+        return "post";
+    }
+
+    /**
+     * 处理API标签
+     */
+    private void processApiTags(VirtualFile file, String projectName, JsonObject operation, JsonObject openapi) {
+        JsonArray fileTags = getApiTags(file, projectName);
+        if (fileTags.size() > 0) {
+            // 添加新的标签到全局tags
+            for (JsonElement tag : fileTags) {
+                String tagName = tag.getAsString();
+                if (!openapi.has("tags")) {
+                    openapi.add("tags", new JsonArray());
+                }
+                JsonArray tags = openapi.getAsJsonArray("tags");
+                boolean found = false;
+                for (JsonElement existingTag : tags) {
+                    if (existingTag.getAsJsonObject().get("name").getAsString().equals(tagName)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    JsonObject tagObject = new JsonObject();
+                    tagObject.addProperty("name", tagName);
+                    // 如果是项目名称，使用特殊描述
+                    if (tagName.equals(projectName)) {
+                        tagObject.addProperty("description", "APIs in project: " + projectName);
+                    } else {
+                        tagObject.addProperty("description", "API group: " + tagName);
+                    }
+                    tags.add(tagObject);
+                }
+            }
+            operation.add("tags", fileTags);
+        }
+    }
+
+    /**
+     * 导出OpenAPI文档到文件
+     *
+     * @param openapi OpenAPI文档
+     * @return 导出的文件内容
+     */
+    private String exportToFile(JsonObject openapi) throws IOException {
+        // 获取当前时间戳
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+
+        // 获取项目名称并构建默认文件名
+        String projectName = project.getName();
+        String defaultFileName = String.format("%s-openapi-%s.json", projectName, timestamp);
+
+        // 配置文件选择器
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("选择导出位置");
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setSelectedFile(new File(defaultFileName));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("JSON files (*.json)", "json"));
+
+        if (fileChooser.showSaveDialog(null) != JFileChooser.APPROVE_OPTION) {
+            return null;
+        }
+
+        File selectedFile = fileChooser.getSelectedFile();
+        if (!selectedFile.getName().toLowerCase().endsWith(".json")) {
+            selectedFile = new File(selectedFile.getAbsolutePath() + ".json");
+        }
+
+        // 检查文件是否已存在
+        if (selectedFile.exists()) {
+            int response = JOptionPane.showConfirmDialog(null,
+                    "文件已存在，是否覆盖？",
+                    "确认覆盖",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+
+            if (response != JOptionPane.YES_OPTION) {
+                return null;
+            }
+        }
+
+        try (FileWriter writer = new FileWriter(selectedFile)) {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String jsonOutput = gson.toJson(openapi);
+            writer.write(jsonOutput);
+            return jsonOutput;
         }
     }
 }
