@@ -38,10 +38,11 @@ public class EasyEnvGroup extends ActionGroup {
         DefaultActionGroup firstGroup = new DefaultActionGroup("环境切换", true);
         firstGroup.add(new EnvChooseGroup());
 
-        DefaultActionGroup secondGroup = new DefaultActionGroup("打包&部署", true);
-        secondGroup.add(new EnvDeployGroup());
+        // 创建HEP+组
+        DefaultActionGroup hepGroup = new DefaultActionGroup("HEP+", true);
+        hepGroup.add(new HepPlusGroup.ExportInterfaceAction());
 
-        return new AnAction[]{firstGroup, secondGroup};
+        return new AnAction[]{firstGroup, hepGroup};
     }
 
 

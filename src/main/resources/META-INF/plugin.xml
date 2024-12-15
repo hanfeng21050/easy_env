@@ -28,7 +28,6 @@
                          language="JAVA"/>
     </extensions>
 
-
     <applicationListeners>
     </applicationListeners>
     <actions>

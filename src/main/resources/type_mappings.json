@@ -1,0 +1,600 @@
+{
+  "typeMapping": {
+    "HsChar6000": {
+      "standardType": "STDstr",
+      "description": "字符6000",
+      "length": 6000,
+      "openApiType": "string"
+    },
+    "HsChar20": {
+      "standardType": "STDstr",
+      "description": "字符20",
+      "length": 20,
+      "openApiType": "string"
+    },
+    "HsChar16": {
+      "standardType": "STDstr",
+      "description": "字符16",
+      "length": 16,
+      "openApiType": "string"
+    },
+    "HsDate": {
+      "standardType": "STDint",
+      "description": "日期",
+      "openApiType": "string",
+      "format": "date"
+    },
+    "HsDateTime": {
+      "standardType": "STDdatetime",
+      "description": "日期时间",
+      "length": 20,
+      "openApiType": "string",
+      "format": "date-time"
+    },
+    "HsInt": {
+      "standardType": "STDint",
+      "description": "整数",
+      "openApiType": "integer"
+    },
+    "HsDouble": {
+      "standardType": "STDdecimal",
+      "description": "双精度",
+      "openApiType": "number"
+    },
+    "HsAmount": {
+      "standardType": "STDdecimal",
+      "description": "金额",
+      "length": 15,
+      "decimal": 2,
+      "openApiType": "number"
+    },
+    "HsAmountList": {
+      "standardType": "STDdecimal",
+      "description": "金额数组",
+      "length": 15,
+      "decimal": 2,
+      "openApiType": "number"
+    },
+    "HsBoolean": {
+      "standardType": "STDbool",
+      "description": "布尔",
+      "openApiType": "boolean"
+    },
+    "HsBranchNo": {
+      "standardType": "STDint",
+      "description": "营业部编号",
+      "openApiType": "integer"
+    },
+    "HsType": {
+      "standardType": "STDint",
+      "description": "类型编号",
+      "openApiType": "integer"
+    },
+    "HsAbstract": {
+      "standardType": "STDstr",
+      "description": "摘要",
+      "length": 2000,
+      "openApiType": "string"
+    },
+    "HsAcctNo": {
+      "standardType": "STDdecimal",
+      "description": "帐号",
+      "length": 19,
+      "decimal": 1,
+      "openApiType": "number"
+    },
+    "HsAddress": {
+      "standardType": "STDstr",
+      "description": "地址",
+      "length": 120,
+      "openApiType": "string"
+    },
+    "HsAddress1": {
+      "standardType": "STDstr",
+      "description": "地址",
+      "length": 180,
+      "openApiType": "string"
+    },
+    "HsBankAccount": {
+      "standardType": "STDstr",
+      "description": "银行账号",
+      "length": 32,
+      "openApiType": "string"
+    },
+    "HsBankClientID": {
+      "standardType": "STDstr",
+      "description": "客户账号（银行用）",
+      "length": 22,
+      "openApiType": "string"
+    },
+    "HsBankID": {
+      "standardType": "STDstr",
+      "description": "银行号",
+      "length": 6,
+      "openApiType": "string"
+    },
+    "HsBankSerialID": {
+      "standardType": "STDstr",
+      "description": "银行流水号",
+      "length": 20,
+      "openApiType": "string"
+    },
+    "HsBit": {
+      "standardType": "STDdecimal",
+      "description": "Bit位",
+      "length": 12,
+      "decimal": 0,
+      "openApiType": "integer"
+    },
+    "HsBondAccount": {
+      "standardType": "STDstr",
+      "description": "债券账号",
+      "length": 18,
+      "openApiType": "string"
+    },
+    "HsBondCode": {
+      "standardType": "STDstr",
+      "description": "债券代码",
+      "length": 12,
+      "openApiType": "string"
+    },
+    "HsBusinessFlag": {
+      "standardType": "STDint",
+      "description": "业务标志",
+      "openApiType": "integer"
+    },
+    "HsCardID": {
+      "standardType": "STDstr",
+      "description": "资金卡号",
+      "length": 32,
+      "openApiType": "string"
+    },
+    "HsChar10": {
+      "standardType": "STDstr",
+      "description": "字符10",
+      "length": 10,
+      "openApiType": "string"
+    },
+    "HsChar100": {
+      "standardType": "STDstr",
+      "description": "字符100",
+      "length": 100,
+      "openApiType": "string"
+    },
+    "HsChar120": {
+      "standardType": "STDstr",
+      "description": "字符120",
+      "length": 120,
+      "openApiType": "string"
+    },
+    "HsChar128": {
+      "standardType": "STDstr",
+      "description": "字符128",
+      "length": 128,
+      "openApiType": "string"
+    },
+    "HsChar16000": {
+      "standardType": "STDstr",
+      "description": "字符16000",
+      "length": 16000,
+      "openApiType": "string"
+    },
+    "HsChar18": {
+      "standardType": "STDstr",
+      "description": "字符18",
+      "length": 18,
+      "openApiType": "string"
+    },
+    "HsChar2": {
+      "standardType": "STDstr",
+      "description": "字符2",
+      "length": 2,
+      "openApiType": "string"
+    },
+    "HsChar2000": {
+      "standardType": "STDstr",
+      "description": "字符2000",
+      "length": 2000,
+      "openApiType": "string"
+    },
+    "HsChar24": {
+      "standardType": "STDstr",
+      "description": "字符24",
+      "length": 24,
+      "openApiType": "string"
+    },
+    "HsChar255": {
+      "standardType": "STDstr",
+      "description": "字符255",
+      "length": 255,
+      "openApiType": "string"
+    },
+    "HsChar255List": {
+      "standardType": "STDstr",
+      "description": "字符255数组",
+      "length": 255,
+      "openApiType": "string"
+    },
+    "HsChar256": {
+      "standardType": "STDstr",
+      "description": "字符256",
+      "length": 256,
+      "openApiType": "string"
+    },
+    "HsChar3": {
+      "standardType": "STDstr",
+      "description": "字符3",
+      "length": 3,
+      "openApiType": "string"
+    },
+    "HsChar30": {
+      "standardType": "STDstr",
+      "description": "字符30",
+      "length": 30,
+      "openApiType": "string"
+    },
+    "HsChar300": {
+      "standardType": "STDstr",
+      "description": "字符300",
+      "length": 300,
+      "openApiType": "string"
+    },
+    "HsChar32": {
+      "standardType": "STDstr",
+      "description": "字符32",
+      "length": 32,
+      "openApiType": "string"
+    },
+    "HsChar32000": {
+      "standardType": "STDstr",
+      "description": "字符32000",
+      "length": 32000,
+      "openApiType": "string"
+    },
+    "HsChar36": {
+      "standardType": "STDstr",
+      "description": "字符36",
+      "length": 36,
+      "openApiType": "string"
+    },
+    "HsChar4": {
+      "standardType": "STDstr",
+      "description": "字符4",
+      "length": 4,
+      "openApiType": "string"
+    },
+    "HsChar4000": {
+      "standardType": "STDstr",
+      "description": "字符4000",
+      "length": 4000,
+      "openApiType": "string"
+    },
+    "HsChar640000": {
+      "standardType": "STDstr",
+      "description": "字符640000",
+      "length": 640000,
+      "openApiType": "string"
+    },
+    "HsChar8": {
+      "standardType": "STDstr",
+      "description": "字符8",
+      "length": 8,
+      "openApiType": "string"
+    },
+    "HsChar80": {
+      "standardType": "STDstr",
+      "description": "字符80",
+      "length": 80,
+      "openApiType": "string"
+    },
+    "HsChar8000": {
+      "standardType": "STDstr",
+      "description": "字符8000",
+      "length": 8000,
+      "openApiType": "string"
+    },
+    "HsCursor": {
+      "standardType": "STDcursor",
+      "description": "游标",
+      "openApiType": "object"
+    },
+    "HsEnPassword": {
+      "standardType": "STDstr",
+      "description": "增强型密码",
+      "length": 64,
+      "openApiType": "string",
+      "format": "password"
+    },
+    "HsFundAccount": {
+      "standardType": "STDstr",
+      "description": "资产账号",
+      "length": 18,
+      "openApiType": "string"
+    },
+    "HsFundPrice": {
+      "standardType": "STDdecimal",
+      "description": "价格（基金）",
+      "length": 9,
+      "decimal": 4,
+      "openApiType": "number"
+    },
+    "HsFundQty": {
+      "standardType": "STDdecimal",
+      "description": "基金份额",
+      "length": 15,
+      "decimal": 2,
+      "openApiType": "number"
+    },
+    "HsFundScale": {
+      "standardType": "STDdecimal",
+      "description": "基金规模",
+      "length": 18,
+      "decimal": 4,
+      "openApiType": "number"
+    },
+    "HsFuturesCode": {
+      "standardType": "STDstr",
+      "description": "期货代码",
+      "length": 30,
+      "openApiType": "string"
+    },
+    "HsHighPrice": {
+      "standardType": "STDdecimal",
+      "description": "高精度价格",
+      "length": 15,
+      "decimal": 8,
+      "openApiType": "number"
+    },
+    "HsHighPrice2": {
+      "standardType": "STDdecimal",
+      "description": "高精度价格",
+      "length": 23,
+      "decimal": 8,
+      "openApiType": "number"
+    },
+    "HsHighPrice3": {
+      "standardType": "STDdecimal",
+      "description": "高精度价格",
+      "length": 36,
+      "decimal": 2,
+      "openApiType": "number"
+    },
+    "HsHighQuantity2": {
+      "standardType": "STDdecimal",
+      "description": "高精度数量",
+      "length": 23,
+      "decimal": 8,
+      "openApiType": "number"
+    },
+    "HsHighRisk": {
+      "standardType": "STDdecimal",
+      "description": "高精度风险",
+      "length": 15,
+      "decimal": 9,
+      "openApiType": "number"
+    },
+    "HsIDENTITY": {
+      "standardType": "STDstr",
+      "description": "证件号码",
+      "length": 32,
+      "openApiType": "string"
+    },
+    "HsIDNo": {
+      "standardType": "STDstr",
+      "description": "证件号码",
+      "length": 40,
+      "openApiType": "string"
+    },
+    "HsJson": {
+      "standardType": "STDstr",
+      "description": "Json信息",
+      "length": 4000,
+      "openApiType": "string",
+      "format": "json"
+    },
+    "HsMoneyType": {
+      "standardType": "STDstr",
+      "description": "币种",
+      "length": 3,
+      "openApiType": "string"
+    },
+    "HsName": {
+      "standardType": "STDstr",
+      "description": "姓名",
+      "length": 60,
+      "openApiType": "string"
+    },
+    "HsName2": {
+      "standardType": "STDstr",
+      "description": "名称",
+      "length": 64,
+      "openApiType": "string"
+    },
+    "HsName3": {
+      "standardType": "STDstr",
+      "description": "字符120",
+      "length": 120,
+      "openApiType": "string"
+    },
+    "HsName6": {
+      "standardType": "STDstr",
+      "description": "名称",
+      "length": 128,
+      "openApiType": "string"
+    },
+    "HsNum10": {
+      "standardType": "STDint",
+      "description": "数字10",
+      "openApiType": "integer",
+      "format": "int32"
+    },
+    "HsNum2": {
+      "standardType": "STDtinyInt",
+      "description": "数字2",
+      "openApiType": "integer",
+      "format": "int8"
+    },
+    "HsNum20": {
+      "standardType": "STDbigInt",
+      "description": "数字20",
+      "openApiType": "integer",
+      "format": "int64"
+    },
+    "HsNum3": {
+      "standardType": "STDsmallInt",
+      "description": "数字3",
+      "openApiType": "integer",
+      "format": "int16"
+    },
+    "HsOptName": {
+      "standardType": "STDstr",
+      "description": "期权合约简称",
+      "length": 128,
+      "openApiType": "string"
+    },
+    "HsOtcAccount": {
+      "standardType": "STDstr",
+      "description": "权益账号",
+      "length": 32,
+      "openApiType": "string"
+    },
+    "HsOtcCode": {
+      "standardType": "STDstr",
+      "description": "权益代码",
+      "length": 32,
+      "openApiType": "string"
+    },
+    "HsOtcName": {
+      "standardType": "STDstr",
+      "description": "普通类型",
+      "length": 32,
+      "openApiType": "string"
+    },
+    "HsPhone": {
+      "standardType": "STDstr",
+      "description": "电话号码",
+      "length": 32,
+      "openApiType": "string"
+    },
+    "HsPosInt": {
+      "standardType": "STDdecimal",
+      "description": "数字型定位串",
+      "length": 18,
+      "decimal": 0,
+      "openApiType": "number"
+    },
+    "HsPosStr": {
+      "standardType": "STDstr",
+      "description": "字符型定位串",
+      "length": 100,
+      "openApiType": "string"
+    },
+    "HsPrice": {
+      "standardType": "STDdecimal",
+      "description": "价格",
+      "length": 9,
+      "decimal": 4,
+      "openApiType": "number"
+    },
+    "HsQuantity": {
+      "standardType": "STDdecimal",
+      "description": "数量",
+      "length": 15,
+      "decimal": 2,
+      "openApiType": "number"
+    },
+    "HsQuantityList": {
+      "standardType": "STDdecimal",
+      "description": "数量数组",
+      "length": 15,
+      "decimal": 2,
+      "openApiType": "number"
+    },
+    "HsRate": {
+      "standardType": "STDdecimal",
+      "description": "费率",
+      "length": 9,
+      "decimal": 8,
+      "openApiType": "number"
+    },
+    "HsRateList": {
+      "standardType": "STDdecimal",
+      "description": "利率数组",
+      "length": 9,
+      "decimal": 8,
+      "openApiType": "number"
+    },
+    "HsSchemeCode": {
+      "standardType": "STDstr",
+      "description": "方案代码",
+      "length": 32,
+      "openApiType": "string"
+    },
+    "HsSdcAccount": {
+      "standardType": "STDstr",
+      "description": "登记权益账号",
+      "length": 32,
+      "openApiType": "string"
+    },
+    "HsSdcCode": {
+      "standardType": "STDstr",
+      "description": "登记权益代码",
+      "length": 32,
+      "openApiType": "string"
+    },
+    "HsSdcName": {
+      "standardType": "STDstr",
+      "description": "登记权益名称",
+      "length": 32,
+      "openApiType": "string"
+    },
+    "HsStation": {
+      "standardType": "STDstr",
+      "description": "站点地址",
+      "length": 255,
+      "openApiType": "string"
+    },
+    "HsStationNo": {
+      "standardType": "STDint",
+      "description": "站点编号",
+      "openApiType": "integer",
+      "format": "int32"
+    },
+    "HsStatus": {
+      "standardType": "STDsinglechar",
+      "description": "状态",
+      "length": 1,
+      "openApiType": "string"
+    },
+    "HsStockAccount": {
+      "standardType": "STDstr",
+      "description": "交易账号",
+      "length": 20,
+      "openApiType": "string"
+    },
+    "HsStockName": {
+      "standardType": "STDstr",
+      "description": "股票名称",
+      "length": 32,
+      "openApiType": "string"
+    },
+    "HsToken": {
+      "standardType": "STDstr",
+      "description": "用户口令",
+      "length": 512,
+      "openApiType": "string"
+    },
+    "HsUnPacker": {
+      "standardType": "STDUnPacker",
+      "description": "解包器",
+      "openApiType": "object"
+    },
+    "HsUserNo": {
+      "standardType": "STDdecimal",
+      "description": "用户编号",
+      "length": 18,
+      "decimal": 0,
+      "openApiType": "number"
+    }
+  }
+}
