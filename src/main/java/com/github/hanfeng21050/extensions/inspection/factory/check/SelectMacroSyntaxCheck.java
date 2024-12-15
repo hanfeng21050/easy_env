@@ -6,46 +6,65 @@ import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
-/**
- * @Author hanfeng32305
- * @Date 2024/6/30 13:17
- */
 public class SelectMacroSyntaxCheck extends MacroSyntaxCheck implements SyntaxChecker {
+    private static final String SELECT_TEMPLATE = "[select][sql][查询字段][条件语句][自定义动态条件][分组排序语句]";
+    private static final String SELECT_LIST_TEMPLATE = "[selectList][sql][查询字段][条件语句][自定义动态条件][分组排序语句]";
+    private static final String SELECT_DOC = """
+            宏定义说明：
+            1. [sql] - 必填参数
+               - 基本SQL查询语句
+               - 可以是简单查询或复杂的联表/子查询
+            
+            2. [查询字段] - 可选参数
+               - 简单SQL可不填
+               - 联表查询或子查询等复杂SQL需要填写
+            
+            3. [条件语句] - 可选参数
+               - 固定条件语句（不含where关键字）
+               - 作为必要的查询条件
+            
+            4. [自定义动态条件] - 可选参数
+               - 动态拼接的条件语句
+               - 仅在变量值非null时拼接
+               - 支持 /*#OR*/ 标记来替换默认的 AND 连接符
+            
+            5. [分组排序语句] - 可选参数
+               - 用于 ORDER BY、GROUP BY 等语句
+               - 使用动态条件时必须在此处指定排序/分组
+            
+            特殊用法：
+            - 别名生成：使用 "<A>" 宏标记
+            - OR条件：使用 "/*#OR*/" 标记
+            
+            示例：
+            1. 基本查询：
+               @JRESMacro("[select][select hs_nvl(risk_level_old, 0),init_date from table][][client_id =:client_id and branch_no = 1]")
+            
+            2. 子查询：
+               @JRESMacro("[select][select * from (select client_id, exchange_type, current_balance from opt_fundreal where client_id = :client_id)][client_id, exchange_type, current_balance]")
+            
+            3. 纯动态条件：
+               @JRESMacro("[select][select hs_nvl(risk_level_old, 0),init_date from table][][][client_id =:client_id, branch_no = :branch_no]")
+            
+            4. 混合条件：
+               @JRESMacro("[select][select hs_nvl(risk_level_old, 0),init_date from table][][client_id =:client_id and branch_no = '8888'][fund_account = :fund_account]")
+            
+            5. 带排序：
+               @JRESMacro("[select][select hs_nvl(risk_level_old, 0),init_date from table][][client_id =:client_id and branch_no = '8888'][fund_account = :fund_account][order by init_date]")
+            
+            6. 别名方式：
+               @JRESMacro("<A>[select][select hs_nvl(risk_level_old, 0),init_date from table][][client_id =:client_id and branch_no = 1]")
+            
+            7. OR条件：
+               @JRESMacro("[select][select hs_nvl(risk_level_old, 0),init_date from table][][][client_id =:client_id, /*#OR*/branch_no = :branch_no]")
+            """;
+
+    private static final Pattern BIND_VARIABLE_PATTERN = Pattern.compile(":\\w+");
+    private static final Pattern OR_CONDITION_PATTERN = Pattern.compile("/\\*#OR\\*/");
+
     private final String macroName;
-    private final String selectTemplate = "模板：[select][sql][查询字段][条件语句][自定义动态条件][分组排序语句]";
-    private final String selectListTemplate = "模板：[selectList][sql][查询字段][条件语句][自定义动态条件][分组排序语句]";
-    private final String selectsDoc = """
-            1、第一个参数[sql]为必填，第二、三、四个参数选填
-            2、对于简单SQL第二个参数可以不填，联表查询或子查询等复杂SQL需要填写第二个参数
-            3、第三个参数为固定的条件语句，即肯定会作为查询条件的完整语句（不包含where关键字）
-            4、第四个参数为动态拼接的条件语句，当变量值不为null时才会被拼接到sql语句中；例3为[sql]中不包含任何条件，所有条件都是动态生成的，例4为[sql]中包含某些确定的条件，且需要动态拼接某些条件
-            5、第五个参数可以填写order by、group by等需要放到SQL结尾的语句，当使用自定义动态条件时，order by、group by等语句一定要写到这里，否则生成的SQL会有问题，用法见例5
-            6、若有场景需要用别名方式生成，可使用宏标记“A”，用法见例6
-            例1: @JRESMacro("[select][select hs_nvl(risk_level_old, 0),init_date from table][][client_id =:client_id and branch_no = 1]")
-            例2: @JRESMacro("[select][select * from (select client_id, exchange_type, current_balance from opt_fundreal where client_id = :client_id)][client_id, exchange_type, current_balance]")
-            例3: @JRESMacro("[select][select hs_nvl(risk_level_old, 0),init_date from table][][][client_id =:client_id, branch_no = :branch_no]")
-            例4: @JRESMacro("[select][select hs_nvl(risk_level_old, 0),init_date from table][][client_id =:client_id and branch_no = '8888'][fund_account = :fund_account]")
-            例5: @JRESMacro("[select][select hs_nvl(risk_level_old, 0),init_date from table][][client_id =:client_id and branch_no = '8888'][fund_account = :fund_account][order by init_date]")
-            例6: @JRESMacro("<A>[select][select hs_nvl(risk_level_old, 0),init_date from table][][client_id =:client_id and branch_no = 1]")
-            例7: @JRESMacro("[select][select hs_nvl(risk_level_old, 0),init_date from table][][][client_id =:client_id, /*#OR*/branch_no = :branch_no]")
-            """;
-    private final String selectListDoc = """
-            1、第一个参数[sql]为必填，第二、三、四个参数选填
-            2、对于简单SQL第二个参数可以不填，联表查询或子查询等复杂SQL需要填写第二个参数
-            3、第三个参数为固定的条件语句，即肯定会作为查询条件的完整语句（不包含where关键字）
-            4、第四个参数为动态拼接的条件语句，当变量值不为null时才会被拼接到sql语句中；例3为[sql]中不包含任何条件，所有条件都是动态生成的，例4为[sql]中包含某些确定的条件，且需要动态拼接某些条件
-            5、第五个参数可以填写order by、group by等需要放到SQL结尾的语句，当使用自定义动态条件时，order by、group by等语句一定要写到这里，否则生成的SQL会有问题，用法见例5
-            6、若有场景需要用别名方式生成，可使用宏标记“A”，用法见例6
-            7、动态条件中可以使用/*#OR*/标记，生成代码时会用or关键字代替and关键字，用法见例7
-            例1: @JRESMacro("[selectList][select risk_level_old,init_date,corp_risk_level from elg_client_risk_calm][][client_id = :client_id and branch_no > :branch_no]")
-            例2: @JRESMacro("[selectList][select * from (select client_id, exchange_type, current_balance from opt_fundreal where client_id = :client_id)][client_id, exchange_type, current_balance]")
-            例3: @JRESMacro("[selectList][select hs_nvl(risk_level_old, 0),init_date from table][][][client_id =:client_id, branch_no = :branch_no]")
-            例4: @JRESMacro("[selectList][select hs_nvl(risk_level_old, 0),init_date from table][][client_id =:client_id and branch_no = '8888'][fund_account = :fund_account]")
-            例5: @JRESMacro("[selectList][select hs_nvl(risk_level_old, 0),init_date from table][][client_id =:client_id and branch_no = '8888'][fund_account = :fund_account][order by init_date]")
-            例6: @JRESMacro("<A>[selectList][select risk_level_old,init_date,corp_risk_level from elg_client_risk_calm][][client_id = :client_id and branch_no > :branch_no]")
-            例7: @JRESMacro("[selectList][select hs_nvl(risk_level_old, 0),init_date from table][][][client_id =:client_id, /*#OR*/branch_no = :branch_no]")
-            """;
 
     public SelectMacroSyntaxCheck(String macroName, String value) {
         super(value);
@@ -54,64 +73,126 @@ public class SelectMacroSyntaxCheck extends MacroSyntaxCheck implements SyntaxCh
 
     @Override
     public String performSyntaxCheck(List<String> params) {
-        // [sql]
-        String param1 = handleException(() -> params.get(1));
-        // [查询字段]
-        String param2 = handleException(() -> params.get(2));
-        // [条件语句]
-        String param3 = handleException(() -> params.get(3));
-        // [自定义动态条件]
-        String param4 = handleException(() -> params.get(4));
-        // [分组排序语句]
-        String param5 = handleException(() -> params.get(5));
+        if (params.size() < 2) {
+            return generateError("错误：必须提供 [sql] 参数",
+                    getTemplate(), SELECT_DOC);
+        }
 
+        String template = getTemplate();
 
-        String template = macroName.equals("select") ? selectTemplate : selectListTemplate;
-        String doc = macroName.equals("doc") ? selectsDoc : selectListDoc;
+        // 检查SQL语句（必填）
+        String sqlParam = handleException(() -> params.get(1));
+        if (StringUtils.isBlank(sqlParam)) {
+            return generateError("错误：[sql] 参数不能为空", template, SELECT_DOC);
+        }
 
-        if (StringUtils.isBlank(param1)) {
-            return generateError("错误：无法解析[sql].", template, doc);
-        } else {
-            try {
-                CCJSqlParserUtil.parse(param1);
-            } catch (Exception e) {
-                return generateError("错误：无法解析[sql].", e.getMessage(), template, doc);
+        String error = validateSqlStatement(sqlParam);
+        if (error != null) {
+            return generateError("错误：SQL语句无效 - " + error, template, SELECT_DOC);
+        }
+
+        // 检查查询字段（可选）
+        if (params.size() > 2) {
+            String fieldsParam = handleException(() -> params.get(2));
+            if (StringUtils.isNotBlank(fieldsParam)) {
+                error = validateQueryFields(fieldsParam);
+                if (error != null) {
+                    return generateError("错误：查询字段无效 - " + error, template, SELECT_DOC);
+                }
             }
         }
 
-        if (StringUtils.isNotBlank(param2)) {
-            try {
-                CCJSqlParserUtil.parse("select " + param2 + " from table");
-            } catch (Exception e) {
-                return generateError("错误：无法解析[查询字段].", e.getMessage(), template, doc);
+        // 检查固定条件语句（可选）
+        if (params.size() > 3) {
+            String conditionParam = handleException(() -> params.get(3));
+            if (StringUtils.isNotBlank(conditionParam)) {
+                error = validateWhereClause(conditionParam);
+                if (error != null) {
+                    return generateError("错误：固定条件语句无效 - " + error, template, SELECT_DOC);
+                }
             }
         }
 
-        if (StringUtils.isNotBlank(param3)) {
-            try {
-                CCJSqlParserUtil.parse("select * from table where " + param3);
-            } catch (Exception e) {
-                return generateError("错误：无法解析[条件语句].", e.getMessage(), template, doc);
+        // 检查动态条件（可选）
+        if (params.size() > 4) {
+            String dynamicConditionParam = handleException(() -> params.get(4));
+            if (StringUtils.isNotBlank(dynamicConditionParam)) {
+                error = validateDynamicConditions(dynamicConditionParam);
+                if (error != null) {
+                    return generateError("错误：动态条件无效 - " + error, template, SELECT_DOC);
+                }
             }
         }
 
-        if (StringUtils.isNotBlank(param4)) {
-//            param4 = param3.replace(",", " and ");
-//            try {
-//                CCJSqlParserUtil.parse("select * from table where " + param4);
-//            } catch (Exception e) {
-//                return generateError("错误：无法解析[自定义动态条件].", e.getMessage(), template, doc);
-//            }
-        }
-
-        if (StringUtils.isNotBlank(param5)) {
-            try {
-                CCJSqlParserUtil.parse("select * from table " + param5);
-            } catch (Exception e) {
-                return generateError("错误：无法解析[分组排序语句].", e.getMessage(), template, doc);
+        // 检查分组排序语句（可选）
+        if (params.size() > 5) {
+            String orderByParam = handleException(() -> params.get(5));
+            if (StringUtils.isNotBlank(orderByParam)) {
+                error = validateOrderByClause(orderByParam);
+                if (error != null) {
+                    return generateError("错误：分组排序语句无效 - " + error, template, SELECT_DOC);
+                }
             }
         }
 
         return null;
+    }
+
+    private String getTemplate() {
+        return "select".equals(macroName) ? SELECT_TEMPLATE : SELECT_LIST_TEMPLATE;
+    }
+
+    private String validateSqlStatement(String sql) {
+        try {
+            CCJSqlParserUtil.parse(sql);
+            return null;
+        } catch (Exception e) {
+            return e.getMessage();
+        }
+    }
+
+    private String validateQueryFields(String fields) {
+        try {
+            CCJSqlParserUtil.parse("SELECT " + fields + " FROM dual");
+            return null;
+        } catch (Exception e) {
+            return e.getMessage();
+        }
+    }
+
+    private String validateWhereClause(String condition) {
+        try {
+            CCJSqlParserUtil.parse("SELECT * FROM dual WHERE " + condition);
+            return null;
+        } catch (Exception e) {
+            return e.getMessage();
+        }
+    }
+
+    private String validateDynamicConditions(String conditions) {
+        // 处理 OR 条件标记
+        String processedConditions = conditions;
+        if (OR_CONDITION_PATTERN.matcher(conditions).find()) {
+            processedConditions = conditions.replaceAll("/\\*#OR\\*/", "OR");
+        }
+
+        // 将逗号分隔的条件转换为 AND 连接
+        processedConditions = processedConditions.replace(",", " AND ");
+
+        try {
+            CCJSqlParserUtil.parse("SELECT * FROM dual WHERE " + processedConditions);
+            return null;
+        } catch (Exception e) {
+            return e.getMessage();
+        }
+    }
+
+    private String validateOrderByClause(String clause) {
+        try {
+            CCJSqlParserUtil.parse("SELECT * FROM dual " + clause);
+            return null;
+        } catch (Exception e) {
+            return e.getMessage();
+        }
     }
 }
