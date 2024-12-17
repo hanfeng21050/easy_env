@@ -690,7 +690,7 @@ public class OpenApiExporterController implements HepExporter {
         String projectPathNew = projectPath.replaceFirst("-", ".");
 
         // 拼接最终路径 /g/项目名/v/接口名
-        path = "/g/" + projectPathNew + "/v" + path;
+        path = "/g/hs" + projectPathNew + "/v" + path;
 
         // 创建API操作对象
         JsonObject pathItem = new JsonObject();
