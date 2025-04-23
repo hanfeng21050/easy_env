@@ -56,40 +56,29 @@ public class EnvConfigController {
             Logger.info(String.format("[%s] 开始获取auth信息...", name));
             SeeRequestController.login(seeConfig);
 
+            boolean stackMode = false;
             String auth = SeeRequestController.getAuth(seeConfig);
             Logger.info(String.format("[%s] auth获取成功", name));
 
-            // 获取应用id
             Logger.info(String.format("[%s] 开始获取应用ID，应用名称: %s", name, applicationName));
             String applicationId = SeeRequestController.getApplication(seeConfig, applicationName, auth);
             Logger.info(String.format("[%s] 获取应用ID成功: %s", name, applicationId));
 
+            if (StringUtils.isEmpty(applicationId)) {
+                // 获取应用id
+                Logger.info(String.format("[%s] 应用ID获取为空, 开始获取Stack应用ID，应用名称: %s", name, applicationName));
+                applicationId = SeeRequestController.getStackApplication(seeConfig, applicationName, auth);
+                Logger.info(String.format("[%s] 获取应用Stack成功: %s", name, applicationId));
+                stackMode = true;
+            }
+
             if (StringUtils.isNotBlank(applicationId)) {
-                // 获取新版see的配置
-                boolean flag = false;
-                try {
-                    Logger.info(String.format("[%s] 尝试获取新版See配置...", name));
-                    JSONObject config = SeeRequestController.getConfigInfoNew(seeConfig, applicationId, auth);
-                    Logger.info(String.format("[%s] 新版See配置获取成功", name));
-                    // 保存配置
-                    saveConfigToFileNew(config);
-                    flag = true;
-                } catch (Exception e) {
-                    Logger.warn(String.format("[%s] 新版See配置获取失败: %s", name, e.getMessage()));
-                }
+                Logger.info(String.format("[%s] 尝试获取See配置...", name));
+                JSONObject config = SeeRequestController.getConfigInfo(seeConfig, applicationId, auth);
+                Logger.info(String.format("[%s] 旧版See配置获取成功", name));
 
-                if (!flag) {
-                    Logger.info(String.format("[%s] 尝试获取旧版See配置...", name));
-                    JSONObject config = SeeRequestController.getConfigInfo(seeConfig, applicationId, auth);
-                    Logger.info(String.format("[%s] 旧版See配置获取成功", name));
-
-                    // 保存配置
-                    saveConfigToFile(config);
-                }
-
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    Messages.showInfoMessage(String.format("[%s] %s", name, "获取项目配置信息成功"), "信息");
-                });
+                // 保存配置
+                saveConfigToFile(config, applicationName);
             } else {
                 Logger.warn(String.format("[%s] 未获取到应用ID", name));
                 ApplicationManager.getApplication().invokeLater(() -> {
@@ -109,7 +98,15 @@ public class EnvConfigController {
     /**
      * @param jsonObject
      */
-    private void saveConfigToFile(JSONObject jsonObject) {
+    private void saveConfigToFile(JSONObject jsonObject, String applicationName) {
+        JSONArray jsonArray = jsonObject.getJSONObject("data").getJSONArray("node");
+        for (int i = 0; i < jsonArray.size(); i++) {
+            String name = jsonArray.getJSONObject(i).getString("name");
+            if (applicationName.equals(name)) {
+                jsonObject = jsonArray.getJSONObject(i);
+            }
+        }
+
         Logger.info(String.format("[%s] 开始保存配置文件...", project.getName()));
         JSONArray array = mergeNonEmptyConfig(jsonObject);
         for (int i = 0; i < array.size(); i++) {
@@ -129,8 +126,9 @@ public class EnvConfigController {
 
     /**
      * @param jsonObject
+     * @param stackMode
      */
-    private void saveConfigToFileNew(JSONObject jsonObject) {
+    private void saveConfigToFileNew(JSONObject jsonObject, boolean stackMode) {
         Logger.info(String.format("[%s] 开始保存新版配置文件...", project.getName()));
         if (jsonObject != null) {
             String fileName = jsonObject.getJSONObject("data").getString("fileName");
@@ -176,7 +174,7 @@ public class EnvConfigController {
                                 }
                                 Logger.info(String.format("[%s] 文件下载成功: %s", project.getName(), file.getCanonicalPath()));
                                 // 解压文件， 获取配置
-                                extractFilesFromNestedZip(resourceDirectory.getPath() + "/" + fileName, resourceDirectory.getPath());
+                                extractFilesFromNestedZip(resourceDirectory.getPath() + "/" + fileName, resourceDirectory.getPath(), stackMode);
                             }
                         }
                     } catch (Exception e) {
@@ -189,14 +187,17 @@ public class EnvConfigController {
         Logger.info(String.format("[%s] 新版配置文件保存完成", project.getName()));
     }
 
-    public void extractFilesFromNestedZip(String zipFilePath, String outputDir) throws IOException {
+    public void extractFilesFromNestedZip(String zipFilePath, String outputDir, boolean stackMode) throws IOException {
         Logger.info(String.format("[%s] 开始解压嵌套ZIP文件: %s", project.getName(), zipFilePath));
-        String regex = "home/hundsun/server/[^/]*(/config|/cust-config)/";
+        String regex = "home/hundsun/*(/config|/cust-config)/";
         Pattern pattern = Pattern.compile(regex);
 
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFilePath))) {
             ZipEntry zipEntry;
             while ((zipEntry = zis.getNextEntry()) != null) {
+                if (!zipEntry.getName().startsWith(project.getName() + "-svr")) {
+                    continue;
+                }
                 Logger.info(String.format("[%s] 处理ZIP条目: %s", project.getName(), zipEntry.getName()));
                 if (zipEntry.getName().endsWith(".zip")) {
                     File tempFile = File.createTempFile("tempZip", ".zip");

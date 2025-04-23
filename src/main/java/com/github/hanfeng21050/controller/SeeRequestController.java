@@ -32,6 +32,7 @@ public class SeeRequestController {
     private static final String ACM_GOVERNANCE_SERVICE_PAGESERVICELIST_URL = "/acm/governance/service/pageServiceList.json";
     private static final String ACM_GOVERNANCE_SERVICE_SERVICEINFOQUERY_URL = "/acm/governance/service/serviceInfoQuery.json";
     private static final String ACM_BROKER_APPMENU_LOACALCACHEREFRESH_URL = "/acm/broker/appMenu/localCacheRefresh.json";
+    private static final String ACM_HSSERVER_APP_GETAPPDETAIL_URL = "/acm/hsserver/app/getAppDetail.json";
 
 
     // 登录方法
@@ -87,6 +88,90 @@ public class SeeRequestController {
         Pattern regex = Pattern.compile(pattern);
         Matcher matcher = regex.matcher(response);
         return matcher.find() ? matcher.group(1) : "";
+    }
+
+    /**
+     * 从轻量化合并包中获取
+     *
+     * @param seeConfig
+     * @param auth
+     * @return
+     * @throws IOException
+     */
+    public static String getStackApplication(SeeConfig seeConfig, String applicationName, String auth) throws IOException, URISyntaxException {
+        Map<String, String> body = new HashMap<>();
+        Map<String, String> header = new HashMap<>();
+        body.put("pageNo", "1");
+        body.put("pageSize", "100");
+        body.put("category", "stack");
+        body.put("allowedUpgradeMark", "true");
+        header.put("Authorization", "Bearer " + auth);
+
+        // 发起获取应用信息的请求
+        String response = HttpClientUtil.httpPost(seeConfig.getAddress() + ACM_DSSP_APPLICATION_QUERY_JSON_URL, body, header);
+        JSONObject parse = JSONObject.parse(response);
+
+        // 处理响应
+        String errorInfo = parse.getString("error_info");
+        if (StringUtils.isBlank(errorInfo)) {
+            JSONArray jsonArray = parse.getJSONObject("data").getJSONArray("items");
+            if (!jsonArray.isEmpty()) {
+                for (int i = 0; i < jsonArray.size(); i++) {
+                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+                    String id = jsonObject.getString("id");
+                    String productId = jsonObject.getString("productId");
+                    boolean b = existMacroSvr(seeConfig, auth, id, productId, applicationName);
+                    if (b) {
+                        return id;
+                    }
+                }
+            }
+        } else {
+            // 处理错误信息
+            handleError(errorInfo);
+        }
+        return "";
+
+    }
+
+    /**
+     * 判断微服务是否在合并包中
+     *
+     * @param seeConfig
+     * @param auth
+     * @param appId
+     * @param applicationName
+     * @return
+     * @throws IOException
+     */
+    private static boolean existMacroSvr(SeeConfig seeConfig, String auth, String appId, String productId, String applicationName) throws URISyntaxException, IOException {
+        Map<String, String> body = new HashMap<>();
+        Map<String, String> header = new HashMap<>();
+        header.put("Authorization", "Bearer " + auth);
+        body.put("appId", appId);
+        body.put("instance_id", productId);
+
+        String response = HttpClientUtil.httpGet(seeConfig.getAddress() + ACM_HSSERVER_APP_GETAPPDETAIL_URL, body, header);
+
+        JSONObject parse = JSONObject.parse(response);
+        // 处理响应
+        String errorInfo = parse.getString("error_info");
+        if (StringUtils.isBlank(errorInfo)) {
+            JSONArray jsonArray = parse.getJSONObject("data").getJSONArray("subProductInfoList");
+            if (!jsonArray.isEmpty()) {
+                for (int i = 0; i < jsonArray.size(); i++) {
+                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+                    String productTypeName = jsonObject.getString("productTypeName");
+                    if (applicationName.equals(productTypeName)) {
+                        return true;
+                    }
+                }
+            }
+        } else {
+            // 处理错误信息
+            handleError(errorInfo);
+        }
+        return false;
     }
 
     // 获取应用信息方法
