@@ -101,8 +101,10 @@ public class ExistsMacroSyntaxCheck extends MacroSyntaxCheck implements SyntaxCh
                 // T标记时，condition是完整的SQL
                 CCJSqlParserUtil.parse(condition);
             } else {
-                // 非T标记时，condition是WHERE子句
-                CCJSqlParserUtil.parse("SELECT * FROM dual WHERE " + condition);
+                if (StringUtils.isNotBlank(condition)) {
+                    // 非T标记时，condition是WHERE子句
+                    CCJSqlParserUtil.parse("SELECT * FROM dual WHERE " + condition);
+                }
             }
 
             // 检查是否包含绑定变量

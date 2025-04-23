@@ -5,8 +5,6 @@ import com.github.hanfeng21050.controller.export.OpenApiExporterController;
 import com.github.hanfeng21050.dialog.export.FileSelectDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,8 +12,6 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 
@@ -65,52 +61,11 @@ public class HepPlusGroup {
                     // 用户取消了导出操作
                     return;
                 }
-
-                // 在写入动作中创建和更新文件
-                WriteCommandAction.runWriteCommandAction(project, () -> {
-                    try {
-                        // 获取或创建输出目录
-                        VirtualFile outputDir = getOrCreateOutputDirectory(project);
-                        // 创建输出文件
-                        VirtualFile outputFile = outputDir.findOrCreateChildData(this, "openapi.json");
-                        // 写入内容
-                        outputFile.setBinaryContent(openApiJson.getBytes(StandardCharsets.UTF_8));
-                        // 显示通知
-                        showSuccessNotification(project);
-                    } catch (IOException ex) {
-                        showErrorNotification(project, ex);
-                    }
-                });
             } catch (Exception ex) {
                 Messages.showErrorDialog(project,
                         "导出失败: " + ex.getMessage(),
                         "错误");
             }
-        }
-
-        private VirtualFile getOrCreateOutputDirectory(Project project) throws IOException {
-            VirtualFile baseDir = project.getBaseDir();
-            VirtualFile outputDir = baseDir.findChild("output");
-            if (outputDir == null) {
-                outputDir = baseDir.createChildDirectory(this, "output");
-            }
-            return outputDir;
-        }
-
-        private void showSuccessNotification(Project project) {
-            ApplicationManager.getApplication().invokeLater(() ->
-                    Messages.showInfoMessage(project,
-                            "OpenAPI规范已导出",
-                            "导出成功")
-            );
-        }
-
-        private void showErrorNotification(Project project, IOException e) {
-            ApplicationManager.getApplication().invokeLater(() ->
-                    Messages.showErrorDialog(project,
-                            "写入文件失败: " + e.getMessage(),
-                            "错误")
-            );
         }
     }
 }
