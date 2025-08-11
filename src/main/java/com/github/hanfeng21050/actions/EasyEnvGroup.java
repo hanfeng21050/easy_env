@@ -4,12 +4,12 @@ import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.github.hanfeng21050.config.SeeConfig;
 import com.github.hanfeng21050.controller.EnvConfigController;
 import com.github.hanfeng21050.extensions.EasyEnvConfigComponent;
+import com.github.hanfeng21050.utils.ServiceUtils;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class EasyEnvGroup extends ActionGroup {
 
-    private final EasyEnvConfig config = ServiceManager.getService(EasyEnvConfigComponent.class).getState();
+    private final EasyEnvConfig config = ServiceUtils.getService(EasyEnvConfigComponent.class).getState();
 
     public EasyEnvGroup() {
         // 设置 Action 组的显示文本

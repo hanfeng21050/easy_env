@@ -12,19 +12,18 @@ import java.util.regex.Pattern;
 
 public class InsertSelectMacroSyntaxCheck extends MacroSyntaxCheck implements SyntaxChecker {
     private static final String TEMPLATE = "[insertSelect][插入目标表][源表][字段映射][条件语句]";
-    private static final String DOC = """
-            格式说明：
-            1. [插入目标表]: 要插入数据的目标表名
-            2. [源表]: 数据来源的表名
-            3. [字段映射]: 可选参数，用于指定目标表和源表中不同名的字段映射关系
-               - 如果不填，则只插入目标表和源表中所有同名字段
-               - 格式为：目标字段=源字段，多个映射用逗号分隔
-            4. [条件语句]: WHERE子句的完整条件，必须包含绑定变量
-            
-            示例：
-            @JRESMacro("[insertSelect][act_fund_account_control_jour][act_fund_account_jour][handle_flag=witness_flag][branch_no=:branch_no and op_entrust_way=:op_entrust_way]")
-            说明：该示例会把 act_fund_account_jour 表中的 witness_flag 字段的值插入到 act_fund_account_control_jour 表的 handle_flag 字段中
-            """;
+    private static final String DOC =
+            "格式说明：\n" +
+                    "1. [插入目标表]: 要插入数据的目标表名\n" +
+                    "2. [源表]: 数据来源的表名\n" +
+                    "3. [字段映射]: 可选参数，用于指定目标表和源表中不同名的字段映射关系\n" +
+                    "   - 如果不填，则只插入目标表和源表中所有同名字段\n" +
+                    "   - 格式为：目标字段=源字段，多个映射用逗号分隔\n" +
+                    "4. [条件语句]: WHERE子句的完整条件，必须包含绑定变量\n" +
+                    "\n" +
+                    "示例：\n" +
+                    "@JRESMacro(\"[insertSelect][act_fund_account_control_jour][act_fund_account_jour][handle_flag=witness_flag][branch_no=:branch_no and op_entrust_way=:op_entrust_way]\")\n" +
+                    "说明：该示例会把 act_fund_account_jour 表中的 witness_flag 字段的值插入到 act_fund_account_control_jour 表的 handle_flag 字段中\n";
 
     private static final Pattern TABLE_NAME_PATTERN = Pattern.compile("^\\w+$");
     private static final Pattern FIELD_MAPPING_PATTERN = Pattern.compile("^\\w+\\s*=\\s*\\w+$");

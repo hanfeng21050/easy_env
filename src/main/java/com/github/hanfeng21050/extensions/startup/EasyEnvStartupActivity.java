@@ -7,7 +7,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
-public class EasyEnvStartupActivity implements StartupActivity.DumbAware {
+public class EasyEnvStartupActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
         // 延迟执行，确保工具窗口已经被注册

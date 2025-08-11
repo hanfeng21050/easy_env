@@ -9,22 +9,21 @@ import java.util.regex.Pattern;
 
 public class TruncateMacroSyntaxCheck extends MacroSyntaxCheck implements SyntaxChecker {
     private static final String TEMPLATE = "[truncate][表名]";
-    private static final String DOC = """
-            宏定义说明:
-            1. [表名] - 必填参数
-               - 数据库表名
-               - 只能包含字母、数字和下划线
-               - 必须以字母开头
-            
-            注意事项:
-            - truncate 操作会清空整个表的数据
-            - 此操作不可回滚，请谨慎使用
-            - 执行此操作需要相应的数据库权限
-            
-            示例:
-            @JRESMacro("[truncate][ses_sys_arg]")
-            int truncateTable();
-            """;
+    private static final String DOC =
+            "宏定义说明:\n" +
+                    "1. [表名] - 必填参数\n" +
+                    "   - 数据库表名\n" +
+                    "   - 只能包含字母、数字和下划线\n" +
+                    "   - 必须以字母开头\n" +
+                    "\n" +
+                    "注意事项:\n" +
+                    "- truncate 操作会清空整个表的数据\n" +
+                    "- 此操作不可回滚，请谨慎使用\n" +
+                    "- 执行此操作需要相应的数据库权限\n" +
+                    "\n" +
+                    "示例:\n" +
+                    "@JRESMacro(\"[truncate][ses_sys_arg]\")\n" +
+                    "int truncateTable();\n";
 
     private static final Pattern TABLE_NAME_PATTERN = Pattern.compile("^[a-zA-Z]\\w*$");
 

@@ -20,37 +20,34 @@ public class InsertMacroSyntaxCheck extends MacroSyntaxCheck implements SyntaxCh
     private static final String GET_SERIAL_NO_TEMPLATE = "[getSerialNo][表名][字段列表]";
     private static final String GET_PREFETCH_SEQ_TEMPLATE = "[getPrefetchSeq][表名][条件语句]";
 
-    private static final String INSERT_DOC = """
-            插入单条记录
-            格式：@JRESMacro("[insert][表名][字段1=:参数1,字段2,字段3=:参数3]")
-            说明：
-            1. 字段列表中的字段可以是以下两种形式：
-               - 字段名=:参数名 （显式指定参数）
-               - 字段名 （隐式使用同名参数）
-            2. 所有字段都会从传入的对象中获取对应的值
-            例子：
-            @JRESMacro("[insert][elg_client_risk_calm][branch_no=:branch_no,client_id]")
-            """;
+    private static final String INSERT_DOC =
+            "插入单条记录\n" +
+                    "格式：@JRESMacro(\"[insert][表名][字段1=:参数1,字段2,字段3=:参数3]\")\n" +
+                    "说明：\n" +
+                    "1. 字段列表中的字段可以是以下两种形式：\n" +
+                    "   - 字段名=:参数名 （显式指定参数）\n" +
+                    "   - 字段名 （隐式使用同名参数）\n" +
+                    "2. 所有字段都会从传入的对象中获取对应的值\n" +
+                    "例子：\n" +
+                    "@JRESMacro(\"[insert][elg_client_risk_calm][branch_no=:branch_no,client_id]\")\n";
 
-    private static final String BATCH_INSERT_DOC = """
-            批量插入记录
-            格式：@JRESMacro("[batchInsert][表名][字段1=:参数1,字段2,字段3=:参数3]")
-            说明：
-            1. 方法参数类型必须为List集合
-            2. 字段格式与单条插入相同
-            例子：
-            @JRESMacro("[batchInsert][elg_client_risk_calm][branch_no=:branch_no,client_id]")
-            """;
+    private static final String BATCH_INSERT_DOC =
+            "批量插入记录\n" +
+                    "格式：@JRESMacro(\"[batchInsert][表名][字段1=:参数1,字段2,字段3=:参数3]\")\n" +
+                    "说明：\n" +
+                    "1. 方法参数类型必须为List集合\n" +
+                    "2. 字段格式与单条插入相同\n" +
+                    "例子：\n" +
+                    "@JRESMacro(\"[batchInsert][elg_client_risk_calm][branch_no=:branch_no,client_id]\")\n";
 
-    private static final String BATCH_DELETE_DOC = """
-            批量删除记录
-            格式：@JRESMacro("[batchDelete][表名][条件语句]")
-            说明：
-            1. 方法参数类型必须为List集合
-            2. 条件语句必须包含绑定变量
-            例子：
-            @JRESMacro("[batchDelete][elg_client_risk_calm][init_date=20190301 and risk_level>:old_risk and client_id=:client_id]")
-            """;
+    private static final String BATCH_DELETE_DOC =
+            "批量删除记录\n" +
+                    "格式：@JRESMacro(\"[batchDelete][表名][条件语句]\")\n" +
+                    "说明：\n" +
+                    "1. 方法参数类型必须为List集合\n" +
+                    "2. 条件语句必须包含绑定变量\n" +
+                    "例子：\n" +
+                    "@JRESMacro(\"[batchDelete][elg_client_risk_calm][init_date=20190301 and risk_level>:old_risk and client_id=:client_id]\")\n";
 
     private static final Pattern TABLE_NAME_PATTERN = Pattern.compile("^\\w+$");
     private static final Pattern FIELD_PATTERN = Pattern.compile("^\\w+(?:=:\\w+)?$");
@@ -96,23 +93,33 @@ public class InsertMacroSyntaxCheck extends MacroSyntaxCheck implements SyntaxCh
     }
 
     private String getTemplate() {
-        return switch (macroName) {
-            case "insert" -> INSERT_TEMPLATE;
-            case "batchInsert" -> BATCH_INSERT_TEMPLATE;
-            case "batchDelete" -> BATCH_DELETE_TEMPLATE;
-            case "getSerialNo" -> GET_SERIAL_NO_TEMPLATE;
-            case "getPrefetchSeq" -> GET_PREFETCH_SEQ_TEMPLATE;
-            default -> INSERT_TEMPLATE;
-        };
+        switch (macroName) {
+            case "insert":
+                return INSERT_TEMPLATE;
+            case "batchInsert":
+                return BATCH_INSERT_TEMPLATE;
+            case "batchDelete":
+                return BATCH_DELETE_TEMPLATE;
+            case "getSerialNo":
+                return GET_SERIAL_NO_TEMPLATE;
+            case "getPrefetchSeq":
+                return GET_PREFETCH_SEQ_TEMPLATE;
+            default:
+                return INSERT_TEMPLATE;
+        }
     }
 
     private String getDoc() {
-        return switch (macroName) {
-            case "insert" -> INSERT_DOC;
-            case "batchInsert" -> BATCH_INSERT_DOC;
-            case "batchDelete" -> BATCH_DELETE_DOC;
-            default -> INSERT_DOC;
-        };
+        switch (macroName) {
+            case "insert":
+                return INSERT_DOC;
+            case "batchInsert":
+                return BATCH_INSERT_DOC;
+            case "batchDelete":
+                return BATCH_DELETE_DOC;
+            default:
+                return INSERT_DOC;
+        }
     }
 
     private boolean isValidTableName(String tableName) {

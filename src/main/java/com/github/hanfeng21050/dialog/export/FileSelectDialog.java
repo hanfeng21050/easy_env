@@ -142,10 +142,12 @@ public class FileSelectDialog extends DialogWrapper {
                 new CheckboxTree.CheckboxTreeCellRenderer() {
                     @Override
                     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-                        if (!(value instanceof CheckedTreeNode node)) return;
+                        if (!(value instanceof CheckedTreeNode)) return;
+                        CheckedTreeNode node = (CheckedTreeNode) value;
 
-                        if (node.getUserObject() instanceof FileTreeNode fileNode) {
+                        if (node.getUserObject() instanceof FileTreeNode) {
                             // 文件节点显示
+                            FileTreeNode fileNode = (FileTreeNode) node.getUserObject();
                             getTextRenderer().append(fileNode.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
                             getTextRenderer().setIcon(AllIcons.FileTypes.Text);
                         } else if (node == root) {

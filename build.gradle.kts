@@ -29,13 +29,11 @@ dependencies {
     implementation("com.github.jsqlparser:jsqlparser:4.2")
 }
 
-// Set the JVM language level used to build the project. Use Java 11 for 2020.3+, and Java 17 for 2022.2+.
+// Set the JVM language level used to build the project. Use Java 11 for good compatibility
+// 修改为Java 11以平衡兼容性和现代性
 kotlin {
     @Suppress("UnstableApiUsage")
-    jvmToolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-        vendor = JvmVendorSpec.JETBRAINS
-    }
+    jvmToolchain(11)
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
@@ -131,6 +129,16 @@ tasks {
         // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
         channels =
             properties("pluginVersion").map { listOf(it.split('-').getOrElse(1) { "default" }.split('.').first()) }
+    }
+
+    // 添加编译兼容性配置 - 使用Java 11
+    compileJava {
+        sourceCompatibility = "11"
+        targetCompatibility = "11"
+    }
+
+    compileKotlin {
+        kotlinOptions.jvmTarget = "11"
     }
 }
 

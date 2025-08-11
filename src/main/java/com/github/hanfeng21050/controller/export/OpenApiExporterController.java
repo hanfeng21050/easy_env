@@ -434,7 +434,7 @@ public class OpenApiExporterController implements HepExporter {
             }
 
             schema.add("properties", properties);
-            if (!required.isEmpty()) {
+            if (required.size() > 0) {
                 schema.add("required", required);
             }
 

@@ -12,27 +12,26 @@ import java.util.regex.Pattern;
 
 public class UpdateMacroSyntaxCheck extends MacroSyntaxCheck implements SyntaxChecker {
     private static final String TEMPLATE = "[update][表名][更新字段][条件语句][更新语句]";
-    private static final String DOC = """
-            宏定义说明：
-            1. 简单模式（推荐）：
-               - 只使用第一个参数
-               - 参数为完整的 UPDATE SQL 语句
-               - 支持所有复杂场景
-               示例：@JRESMacro("[update][update act_join_stockacct set socialral_type = case when socialral_type in ('0','1') then '2' end,client_name = :client_name where id_no=:id_no]")
-            
-            2. 键值对模式：
-               - [表名] - 数据库表名
-               - [更新字段] - 键值对格式，用于简单赋值
-               - [条件语句] - WHERE 条件
-               示例：@JRESMacro("[update][client][branch_no=:branch_no,client_id][init_date=20190301 and risk_level>:old_risk and risk_level<:risk_level and client_id=:client_id]")
-            
-            3. 复杂更新模式：
-               - [表名] - 数据库表名
-               - [更新字段] - 简单键值对
-               - [条件语句] - WHERE 条件
-               - [更新语句] - 复杂的 SET 子句
-               示例：@JRESMacro("[update][prd_busin_entrust][init_date = :init_date,entrust_no=:report_no][init_date = :init_date and entrust_no=:report_no and otc_entrust_status <> '2'][otc_entrust_status = case when otc_entrust_status in ('0', '1') then '2' else otc_entrust_status end]")
-            """;
+    private static final String DOC =
+            "宏定义说明：\n" +
+                    "1. 简单模式（推荐）：\n" +
+                    "   - 只使用第一个参数\n" +
+                    "   - 参数为完整的 UPDATE SQL 语句\n" +
+                    "   - 支持所有复杂场景\n" +
+                    "   示例：@JRESMacro(\"[update][update act_join_stockacct set socialral_type = case when socialral_type in ('0','1') then '2' end,client_name = :client_name where id_no=:id_no]\")\n" +
+                    "\n" +
+                    "2. 键值对模式：\n" +
+                    "   - [表名] - 数据库表名\n" +
+                    "   - [更新字段] - 键值对格式，用于简单赋值\n" +
+                    "   - [条件语句] - WHERE 条件\n" +
+                    "   示例：@JRESMacro(\"[update][client][branch_no=:branch_no,client_id][init_date=20190301 and risk_level>:old_risk and risk_level<:risk_level and client_id=:client_id]\")\n" +
+                    "\n" +
+                    "3. 复杂更新模式：\n" +
+                    "   - [表名] - 数据库表名\n" +
+                    "   - [更新字段] - 简单键值对\n" +
+                    "   - [条件语句] - WHERE 条件\n" +
+                    "   - [更新语句] - 复杂的 SET 子句\n" +
+                    "   示例：@JRESMacro(\"[update][prd_busin_entrust][init_date = :init_date,entrust_no=:report_no][init_date = :init_date and entrust_no=:report_no and otc_entrust_status <> '2'][otc_entrust_status = case when otc_entrust_status in ('0', '1') then '2' else otc_entrust_status end]\")\n";
 
     private static final Pattern TABLE_NAME_PATTERN = Pattern.compile("^[a-zA-Z]\\w*$");
 

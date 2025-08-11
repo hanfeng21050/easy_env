@@ -2,23 +2,23 @@ package com.github.hanfeng21050.extensions.ToolWindow;
 
 import com.github.hanfeng21050.config.EasyEnvConfig;
 import com.github.hanfeng21050.extensions.EasyEnvConfigComponent;
+import com.github.hanfeng21050.utils.ContentFactoryUtils;
 import com.github.hanfeng21050.utils.Logger;
-import com.intellij.openapi.components.ServiceManager;
+import com.github.hanfeng21050.utils.ServiceUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 
 public class EasyEnvToolWindowFactory implements ToolWindowFactory {
-    private final EasyEnvConfig config = ServiceManager.getService(EasyEnvConfigComponent.class).getState();
+    private final EasyEnvConfig config = ServiceUtils.getService(EasyEnvConfigComponent.class).getState();
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         // 创建日志窗口
         EasyEnvLogWindow logWindow = new EasyEnvLogWindow(project, toolWindow);
-        Content logContent = ContentFactory.getInstance().createContent(
+        Content logContent = ContentFactoryUtils.createContent(
                 logWindow,
                 "日志",
                 false
@@ -30,7 +30,7 @@ public class EasyEnvToolWindowFactory implements ToolWindowFactory {
 
         // 创建缓存管理窗口
         CacheMgrWindow cacheMgrWindow = new CacheMgrWindow(config);
-        Content cacheContent = ContentFactory.getInstance().createContent(
+        Content cacheContent = ContentFactoryUtils.createContent(
                 cacheMgrWindow.getPanel(),
                 "缓存管理",
                 false

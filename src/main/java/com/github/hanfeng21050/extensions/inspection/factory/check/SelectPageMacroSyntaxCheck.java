@@ -12,60 +12,59 @@ import java.util.regex.Pattern;
 
 public class SelectPageMacroSyntaxCheck extends MacroSyntaxCheck implements SyntaxChecker {
     private static final String TEMPLATE = "[selectPage][sql][pageNo=:pageNo,pageSize=:pageSize,rownum=请求行数][查询字段][条件语句][自定义动态条件][分组排序语句]";
-    private static final String DOC = """
-            宏定义说明：
-            1. [sql] - 必填参数
-               - 基本SQL查询语句
-               - 可以是简单查询或复杂的联表/子查询
-            
-            2. [分页参数] - 部分可选
-               - rownum: 必填，指定请求行数
-               - pageNo: 可选，页码
-               - pageSize: 可选，每页大小
-            
-            3. [查询字段] - 可选参数
-               - 简单SQL可不填
-               - 联表查询或子查询需要填写返回字段
-            
-            4. [条件语句] - 可选参数
-               - 固定条件语句（不含where关键字）
-               - 作为必要的查询条件
-            
-            5. [自定义动态条件] - 可选参数
-               - 动态拼接的条件语句
-               - 仅在变量值非null时拼接
-               - 支持 /*#OR*/ 标记来替换默认的 AND 连接符
-            
-            6. [分组排序语句] - 可选参数
-               - 用于 ORDER BY、GROUP BY 等语句
-               - 使用动态条件时必须在此处指定排序/分组
-            
-            特殊用法：
-            - 别名生成：使用 "<A>" 宏标记
-            - OR条件：使用 "/*#OR*/" 标记
-            
-            示例：
-            1. 基本分页查询：
-               @JRESMacro("[selectPage][select risk_level_old,init_date,corp_risk_level from elg_client_risk_calm][pageNo=:pageNo,pageSize=:pageSize,rownum=1000][][client_id = :client_id and branch_no > :branch_no]")
-            
-            2. 子查询分页：
-               @JRESMacro("[selectPage][select * from (select client_id, exchange_type, current_balance from opt_fundreal where client_id = :client_id)][pageNo=:pageNo,pageSize=100,rownum=1000][client_id, exchange_type, current_balance]")
-            
-            3. 纯动态条件：
-               @JRESMacro("[selectPage][select hs_nvl(risk_level_old, 0),init_date from table][rownum=1000][][][client_id =:client_id, branch_no = :branch_no]")
-            
-            4. 混合条件：
-               @JRESMacro("[selectPage][select hs_nvl(risk_level_old, 0),init_date from table][rownum=1000][][client_id =:client_id and branch_no = '8888'][fund_account = :fund_account]")
-            
-            5. 带排序：
-               @JRESMacro("[selectPage][select hs_nvl(risk_level_old, 0),init_date from table][rownum=1000][][client_id =:client_id and branch_no = '8888'][fund_account = :fund_account][order by init_date]")
-            
-            6. 别名方式：
-               @JRESMacro("<A>[selectPage][select risk_level_old,init_date,corp_risk_level from elg_client_risk_calm][pageNo=:pageNo,pageSize=:pageSize,rownum=1000][][client_id = :client_id and branch_no > :branch_no]")
-            
-            7. OR条件：
-               @JRESMacro("[selectPage][select hs_nvl(risk_level_old, 0),init_date from table][rownum=1000][][][client_id =:client_id, /*#OR*/branch_no = :branch_no]")
-            """;
+    private static final String DOC =
+            "宏定义说明：\n" +
+                    "1. [sql] - 必填参数\n" +
+                    "   - 基本SQL查询语句\n" +
+                    "   - 可以是简单查询或复杂的联表/子查询\n" +
+                    "\n" +
+                    "2. [分页参数] - 部分可选\n" +
+                    "   - rownum: 必填，指定请求行数\n" +
+                    "   - pageNo: 可选，页码\n" +
+                    "   - pageSize: 可选，每页大小\n" +
+                    "\n" +
+                    "3. [查询字段] - 可选参数\n" +
+                    "   - 简单SQL可不填\n" +
+                    "   - 联表查询或子查询需要填写返回字段\n" +
+                    "\n" +
+                    "4. [条件语句] - 可选参数\n" +
+                    "   - 固定条件语句（不含where关键字）\n" +
+                    "   - 作为必要的查询条件\n" +
+                    "\n" +
+                    "5. [自定义动态条件] - 可选参数\n" +
+                    "   - 动态拼接的条件语句\n" +
+                    "   - 仅在变量值非null时拼接\n" +
+                    "   - 支持 /*#OR*/ 标记来替换默认的 AND 连接符\n" +
+                    "\n" +
+                    "6. [分组排序语句] - 可选参数\n" +
+                    "   - 用于 ORDER BY、GROUP BY 等语句\n" +
+                    "   - 使用动态条件时必须在此处指定排序/分组\n" +
+                    "\n" +
+                    "特殊用法：\n" +
+                    "- 别名生成：使用 \"<A>\" 宏标记\n" +
+                    "- OR条件：使用 \"/*#OR*/\" 标记\n" +
+                    "\n" +
+                    "示例：\n" +
+                    "1. 基本分页查询：\n" +
+                    "   @JRESMacro(\"[selectPage][select risk_level_old,init_date,corp_risk_level from elg_client_risk_calm][pageNo=:pageNo,pageSize=:pageSize,rownum=1000][][client_id = :client_id and branch_no > :branch_no]\")\n" +
+                    "\n" +
+                    "2. 子查询分页：\n" +
+                    "   @JRESMacro(\"[selectPage][select * from (select client_id, exchange_type, current_balance from opt_fundreal where client_id = :client_id)][pageNo=:pageNo,pageSize=100,rownum=1000][client_id, exchange_type, current_balance]\")\n" +
+                    "\n" +
+                    "3. 纯动态条件：\n" +
+                    "   @JRESMacro(\"[selectPage][select hs_nvl(risk_level_old, 0),init_date from table][rownum=1000][][][client_id =:client_id, branch_no = :branch_no]\")\n" +
+                    "\n" +
+                    "4. 混合条件：\n" +
+                    "   @JRESMacro(\"[selectPage][select hs_nvl(risk_level_old, 0),init_date from table][rownum=1000][][client_id =:client_id and branch_no = '8888'][fund_account = :fund_account]\")\n" +
+                    "\n" +
+                    "5. 带排序：\n" +
+                    "   @JRESMacro(\"[selectPage][select hs_nvl(risk_level_old, 0),init_date from table][rownum=1000][][client_id =:client_id and branch_no = '8888'][fund_account = :fund_account][order by init_date]\")\n" +
+                    "\n" +
+                    "6. 别名方式：\n" +
+                    "   @JRESMacro(\"<A>[selectPage][select risk_level_old,init_date,corp_risk_level from elg_client_risk_calm][pageNo=:pageNo,pageSize=:pageSize,rownum=1000][][client_id = :client_id and branch_no > :branch_no]\")\n" +
+                    "\n" +
+                    "7. OR条件：\n" +
+                    "   @JRESMacro(\"[selectPage][select hs_nvl(risk_level_old, 0),init_date from table][rownum=1000][][][client_id =:client_id, /*#OR*/branch_no = :branch_no]\")\n";
 
     private static final Pattern BIND_VARIABLE_PATTERN = Pattern.compile(":\\w+");
     private static final Pattern OR_CONDITION_PATTERN = Pattern.compile("/\\*#OR\\*/");

@@ -23,11 +23,11 @@
 
         <postStartupActivity implementation="com.github.hanfeng21050.extensions.startup.EasyEnvStartupActivity"/>
 
-        <localInspection enabledByDefault="true" displayName="EasyEnv-Check" groupName="EasyEnv-Check"
-                         implementationClass="com.github.hanfeng21050.extensions.inspection.JRESMacroInspection"
-                         language="JAVA"/>
-        <codeInsight.lineMarkerProvider language="JAVA"
-                                        implementationClass="com.github.hanfeng21050.extensions.gutter.JresMacroGutterIconProvider"/>
+        <!--        <localInspection enabledByDefault="true" displayName="EasyEnv-Check" groupName="EasyEnv-Check"-->
+        <!--                         implementationClass="com.github.hanfeng21050.extensions.inspection.JRESMacroInspection"-->
+        <!--                         language="JAVA"/>-->
+        <!--        <codeInsight.lineMarkerProvider language="JAVA"-->
+        <!--                                        implementationClass="com.github.hanfeng21050.extensions.gutter.JresMacroGutterIconProvider"/>-->
     </extensions>
 
     <applicationListeners>

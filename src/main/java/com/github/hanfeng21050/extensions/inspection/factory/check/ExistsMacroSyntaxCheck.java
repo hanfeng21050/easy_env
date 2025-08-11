@@ -16,25 +16,23 @@ public class ExistsMacroSyntaxCheck extends MacroSyntaxCheck implements SyntaxCh
     private static final String EXISTS_TEMPLATE = "[exists]<T>[表名][SQL条件语句][自定义动态条件]";
     private static final String DELETE_TEMPLATE = "[delete][表名][SQL条件语句][自定义动态条件]";
 
-    private static final String EXISTS_DOC = """
-            宏标记说明：
-            T：打上该标记后，第二个参数会作为完整sql用select count(0)或select exists包装起来，一般用于联表查询，此时第三个参数不可用
-            第三个参数为动态拼接的条件语句，当变量值不为null时才会被拼接到sql语句中
-            动态条件中可以使用/*#OR*/标记，生成代码时会用or关键字代替and关键字，用法见例3
-            例1: @JRESMacro("[exists][elg_client_risk_calm][init_date=20190301 and risk_level>:old_risk and risk_level<:risk_level and client_id=:client_id]")
-            例2: @JRESMacro("[exists][elg_client_risk_calm][init_date=20190301 and risk_level>:old_risk and risk_level<:risk_level][client_id =:client_id]")
-            例3: @JRESMacro("[exists][elg_client_risk_calm][init_date=20190301 and risk_level>:old_risk][risk_level<:risk_level, /*#OR*/client_id =:client_id]")
-            """;
+    private static final String EXISTS_DOC =
+            "宏标记说明：\n" +
+                    "T：打上该标记后，第二个参数会作为完整sql用select count(0)或select exists包装起来，一般用于联表查询，此时第三个参数不可用\n" +
+                    "第三个参数为动态拼接的条件语句，当变量值不为null时才会被拼接到sql语句中\n" +
+                    "动态条件中可以使用/*#OR*/标记，生成代码时会用or关键字代替and关键字，用法见例3\n" +
+                    "例1: @JRESMacro(\"[exists][elg_client_risk_calm][init_date=20190301 and risk_level>:old_risk and risk_level<:risk_level and client_id=:client_id]\")\n" +
+                    "例2: @JRESMacro(\"[exists][elg_client_risk_calm][init_date=20190301 and risk_level>:old_risk and risk_level<:risk_level][client_id =:client_id]\")\n" +
+                    "例3: @JRESMacro(\"[exists][elg_client_risk_calm][init_date=20190301 and risk_level>:old_risk][risk_level<:risk_level, /*#OR*/client_id =:client_id]\")\n";
 
-    private static final String DELETE_DOC = """
-            1、第一、二个参数为必填，第三个参数[自定义动态条件]选填
-            2、第三个参数为动态拼接的条件语句，当变量值不为null时才会被拼接到sql语句中
-            3、动态条件中可以使用/*#OR*/标记，生成代码时会用or关键字代替and关键字
-            例1：@JRESMacro("[delete][elg_client_risk_calm][init_date=20190301 and risk_level>:old_risk and risk_level<:risk_level and client_id=:client_id]")
-            例2：@JRESMacro("[delete][prd_test][][user_id = :user_id, create_date > :create_date]")
-            例3：@JRESMacro("[delete][prd_test][user_id = :user_id][create_date > :create_date]")
-            例4：@JRESMacro("[delete][prd_test][][user_id = :user_id, /*#OR*/create_date > :create_date]")
-            """;
+    private static final String DELETE_DOC =
+            "1、第一、二个参数为必填，第三个参数[自定义动态条件]选填\n" +
+                    "2、第三个参数为动态拼接的条件语句，当变量值不为null时才会被拼接到sql语句中\n" +
+                    "3、动态条件中可以使用/*#OR*/标记，生成代码时会用or关键字代替and关键字\n" +
+                    "例1：@JRESMacro(\"[delete][elg_client_risk_calm][init_date=20190301 and risk_level>:old_risk and risk_level<:risk_level and client_id=:client_id]\")\n" +
+                    "例2：@JRESMacro(\"[delete][prd_test][][user_id = :user_id, create_date > :create_date]\")\n" +
+                    "例3：@JRESMacro(\"[delete][prd_test][user_id = :user_id][create_date > :create_date]\")\n" +
+                    "例4：@JRESMacro(\"[delete][prd_test][][user_id = :user_id, /*#OR*/create_date > :create_date]\")\n";
 
     private static final Pattern TABLE_NAME_PATTERN = Pattern.compile("^\\w+$");
     private static final Pattern BIND_VARIABLE_PATTERN = Pattern.compile(":\\w+");

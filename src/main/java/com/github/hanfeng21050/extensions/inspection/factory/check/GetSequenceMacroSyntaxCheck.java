@@ -9,24 +9,23 @@ import java.util.regex.Pattern;
 
 public class GetSequenceMacroSyntaxCheck extends MacroSyntaxCheck implements SyntaxChecker {
     private static final String TEMPLATE = "[getSequence][表名][序列名]";
-    private static final String DOC = """
-            宏定义说明:
-            1. [表名] - 必填参数
-               - 数据库表名
-               - 只能包含字母、数字和下划线
-            
-            2. [序列名] - 必填参数
-               - Oracle序列名称
-               - 只能包含字母、数字和下划线
-            
-            注意事项:
-            - 方法参数类型必须为List集合
-            - 返回值类型为Long
-            
-            示例:
-            @JRESMacro("[getSequence][sps_sequence][entrustseq]")
-            Long getFastCounter();
-            """;
+    private static final String DOC =
+            "宏定义说明:\n" +
+                    "1. [表名] - 必填参数\n" +
+                    "   - 数据库表名\n" +
+                    "   - 只能包含字母、数字和下划线\n" +
+                    "\n" +
+                    "2. [序列名] - 必填参数\n" +
+                    "   - Oracle序列名称\n" +
+                    "   - 只能包含字母、数字和下划线\n" +
+                    "\n" +
+                    "注意事项:\n" +
+                    "- 方法参数类型必须为List集合\n" +
+                    "- 返回值类型为Long\n" +
+                    "\n" +
+                    "示例:\n" +
+                    "@JRESMacro(\"[getSequence][sps_sequence][entrustseq]\")\n" +
+                    "Long getFastCounter();\n";
 
     private static final Pattern NAME_PATTERN = Pattern.compile("^[a-zA-Z]\\w*$");
 

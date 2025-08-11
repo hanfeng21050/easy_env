@@ -120,11 +120,16 @@ public class EasyEnvLogWindow extends SimpleToolWindowPanel {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
         boolean isDarkTheme = EditorColorsManager.getInstance().isDarkEditor();
 
-        return switch (level) {
-            case INFO -> scheme.getDefaultForeground();
-            case ERROR -> new JBColor(new Color(200, 0, 0), new Color(255, 100, 100));
-            case WARN -> new JBColor(new Color(200, 130, 0), new Color(255, 200, 100));
-        };
+        switch (level) {
+            case INFO:
+                return scheme.getDefaultForeground();
+            case ERROR:
+                return new JBColor(new Color(200, 0, 0), new Color(255, 100, 100));
+            case WARN:
+                return new JBColor(new Color(200, 130, 0), new Color(255, 200, 100));
+            default:
+                return scheme.getDefaultForeground();
+        }
     }
 
     private Color getLinkColor() {

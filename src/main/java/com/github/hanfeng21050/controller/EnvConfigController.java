@@ -8,8 +8,8 @@ import com.github.hanfeng21050.extensions.EasyEnvConfigComponent;
 import com.github.hanfeng21050.utils.CommonValidateUtil;
 import com.github.hanfeng21050.utils.HttpClientUtil;
 import com.github.hanfeng21050.utils.Logger;
+import com.github.hanfeng21050.utils.ServiceUtils;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -36,7 +36,7 @@ import java.util.zip.ZipInputStream;
  */
 public class EnvConfigController {
 
-    private final EasyEnvConfig config = ServiceManager.getService(EasyEnvConfigComponent.class).getState();
+    private final EasyEnvConfig config = ServiceUtils.getService(EasyEnvConfigComponent.class).getState();
     private final SeeConfig seeConfig;
     private final Project project;
 
