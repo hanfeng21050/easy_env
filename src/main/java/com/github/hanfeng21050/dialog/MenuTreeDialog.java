@@ -1,14 +1,15 @@
 package com.github.hanfeng21050.dialog;
 
 import com.github.hanfeng21050.model.MenuFunctionData;
+import com.github.hanfeng21050.utils.Logger;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,33 +48,48 @@ public class MenuTreeDialog extends DialogWrapper {
         root = new CheckedTreeNode("菜单功能");
         root.setChecked(false);
 
-        // 创建树控件
-        tree = new CheckboxTree(new MenuTreeCellRenderer(), root);
+        // 创建树控件，完全禁用级联选择
+        tree = new CheckboxTree(new MenuTreeCellRenderer(), root) {
+            @Override
+            protected void onNodeStateChanged(CheckedTreeNode node) {
+                // 完全禁用级联选择，只改变当前节点状态，不影响父子节点
+                // 这里不做任何级联操作，只重绘界面
+                repaint();
+            }
+        };
 
         // 构建菜单树
         buildMenuTree();
 
         // 设置对话框
         init();
-        setSize(600, 500);
+        setSize(700, 600);
+    }
+
+    @Override
+    protected void doOKAction() {
+        List<MenuTreeNodeData> selectedItems = getSelectedItems();
+        if (selectedItems.isEmpty()) {
+            Messages.showWarningDialog(
+                    "请至少选择一个菜单或功能号",
+                    "警告"
+            );
+            return;
+        }
+        super.doOKAction();
     }
 
     @Override
     protected @Nullable JComponent createCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         
-        // 添加说明标签
-        JLabel label = new JLabel("选择需要的菜单和功能号（可单独选择，无联动）：");
-        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-        panel.add(label, BorderLayout.NORTH);
-        
         // 添加树控件
         JBScrollPane scrollPane = new JBScrollPane(tree);
-        scrollPane.setPreferredSize(new Dimension(580, 400));
+        scrollPane.setPreferredSize(new Dimension(680, 500));
         panel.add(scrollPane, BorderLayout.CENTER);
-        
-        // 全部展开树
-        expandAll();
+
+        // 全部展开树的前两层
+        expandTopLevels();
         
         return panel;
     }
@@ -83,66 +99,95 @@ public class MenuTreeDialog extends DialogWrapper {
      */
     private void buildMenuTree() {
         if (menuData.getDetail() == null || menuData.getDetail().getItems() == null) {
+            Logger.info("菜单数据为空");
             return;
         }
 
-        // 创建菜单项的映射表
-        Map<String, CheckedTreeNode> menuNodeMap = new HashMap<>();
-        Map<String, List<MenuFunctionData.MenuItem>> childrenMap = new HashMap<>();
+        List<MenuFunctionData.MenuItem> menuItems = menuData.getDetail().getItems();
+        Logger.info("开始构建菜单树，菜单项总数: " + menuItems.size());
 
-        // 第一遍：创建所有菜单节点并建立父子关系映射
-        for (MenuFunctionData.MenuItem menuItem : menuData.getDetail().getItems()) {
-            CheckedTreeNode menuNode = new CheckedTreeNode(new MenuTreeNodeData(menuItem, true));
-            menuNode.setChecked(false);
-            menuNodeMap.put(menuItem.getUuid(), menuNode);
+        // 清空根节点
+        root.removeAllChildren();
 
-            String parentId = menuItem.getExtensibleModel() != null && 
-                            menuItem.getExtensibleModel().getData() != null ? 
-                            menuItem.getExtensibleModel().getData().getParentId() : null;
+        // 第一步：递归处理所有菜单项（包括children中的）并创建节点映射
+        Map<String, CheckedTreeNode> allMenuNodeMap = new HashMap<>();
+        Set<String> allProcessedNodes = new HashSet<>();
 
-            if (parentId != null && !parentId.isEmpty()) {
-                childrenMap.computeIfAbsent(parentId, k -> new ArrayList<>()).add(menuItem);
+        Logger.info("=== 开始递归创建所有菜单节点 ===");
+        for (MenuFunctionData.MenuItem menuItem : menuItems) {
+            createAllMenuNodesRecursively(menuItem, allMenuNodeMap, 0);
+        }
+
+        // 第二步：为所有菜单节点添加功能号
+        Logger.info("=== 开始为所有菜单添加功能号 ===");
+        addFunctionNodesToAllMenus(allMenuNodeMap);
+
+        // 第三步：构建树结构 - 递归处理children关系
+        Logger.info("=== 开始构建菜单树结构 ===");
+        for (MenuFunctionData.MenuItem menuItem : menuItems) {
+            buildMenuStructureRecursively(menuItem, allMenuNodeMap, allProcessedNodes, 0);
+        }
+
+        // 第四步：添加根级菜单（顶层的menuItems）
+        for (MenuFunctionData.MenuItem menuItem : menuItems) {
+            CheckedTreeNode menuNode = allMenuNodeMap.get(menuItem.getUuid());
+            if (menuNode != null && !allProcessedNodes.contains(menuItem.getUuid())) {
+                root.add(menuNode);
+                allProcessedNodes.add(menuItem.getUuid());
+                Logger.info("添加根级菜单: " + getMenuName(menuItem));
             }
         }
 
-        // 第二遍：构建树结构
-        for (MenuFunctionData.MenuItem menuItem : menuData.getDetail().getItems()) {
-            CheckedTreeNode menuNode = menuNodeMap.get(menuItem.getUuid());
-            String parentId = menuItem.getExtensibleModel() != null && 
-                            menuItem.getExtensibleModel().getData() != null ? 
-                            menuItem.getExtensibleModel().getData().getParentId() : null;
+        // 第五步：对所有节点进行排序
+        sortAllTreeNodes(root);
 
-            // 优先使用children属性，如果没有则使用parent_id构建的关系
-            List<MenuFunctionData.MenuItem> children = menuItem.getChildren();
-            if (children == null) {
-                children = childrenMap.get(menuItem.getUuid());
+        // 刷新树模型
+        ((DefaultTreeModel) tree.getModel()).reload();
+
+        Logger.info("菜单树构建完成，根节点数量: " + root.getChildCount());
+        Logger.info("总菜单节点数量: " + allMenuNodeMap.size());
+        logTreeStructure(root, 0);
+    }
+
+    /**
+     * 递归创建所有菜单节点（包括children中的）
+     */
+    private void createAllMenuNodesRecursively(MenuFunctionData.MenuItem menuItem,
+                                               Map<String, CheckedTreeNode> menuNodeMap,
+                                               int level) {
+        String indent = "  ".repeat(level);
+
+        // 为当前菜单项创建节点
+        if (!menuNodeMap.containsKey(menuItem.getUuid())) {
+            CheckedTreeNode menuNode = new CheckedTreeNode(new MenuTreeNodeData(menuItem, true));
+            menuNode.setChecked(false);
+            menuNodeMap.put(menuItem.getUuid(), menuNode);
+            Logger.info(indent + "创建菜单节点: " + getMenuName(menuItem) + " UUID: " + menuItem.getUuid() +
+                    " children数量: " + (menuItem.getChildren() != null ? menuItem.getChildren().size() : 0) +
+                    " slaves数量: " + (menuItem.getSlaves() != null ? menuItem.getSlaves().size() : 0));
+        }
+
+        // 递归处理children中的菜单项
+        if (menuItem.getChildren() != null && !menuItem.getChildren().isEmpty()) {
+            for (MenuFunctionData.MenuItem child : menuItem.getChildren()) {
+                createAllMenuNodesRecursively(child, menuNodeMap, level + 1);
             }
+        }
+    }
 
-            // 添加子菜单
-            if (children != null) {
-                children.sort(Comparator.comparing(item -> {
-                    try {
-                        return Integer.parseInt(item.getExtensibleModel().getData().getOrderNo());
-                    } catch (Exception e) {
-                        return 999;
-                    }
-                }));
-                
-                for (MenuFunctionData.MenuItem child : children) {
-                    CheckedTreeNode childNode = menuNodeMap.get(child.getUuid());
-                    if (childNode != null) {
-                        menuNode.add(childNode);
-                    }
-                }
-            }
+    /**
+     * 为所有菜单节点添加功能号
+     */
+    private void addFunctionNodesToAllMenus(Map<String, CheckedTreeNode> menuNodeMap) {
+        for (Map.Entry<String, CheckedTreeNode> entry : menuNodeMap.entrySet()) {
+            CheckedTreeNode menuNode = entry.getValue();
+            MenuTreeNodeData nodeData = (MenuTreeNodeData) menuNode.getUserObject();
+            MenuFunctionData.MenuItem menuItem = nodeData.getMenuItem();
 
-            // 添加功能号子节点
-            if (menuItem.getSlaves() != null) {
+            if (menuItem.getSlaves() != null && !menuItem.getSlaves().isEmpty()) {
+                Logger.info("为菜单 " + getMenuName(menuItem) + " 添加 " + menuItem.getSlaves().size() + " 个功能号");
                 for (MenuFunctionData.MenuItem.Slave slave : menuItem.getSlaves()) {
-                    String functionId = slave.getExtensibleModel() != null && 
-                                      slave.getExtensibleModel().getData() != null ? 
-                                      slave.getExtensibleModel().getData().getFunctionId() : null;
-                    
+                    String functionId = getFunctionId(slave);
                     if (functionId != null) {
                         MenuFunctionData.InfoItem functionInfo = functionMap.get(functionId);
                         if (functionInfo != null) {
@@ -153,23 +198,200 @@ public class MenuTreeDialog extends DialogWrapper {
                     }
                 }
             }
-
-            // 如果是根节点（没有父节点），添加到树根
-            if (parentId == null || parentId.isEmpty() || !menuNodeMap.containsKey(parentId)) {
-                root.add(menuNode);
-            }
         }
-
-        // 刷新树模型
-        ((DefaultTreeModel) tree.getModel()).reload();
     }
 
     /**
-     * 展开所有节点
+     * 递归构建菜单结构（处理children关系）
      */
-    private void expandAll() {
-        for (int i = 0; i < tree.getRowCount(); i++) {
-            tree.expandRow(i);
+    private void buildMenuStructureRecursively(MenuFunctionData.MenuItem menuItem,
+                                               Map<String, CheckedTreeNode> menuNodeMap,
+                                               Set<String> processedNodes,
+                                               int level) {
+        String indent = "  ".repeat(level);
+        CheckedTreeNode parentNode = menuNodeMap.get(menuItem.getUuid());
+
+        if (menuItem.getChildren() != null && !menuItem.getChildren().isEmpty()) {
+            Logger.info(indent + "处理菜单 " + getMenuName(menuItem) + " 的 " + menuItem.getChildren().size() + " 个子菜单");
+
+            for (MenuFunctionData.MenuItem child : menuItem.getChildren()) {
+                CheckedTreeNode childNode = menuNodeMap.get(child.getUuid());
+                if (childNode != null && parentNode != null) {
+                    parentNode.add(childNode);
+                    processedNodes.add(child.getUuid());
+                    Logger.info(indent + "  添加子菜单: " + getMenuName(child) + " 到父菜单 " + getMenuName(menuItem) + " 下");
+
+                    // 递归处理子菜单的children
+                    buildMenuStructureRecursively(child, menuNodeMap, processedNodes, level + 1);
+                }
+            }
+        }
+    }
+
+    /**
+     * 获取菜单名称用于日志
+     */
+    private String getMenuName(MenuFunctionData.MenuItem menuItem) {
+        if (menuItem != null && menuItem.getExtensibleModel() != null &&
+                menuItem.getExtensibleModel().getData() != null) {
+            return menuItem.getExtensibleModel().getData().getMenuName();
+        }
+        return "未知菜单";
+    }
+
+    /**
+     * 获取功能号ID
+     */
+    private String getFunctionId(MenuFunctionData.MenuItem.Slave slave) {
+        if (slave.getExtensibleModel() != null &&
+                slave.getExtensibleModel().getData() != null) {
+            return slave.getExtensibleModel().getData().getFunctionId();
+        }
+        return null;
+    }
+
+    /**
+     * 获取父菜单ID
+     */
+    private String getParentId(MenuFunctionData.MenuItem menuItem) {
+        if (menuItem.getExtensibleModel() != null &&
+                menuItem.getExtensibleModel().getData() != null) {
+            return menuItem.getExtensibleModel().getData().getParentId();
+        }
+        return null;
+    }
+
+    /**
+     * 递归排序所有树节点
+     */
+    private void sortAllTreeNodes(CheckedTreeNode node) {
+        if (node.getChildCount() <= 1) {
+            return;
+        }
+
+        // 收集子节点
+        List<CheckedTreeNode> children = new ArrayList<>();
+        for (int i = 0; i < node.getChildCount(); i++) {
+            children.add((CheckedTreeNode) node.getChildAt(i));
+        }
+
+        // 排序逻辑：菜单节点按order_no排序，功能号节点按名称排序
+        children.sort((n1, n2) -> {
+            Object obj1 = n1.getUserObject();
+            Object obj2 = n2.getUserObject();
+
+            if (obj1 instanceof MenuTreeNodeData && obj2 instanceof MenuTreeNodeData) {
+                MenuTreeNodeData data1 = (MenuTreeNodeData) obj1;
+                MenuTreeNodeData data2 = (MenuTreeNodeData) obj2;
+
+                // 菜单节点排在功能号节点前面
+                if (data1.isMenu() && !data2.isMenu()) return -1;
+                if (!data1.isMenu() && data2.isMenu()) return 1;
+
+                // 都是菜单节点，按order_no排序
+                if (data1.isMenu() && data2.isMenu()) {
+                    try {
+                        int order1 = getOrderNo(data1.getMenuItem());
+                        int order2 = getOrderNo(data2.getMenuItem());
+                        if (order1 != order2) {
+                            return Integer.compare(order1, order2);
+                        }
+                        // order_no相同时按名称排序
+                        return data1.toString().compareTo(data2.toString());
+                    } catch (Exception e) {
+                        // 排序失败时按名称排序
+                        return data1.toString().compareTo(data2.toString());
+                    }
+                }
+
+                // 都是功能号节点，按名称排序
+                if (!data1.isMenu() && !data2.isMenu()) {
+                    return data1.toString().compareTo(data2.toString());
+                }
+
+                // 其他情况按字符串排序
+                return data1.toString().compareTo(data2.toString());
+            }
+
+            return 0;
+        });
+
+        // 重新添加排序后的子节点
+        node.removeAllChildren();
+        for (CheckedTreeNode child : children) {
+            node.add(child);
+            // 递归排序子节点
+            sortAllTreeNodes(child);
+        }
+    }
+
+    /**
+     * 获取菜单排序号
+     */
+    private int getOrderNo(MenuFunctionData.MenuItem menuItem) {
+        if (menuItem != null && menuItem.getExtensibleModel() != null &&
+                menuItem.getExtensibleModel().getData() != null) {
+            String orderNo = menuItem.getExtensibleModel().getData().getOrderNo();
+            if (orderNo != null && !orderNo.isEmpty()) {
+                try {
+                    return Integer.parseInt(orderNo);
+                } catch (NumberFormatException e) {
+                    // 如果解析失败，返回默认值
+                }
+            }
+        }
+        return 999; // 默认排序值
+    }
+
+    /**
+     * 展开前两层节点
+     */
+    private void expandTopLevels() {
+        SwingUtilities.invokeLater(() -> {
+            // 展开根节点
+            tree.expandPath(new TreePath(root.getPath()));
+
+            // 展开第一层和第二层
+            for (int i = 0; i < root.getChildCount(); i++) {
+                CheckedTreeNode firstLevel = (CheckedTreeNode) root.getChildAt(i);
+                tree.expandPath(new TreePath(firstLevel.getPath()));
+
+                // 展开第二层
+                for (int j = 0; j < firstLevel.getChildCount(); j++) {
+                    CheckedTreeNode secondLevel = (CheckedTreeNode) firstLevel.getChildAt(j);
+                    // 只展开菜单节点，不展开功能号节点
+                    Object userObject = secondLevel.getUserObject();
+                    if (userObject instanceof MenuTreeNodeData) {
+                        MenuTreeNodeData data = (MenuTreeNodeData) userObject;
+                        if (data.isMenu()) {
+                            tree.expandPath(new TreePath(secondLevel.getPath()));
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * 记录树结构用于调试
+     */
+    private void logTreeStructure(CheckedTreeNode node, int level) {
+        if (level > 4) return; // 只记录前4层
+
+        String indent = "  ".repeat(level);
+        Object userObject = node.getUserObject();
+
+        if (userObject instanceof MenuTreeNodeData) {
+            MenuTreeNodeData data = (MenuTreeNodeData) userObject;
+            String type = data.isMenu() ? "📁菜单" : "⚙️功能号";
+            Logger.info(indent + "├─ " + type + ": " + data.toString() + " (子节点: " + node.getChildCount() + ")");
+        } else {
+            Logger.info(indent + "🌳 根: " + userObject + " (子节点: " + node.getChildCount() + ")");
+        }
+
+        for (int i = 0; i < node.getChildCount(); i++) {
+            CheckedTreeNode child = (CheckedTreeNode) node.getChildAt(i);
+            logTreeStructure(child, level + 1);
         }
     }
 
@@ -233,12 +455,22 @@ public class MenuTreeDialog extends DialogWrapper {
         public String toString() {
             if (isMenu && menuItem != null && menuItem.getExtensibleModel() != null && 
                 menuItem.getExtensibleModel().getData() != null) {
-                return menuItem.getExtensibleModel().getData().getMenuName();
+                String menuName = menuItem.getExtensibleModel().getData().getMenuName();
+                String menuCode = menuItem.getExtensibleModel().getData().getMenuCode();
+                if (menuName != null && !menuName.isEmpty()) {
+                    return menuCode != null && !menuCode.isEmpty() ?
+                            menuName + " [" + menuCode + "]" : menuName;
+                }
+                return menuCode != null ? "[" + menuCode + "]" : "未命名菜单";
             } else if (!isMenu && functionItem != null && functionItem.getExtensibleModel() != null && 
                       functionItem.getExtensibleModel().getData() != null) {
                 String name = functionItem.getExtensibleModel().getData().getSubTransName();
                 String code = functionItem.getExtensibleModel().getData().getSubTransCode();
-                return name + " (" + code + ")";
+                if (name != null && !name.isEmpty()) {
+                    return code != null && !code.isEmpty() ?
+                            name + " [" + code + "]" : name;
+                }
+                return code != null ? "[" + code + "]" : "未命名功能";
             }
             return "未知项目";
         }
@@ -269,7 +501,8 @@ public class MenuTreeDialog extends DialogWrapper {
                 } else {
                     // 根节点
                     getTextRenderer().setIcon(AllIcons.Nodes.Project);
-                    getTextRenderer().append(userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+                    getTextRenderer().append(userObject.toString(),
+                            new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, null));
                 }
             }
         }

@@ -9,7 +9,6 @@ import com.github.hanfeng21050.model.MenuFunctionData;
 import com.github.hanfeng21050.utils.Logger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,6 +16,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -136,7 +136,7 @@ public class HepPlusGroup {
             VirtualFile[] children = baseDir.getChildren();
             for (VirtualFile child : children) {
                 if (child.isDirectory() && child.getName().endsWith("-pub")) {
-                    // 查找 studio-resources/metadata/menu 目录
+                    // 查找 studio-resources/metadata 目录
                     VirtualFile studioResources = child.findChild("studio-resources");
                     if (studioResources != null && studioResources.isDirectory()) {
                         VirtualFile metadata = studioResources.findChild("metadata");
@@ -169,25 +169,56 @@ public class HepPlusGroup {
          * 显示选中的项目信息
          */
         private void showSelectedItems(Project project, List<MenuTreeDialog.MenuTreeNodeData> selectedItems) {
-            StringBuilder message = new StringBuilder("选中的项目 (");
-            message.append(selectedItems.size()).append(" 项):\n\n");
+            if (selectedItems.isEmpty()) {
+                Messages.showInfoMessage(project, "未选择任何项目", "提示");
+                return;
+            }
+
+            StringBuilder message = new StringBuilder();
+            message.append("<html><b>选中的项目总数: ").append(selectedItems.size()).append(" 项</b><br/><br/>");
 
             int menuCount = 0;
             int functionCount = 0;
 
+            // 分类统计
+            List<MenuTreeDialog.MenuTreeNodeData> menus = new ArrayList<>();
+            List<MenuTreeDialog.MenuTreeNodeData> functions = new ArrayList<>();
+            
             for (MenuTreeDialog.MenuTreeNodeData item : selectedItems) {
                 if (item.isMenu()) {
+                    menus.add(item);
                     menuCount++;
-                    message.append("📁 菜单: ").append(item.toString()).append("\n");
                 } else {
+                    functions.add(item);
                     functionCount++;
-                    message.append("⚙️ 功能: ").append(item.toString()).append("\n");
                 }
             }
 
-            message.append("\n统计: 菜单 ").append(menuCount).append(" 个，功能号 ").append(functionCount).append(" 个");
+            // 显示菜单
+            if (menuCount > 0) {
+                message.append("<b>📁 选中的菜单 (").append(menuCount).append(" 个):</b><br/>");
+                for (MenuTreeDialog.MenuTreeNodeData menu : menus) {
+                    message.append("&nbsp;&nbsp;• ").append(menu.toString()).append("<br/>");
+                }
+                message.append("<br/>");
+            }
 
-            Messages.showInfoMessage(project, message.toString(), "选中项目");
+            // 显示功能号
+            if (functionCount > 0) {
+                message.append("<b>⚙️ 选中的功能号 (").append(functionCount).append(" 个):</b><br/>");
+                for (MenuTreeDialog.MenuTreeNodeData function : functions) {
+                    message.append("&nbsp;&nbsp;• ").append(function.toString()).append("<br/>");
+                }
+                message.append("<br/>");
+            }
+
+            message.append("<b>统计汇总:</b><br/>");
+            message.append("菜单数量: ").append(menuCount).append(" 个<br/>");
+            message.append("功能号数量: ").append(functionCount).append(" 个<br/>");
+            message.append("总计: ").append(selectedItems.size()).append(" 项");
+            message.append("</html>");
+
+            Messages.showInfoMessage(project, message.toString(), "选中项目详情");
         }
     }
 }
