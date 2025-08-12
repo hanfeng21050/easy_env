@@ -5,12 +5,15 @@ import com.github.hanfeng21050.utils.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
@@ -24,6 +27,11 @@ public class MenuTreeDialog extends DialogWrapper {
     private final IndependentCheckboxTree.IndependentTreeNode root;
     private final MenuFunctionData menuData;
     private final Map<String, MenuFunctionData.InfoItem> functionMap;
+
+    // 搜索相关
+    private SearchTextField searchField;
+    private IndependentCheckboxTree.IndependentTreeNode originalRoot;
+    private Map<String, IndependentCheckboxTree.IndependentTreeNode> allMenuNodeCache;
 
     public MenuTreeDialog(Project project, MenuFunctionData menuData) {
         super(project);
@@ -49,9 +57,117 @@ public class MenuTreeDialog extends DialogWrapper {
         // 构建菜单树
         buildMenuTree();
 
+        // 初始化搜索功能
+        initializeSearch();
+
         // 设置对话框
         init();
         setSize(700, 600);
+    }
+
+    /**
+     * 初始化搜索功能
+     */
+    private void initializeSearch() {
+        // 创建搜索框
+        searchField = new SearchTextField();
+        searchField.setPreferredSize(new Dimension(200, 25));
+
+        // 保存原始根节点（备份完整树结构）
+        originalRoot = new IndependentCheckboxTree.IndependentTreeNode("菜单功能");
+        copyTreeNode(root, originalRoot);
+
+        // 添加搜索监听器
+        searchField.addKeyboardListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                filterTree(searchField.getText().trim());
+            }
+        });
+    }
+
+    /**
+     * 复制树节点（深拷贝）
+     */
+    private void copyTreeNode(IndependentCheckboxTree.IndependentTreeNode source, IndependentCheckboxTree.IndependentTreeNode target) {
+        target.setUserObject(source.getUserObject());
+        target.setChecked(source.isChecked());
+
+        for (int i = 0; i < source.getChildCount(); i++) {
+            IndependentCheckboxTree.IndependentTreeNode sourceChild =
+                    (IndependentCheckboxTree.IndependentTreeNode) source.getChildAt(i);
+            IndependentCheckboxTree.IndependentTreeNode targetChild =
+                    new IndependentCheckboxTree.IndependentTreeNode(sourceChild.getUserObject());
+            copyTreeNode(sourceChild, targetChild);
+            target.add(targetChild);
+        }
+    }
+
+    /**
+     * 根据搜索关键词过滤树
+     */
+    private void filterTree(String keyword) {
+        if (keyword.isEmpty()) {
+            // 恢复完整树结构
+            root.removeAllChildren();
+            copyTreeNode(originalRoot, root);
+        } else {
+            // 执行搜索过滤
+            root.removeAllChildren();
+            searchAndAddMatchingMenus(originalRoot, keyword.toLowerCase());
+        }
+
+        // 刷新树模型
+        ((DefaultTreeModel) tree.getModel()).reload();
+
+        // 展开所有搜索结果
+        if (!keyword.isEmpty()) {
+            tree.expandTopLevels();
+        }
+    }
+
+    /**
+     * 搜索匹配的菜单并添加到结果树中
+     */
+    private void searchAndAddMatchingMenus(IndependentCheckboxTree.IndependentTreeNode sourceNode, String keyword) {
+        for (int i = 0; i < sourceNode.getChildCount(); i++) {
+            IndependentCheckboxTree.IndependentTreeNode child =
+                    (IndependentCheckboxTree.IndependentTreeNode) sourceNode.getChildAt(i);
+
+            Object userObject = child.getUserObject();
+            if (userObject instanceof MenuTreeNodeData) {
+                MenuTreeNodeData data = (MenuTreeNodeData) userObject;
+
+                // 只搜索菜单，不搜索功能号
+                if (data.isMenu() && menuMatches(data, keyword)) {
+                    // 找到匹配的菜单，复制整个菜单节点（包括其下的功能号）
+                    IndependentCheckboxTree.IndependentTreeNode menuCopy =
+                            new IndependentCheckboxTree.IndependentTreeNode(data);
+                    copyTreeNode(child, menuCopy);
+                    root.add(menuCopy);
+                }
+            }
+
+            // 递归搜索子菜单
+            searchAndAddMatchingMenus(child, keyword);
+        }
+    }
+
+    /**
+     * 检查菜单是否匹配搜索关键词
+     */
+    private boolean menuMatches(MenuTreeNodeData menuData, String keyword) {
+        if (menuData.getMenuItem().getExtensibleModel().getData().getMenuName() != null &&
+                menuData.getMenuItem().getExtensibleModel().getData().getMenuName().toLowerCase().contains(keyword)) {
+            return true;
+        }
+
+        if (menuData.getMenuItem().getExtensibleModel().getData().getMenuCode() != null &&
+                menuData.getMenuItem().getExtensibleModel().getData().getMenuCode().toLowerCase().contains(keyword)) {
+            return true;
+        }
+
+        return false;
     }
 
     @Override
@@ -70,10 +186,21 @@ public class MenuTreeDialog extends DialogWrapper {
     @Override
     protected @Nullable JComponent createCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+
+        // 创建顶部搜索面板
+        JPanel topPanel = new JPanel(new BorderLayout());
+
+        // 添加搜索框
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        searchPanel.add(new JLabel("搜索菜单: "));
+        searchPanel.add(searchField);
+        topPanel.add(searchPanel, BorderLayout.NORTH);
+
+        panel.add(topPanel, BorderLayout.NORTH);
         
         // 添加树控件
         JBScrollPane scrollPane = new JBScrollPane(tree);
-        scrollPane.setPreferredSize(new Dimension(680, 500));
+        scrollPane.setPreferredSize(new Dimension(680, 400));
         panel.add(scrollPane, BorderLayout.CENTER);
 
         // 全部展开树的前两层

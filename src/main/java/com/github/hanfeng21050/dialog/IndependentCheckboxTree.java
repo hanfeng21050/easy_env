@@ -6,7 +6,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,25 +28,7 @@ public class IndependentCheckboxTree extends JTree {
         setRootVisible(false);
         setShowsRootHandles(true);
 
-        // 添加鼠标监听器处理复选框点击
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                handleMouseClick(e);
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                // 防止文本选择
-                e.consume();
-            }
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                // 防止文本选择
-                e.consume();
-            }
-        });
+        // 注意：不使用MouseListener，而是通过重写processMouseEvent来处理所有鼠标事件
 
         // 重写processMouseEvent来完全控制鼠标行为
         setFocusable(true);
@@ -89,6 +70,9 @@ public class IndependentCheckboxTree extends JTree {
      * 处理鼠标点击事件
      */
     private void handleMouseClick(MouseEvent e) {
+        // 调试信息
+        System.out.println("handleMouseClick 被调用: " + e.getID());
+        
         TreePath path = getPathForLocation(e.getX(), e.getY());
         if (path != null) {
             Object node = path.getLastPathComponent();
@@ -101,7 +85,13 @@ public class IndependentCheckboxTree extends JTree {
                     if (isCheckboxClick) {
                         // 切换选中状态
                         IndependentTreeNode treeNode = (IndependentTreeNode) node;
-                        treeNode.setChecked(!treeNode.isChecked());
+                        boolean newState = !treeNode.isChecked();
+                        treeNode.setChecked(newState);
+
+                        // 调试信息
+                        Object userObject = treeNode.getUserObject();
+                        String nodeName = userObject != null ? userObject.toString() : "未知节点";
+                        System.out.println("复选框点击: " + nodeName + " -> " + newState);
 
                         // 重绘该节点
                         repaint(bounds);
@@ -116,23 +106,28 @@ public class IndependentCheckboxTree extends JTree {
                             }
                         }
                     }
-
-                    // 阻止默认的选择行为
-                    e.consume();
                 }
             }
         }
+
+        // 阻止默认的选择行为（无论是否找到路径都要阻止）
+        e.consume();
     }
 
     @Override
     protected void processMouseEvent(MouseEvent e) {
-        // 拦截所有鼠标事件，防止默认的选择行为
-        if (e.getID() == MouseEvent.MOUSE_PRESSED ||
-                e.getID() == MouseEvent.MOUSE_RELEASED ||
-                e.getID() == MouseEvent.MOUSE_CLICKED) {
-
+        // 只在MOUSE_PRESSED事件时处理点击，避免重复触发
+        if (e.getID() == MouseEvent.MOUSE_PRESSED) {
             handleMouseClick(e);
-            return; // 不调用super，完全接管鼠标处理
+            e.consume(); // 消费事件，防止传播
+            return;
+        }
+
+        // 消费MOUSE_RELEASED和MOUSE_CLICKED事件，防止默认的选择行为
+        if (e.getID() == MouseEvent.MOUSE_RELEASED ||
+                e.getID() == MouseEvent.MOUSE_CLICKED) {
+            e.consume();
+            return;
         }
 
         // 其他鼠标事件正常处理
