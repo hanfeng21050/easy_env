@@ -2,19 +2,14 @@ package com.github.hanfeng21050.dialog;
 
 import com.github.hanfeng21050.model.MenuFunctionData;
 import com.github.hanfeng21050.utils.Logger;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -25,8 +20,8 @@ import java.util.*;
  */
 public class MenuTreeDialog extends DialogWrapper {
     private final Project project;
-    private final CheckboxTree tree;
-    private final CheckedTreeNode root;
+    private final IndependentCheckboxTree tree;
+    private final IndependentCheckboxTree.IndependentTreeNode root;
     private final MenuFunctionData menuData;
     private final Map<String, MenuFunctionData.InfoItem> functionMap;
 
@@ -45,18 +40,11 @@ public class MenuTreeDialog extends DialogWrapper {
         }
 
         // 创建树根节点
-        root = new CheckedTreeNode("菜单功能");
+        root = new IndependentCheckboxTree.IndependentTreeNode("菜单功能");
         root.setChecked(false);
 
-        // 创建树控件，完全禁用级联选择
-        tree = new CheckboxTree(new MenuTreeCellRenderer(), root) {
-            @Override
-            protected void onNodeStateChanged(CheckedTreeNode node) {
-                // 完全禁用级联选择，只改变当前节点状态，不影响父子节点
-                // 这里不做任何级联操作，只重绘界面
-                repaint();
-            }
-        };
+        // 创建独立的复选框树
+        tree = new IndependentCheckboxTree(root);
 
         // 构建菜单树
         buildMenuTree();
@@ -89,7 +77,7 @@ public class MenuTreeDialog extends DialogWrapper {
         panel.add(scrollPane, BorderLayout.CENTER);
 
         // 全部展开树的前两层
-        expandTopLevels();
+//        expandTopLevels();
         
         return panel;
     }
@@ -110,7 +98,7 @@ public class MenuTreeDialog extends DialogWrapper {
         root.removeAllChildren();
 
         // 第一步：递归处理所有菜单项（包括children中的）并创建节点映射
-        Map<String, CheckedTreeNode> allMenuNodeMap = new HashMap<>();
+        Map<String, IndependentCheckboxTree.IndependentTreeNode> allMenuNodeMap = new HashMap<>();
         Set<String> allProcessedNodes = new HashSet<>();
 
         Logger.info("=== 开始递归创建所有菜单节点 ===");
@@ -130,7 +118,7 @@ public class MenuTreeDialog extends DialogWrapper {
 
         // 第四步：添加根级菜单（顶层的menuItems）
         for (MenuFunctionData.MenuItem menuItem : menuItems) {
-            CheckedTreeNode menuNode = allMenuNodeMap.get(menuItem.getUuid());
+            IndependentCheckboxTree.IndependentTreeNode menuNode = allMenuNodeMap.get(menuItem.getUuid());
             if (menuNode != null && !allProcessedNodes.contains(menuItem.getUuid())) {
                 root.add(menuNode);
                 allProcessedNodes.add(menuItem.getUuid());
@@ -153,13 +141,14 @@ public class MenuTreeDialog extends DialogWrapper {
      * 递归创建所有菜单节点（包括children中的）
      */
     private void createAllMenuNodesRecursively(MenuFunctionData.MenuItem menuItem,
-                                               Map<String, CheckedTreeNode> menuNodeMap,
+                                               Map<String, IndependentCheckboxTree.IndependentTreeNode> menuNodeMap,
                                                int level) {
         String indent = "  ".repeat(level);
 
         // 为当前菜单项创建节点
         if (!menuNodeMap.containsKey(menuItem.getUuid())) {
-            CheckedTreeNode menuNode = new CheckedTreeNode(new MenuTreeNodeData(menuItem, true));
+            IndependentCheckboxTree.IndependentTreeNode menuNode =
+                    new IndependentCheckboxTree.IndependentTreeNode(new MenuTreeNodeData(menuItem, true));
             menuNode.setChecked(false);
             menuNodeMap.put(menuItem.getUuid(), menuNode);
             Logger.info(indent + "创建菜单节点: " + getMenuName(menuItem) + " UUID: " + menuItem.getUuid() +
@@ -178,9 +167,9 @@ public class MenuTreeDialog extends DialogWrapper {
     /**
      * 为所有菜单节点添加功能号
      */
-    private void addFunctionNodesToAllMenus(Map<String, CheckedTreeNode> menuNodeMap) {
-        for (Map.Entry<String, CheckedTreeNode> entry : menuNodeMap.entrySet()) {
-            CheckedTreeNode menuNode = entry.getValue();
+    private void addFunctionNodesToAllMenus(Map<String, IndependentCheckboxTree.IndependentTreeNode> menuNodeMap) {
+        for (Map.Entry<String, IndependentCheckboxTree.IndependentTreeNode> entry : menuNodeMap.entrySet()) {
+            IndependentCheckboxTree.IndependentTreeNode menuNode = entry.getValue();
             MenuTreeNodeData nodeData = (MenuTreeNodeData) menuNode.getUserObject();
             MenuFunctionData.MenuItem menuItem = nodeData.getMenuItem();
 
@@ -191,7 +180,8 @@ public class MenuTreeDialog extends DialogWrapper {
                     if (functionId != null) {
                         MenuFunctionData.InfoItem functionInfo = functionMap.get(functionId);
                         if (functionInfo != null) {
-                            CheckedTreeNode functionNode = new CheckedTreeNode(new MenuTreeNodeData(functionInfo, false));
+                            IndependentCheckboxTree.IndependentTreeNode functionNode =
+                                    new IndependentCheckboxTree.IndependentTreeNode(new MenuTreeNodeData(functionInfo, false));
                             functionNode.setChecked(false);
                             menuNode.add(functionNode);
                         }
@@ -205,17 +195,17 @@ public class MenuTreeDialog extends DialogWrapper {
      * 递归构建菜单结构（处理children关系）
      */
     private void buildMenuStructureRecursively(MenuFunctionData.MenuItem menuItem,
-                                               Map<String, CheckedTreeNode> menuNodeMap,
+                                               Map<String, IndependentCheckboxTree.IndependentTreeNode> menuNodeMap,
                                                Set<String> processedNodes,
                                                int level) {
         String indent = "  ".repeat(level);
-        CheckedTreeNode parentNode = menuNodeMap.get(menuItem.getUuid());
-
+        IndependentCheckboxTree.IndependentTreeNode parentNode = menuNodeMap.get(menuItem.getUuid());
+        
         if (menuItem.getChildren() != null && !menuItem.getChildren().isEmpty()) {
             Logger.info(indent + "处理菜单 " + getMenuName(menuItem) + " 的 " + menuItem.getChildren().size() + " 个子菜单");
 
             for (MenuFunctionData.MenuItem child : menuItem.getChildren()) {
-                CheckedTreeNode childNode = menuNodeMap.get(child.getUuid());
+                IndependentCheckboxTree.IndependentTreeNode childNode = menuNodeMap.get(child.getUuid());
                 if (childNode != null && parentNode != null) {
                     parentNode.add(childNode);
                     processedNodes.add(child.getUuid());
@@ -264,15 +254,15 @@ public class MenuTreeDialog extends DialogWrapper {
     /**
      * 递归排序所有树节点
      */
-    private void sortAllTreeNodes(CheckedTreeNode node) {
+    private void sortAllTreeNodes(IndependentCheckboxTree.IndependentTreeNode node) {
         if (node.getChildCount() <= 1) {
             return;
         }
 
         // 收集子节点
-        List<CheckedTreeNode> children = new ArrayList<>();
+        List<IndependentCheckboxTree.IndependentTreeNode> children = new ArrayList<>();
         for (int i = 0; i < node.getChildCount(); i++) {
-            children.add((CheckedTreeNode) node.getChildAt(i));
+            children.add((IndependentCheckboxTree.IndependentTreeNode) node.getChildAt(i));
         }
 
         // 排序逻辑：菜单节点按order_no排序，功能号节点按名称排序
@@ -318,7 +308,7 @@ public class MenuTreeDialog extends DialogWrapper {
 
         // 重新添加排序后的子节点
         node.removeAllChildren();
-        for (CheckedTreeNode child : children) {
+        for (IndependentCheckboxTree.IndependentTreeNode child : children) {
             node.add(child);
             // 递归排序子节点
             sortAllTreeNodes(child);
@@ -347,35 +337,13 @@ public class MenuTreeDialog extends DialogWrapper {
      * 展开前两层节点
      */
     private void expandTopLevels() {
-        SwingUtilities.invokeLater(() -> {
-            // 展开根节点
-            tree.expandPath(new TreePath(root.getPath()));
-
-            // 展开第一层和第二层
-            for (int i = 0; i < root.getChildCount(); i++) {
-                CheckedTreeNode firstLevel = (CheckedTreeNode) root.getChildAt(i);
-                tree.expandPath(new TreePath(firstLevel.getPath()));
-
-                // 展开第二层
-                for (int j = 0; j < firstLevel.getChildCount(); j++) {
-                    CheckedTreeNode secondLevel = (CheckedTreeNode) firstLevel.getChildAt(j);
-                    // 只展开菜单节点，不展开功能号节点
-                    Object userObject = secondLevel.getUserObject();
-                    if (userObject instanceof MenuTreeNodeData) {
-                        MenuTreeNodeData data = (MenuTreeNodeData) userObject;
-                        if (data.isMenu()) {
-                            tree.expandPath(new TreePath(secondLevel.getPath()));
-                        }
-                    }
-                }
-            }
-        });
+        tree.expandTopLevels();
     }
 
     /**
      * 记录树结构用于调试
      */
-    private void logTreeStructure(CheckedTreeNode node, int level) {
+    private void logTreeStructure(IndependentCheckboxTree.IndependentTreeNode node, int level) {
         if (level > 4) return; // 只记录前4层
 
         String indent = "  ".repeat(level);
@@ -390,7 +358,7 @@ public class MenuTreeDialog extends DialogWrapper {
         }
 
         for (int i = 0; i < node.getChildCount(); i++) {
-            CheckedTreeNode child = (CheckedTreeNode) node.getChildAt(i);
+            IndependentCheckboxTree.IndependentTreeNode child = (IndependentCheckboxTree.IndependentTreeNode) node.getChildAt(i);
             logTreeStructure(child, level + 1);
         }
     }
@@ -400,23 +368,16 @@ public class MenuTreeDialog extends DialogWrapper {
      */
     public List<MenuTreeNodeData> getSelectedItems() {
         List<MenuTreeNodeData> selectedItems = new ArrayList<>();
-        collectSelectedNodes(root, selectedItems);
-        return selectedItems;
-    }
+        List<IndependentCheckboxTree.IndependentTreeNode> checkedNodes = tree.getCheckedNodes();
 
-    /**
-     * 递归收集选中的节点
-     */
-    private void collectSelectedNodes(CheckedTreeNode node, List<MenuTreeNodeData> selectedItems) {
-        if (node.isChecked() && node.getUserObject() instanceof MenuTreeNodeData) {
-            selectedItems.add((MenuTreeNodeData) node.getUserObject());
-        }
-
-        for (int i = 0; i < node.getChildCount(); i++) {
-            if (node.getChildAt(i) instanceof CheckedTreeNode) {
-                collectSelectedNodes((CheckedTreeNode) node.getChildAt(i), selectedItems);
+        for (IndependentCheckboxTree.IndependentTreeNode node : checkedNodes) {
+            Object userObject = node.getUserObject();
+            if (userObject instanceof MenuTreeNodeData) {
+                selectedItems.add((MenuTreeNodeData) userObject);
             }
         }
+        
+        return selectedItems;
     }
 
     /**
@@ -476,36 +437,5 @@ public class MenuTreeDialog extends DialogWrapper {
         }
     }
 
-    /**
-     * 自定义树节点渲染器
-     */
-    private static class MenuTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
-        @Override
-        public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, 
-                                    boolean leaf, int row, boolean hasFocus) {
-            if (value instanceof CheckedTreeNode) {
-                CheckedTreeNode node = (CheckedTreeNode) value;
-                Object userObject = node.getUserObject();
-
-                if (userObject instanceof MenuTreeNodeData) {
-                    MenuTreeNodeData data = (MenuTreeNodeData) userObject;
-                    if (data.isMenu()) {
-                        // 菜单节点 - 使用文件夹图标
-                        getTextRenderer().setIcon(expanded ? AllIcons.Nodes.Folder : AllIcons.Nodes.Folder);
-                        getTextRenderer().append(data.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-                    } else {
-                        // 功能号节点 - 使用方法图标
-                        getTextRenderer().setIcon(AllIcons.Nodes.Method);
-                        getTextRenderer().append(data.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-                    }
-                } else {
-                    // 根节点
-                    getTextRenderer().setIcon(AllIcons.Nodes.Project);
-                    getTextRenderer().append(userObject.toString(),
-                            new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, null));
-                }
-            }
-        }
-    }
 }
 
