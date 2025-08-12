@@ -858,7 +858,7 @@ public class OpenApiExporterController implements HepExporter {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String jsonOutput = gson.toJson(openapi);
 
-        try (FileWriter writer = new FileWriter(selectedFile)) {
+        try (FileWriter writer = new FileWriter(selectedFile, StandardCharsets.UTF_8)) {
             writer.write(jsonOutput);
             Logger.info("文件导出成功: " + selectedFile.getAbsolutePath());
             return jsonOutput;
