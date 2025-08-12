@@ -31,7 +31,6 @@ public class EasyEnvGroup extends ActionGroup {
      * Returns the child actions of the group.
      *
      * @param e
-     * @see #getActionUpdateThread()
      */
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
@@ -41,6 +40,7 @@ public class EasyEnvGroup extends ActionGroup {
         // 创建HEP+组
         DefaultActionGroup hepGroup = new DefaultActionGroup("HEP+", true);
         hepGroup.add(new HepPlusGroup.ExportInterfaceAction());
+        hepGroup.add(new HepPlusGroup.SqlDealAction());
 
         return new AnAction[]{firstGroup, hepGroup};
     }
